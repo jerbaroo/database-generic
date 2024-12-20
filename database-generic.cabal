@@ -18,7 +18,9 @@ common warnings
 library
     import:           warnings
     exposed-modules:  Database.Generic.Class,
-                      Database.Generic.Internal
+                      Database.Generic.Entity,
+                      Database.Generic.Operations,
+                      Database.Generic.Prelude,
     build-depends:    base
     hs-source-dirs:   src
     default-language: GHC2021

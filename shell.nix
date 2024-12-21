@@ -3,7 +3,7 @@ let
   project = import ./default.nix;
 in project.shellFor {
   exactDeps = true;
-  buildInputs =  [ pkgs.ghcid ];
+  buildInputs =  [ pkgs.ghcid pkgs.sqlite ];
   tools = {
     cabal = "latest";
     haskell-language-server = "latest";

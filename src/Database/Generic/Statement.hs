@@ -3,26 +3,50 @@ module Database.Generic.Statement where
 import Database.Generic.Database (Database(..))
 import Database.Generic.Entity (Entity)
 import Database.Generic.Entity qualified as Entity
+import Database.Generic.Entity.SqlTypes (SqlType)
 import Database.Generic.Prelude
 
-createTable :: forall db a f. (Database db, Entity f a) => Bool -> String
-createTable ifNotExists = intercalate " "
-  [ "CREATE TABLE"
-  , if ifNotExists then "IF NOT EXISTS" else ""
-  , Entity.tableName @_ @a
-  , intercalate "," $ columns @db @a
-  , "("
-  , ");"
-  ]
+class Database db => ToStatement a db where
+  toStatement :: a -> String
 
--- | Description of each column for database 'db'.
--- Example: ["foo BIGINT PRIMARY KEY"]
-columns :: forall db a f. (Database db, Entity f a) => [String]
-columns = do
+newtype TableName = TableName String deriving Show
+
+tableName :: forall a f. Entity f a => TableName
+tableName = TableName $ Entity.tableName @_ @a
+
+-- * Create table.
+
+data CreateTable = CreateTable
+  { ifNotExists :: Bool
+  , name        :: TableName
+  , columns     :: [CreateTableColumn]
+  }
+
+data CreateTableColumn = CreateTableColumn
+  { name    :: !String
+  , primary :: !Bool
+  , type'   :: !SqlType
+  }
+
+instance Database db => ToStatement CreateTable db where
+  toStatement c = intercalate " "
+    [ "CREATE TABLE"
+    , if c.ifNotExists then "IF NOT EXISTS" else ""
+    , show c.name
+    , intercalate "," $ c.columns <&> \c' -> intercalate " "
+          [ c'.name
+          , columnType @db c'.type'
+          , if c'.primary then "PRIMARY KEY" else ""
+          ]
+    , "("
+    , ");"
+    ]
+
+createTable :: forall a f. Entity f a => Bool -> CreateTable
+createTable ifNotExists = do
   let primaryName = Entity.primaryKeyFieldName @_ @a
-  zip (Entity.sqlFieldNames @_ @a) (Entity.sqlFieldTypes @_ @a) <&>
-    \(name, type') -> intercalate " "
-      [ name
-      , columnType @db type'
-      , if name == primaryName then "PRIMARY KEY" else ""
-      ]
+  let columns =
+        zip (Entity.sqlFieldNames @_ @a) (Entity.sqlFieldTypes @_ @a) <&>
+          \(name, type') -> CreateTableColumn
+            { primary = name == primaryName, .. }
+  CreateTable { name = tableName @a, columns, .. }

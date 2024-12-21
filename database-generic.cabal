@@ -38,10 +38,12 @@ library
                       AllowAmbiguousTypes,
                       BlockArguments,
                       DefaultSignatures,
+                      DuplicateRecordFields,
                       FunctionalDependencies,
                       LambdaCase,
                       NoImplicitPrelude,
                       OverloadedRecordDot,
+                      RecordWildCards,
                       TypeFamilies,
 
 executable database-generic-example

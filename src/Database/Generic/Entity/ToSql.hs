@@ -10,7 +10,7 @@ import Generics.Eot qualified as G
 showType :: forall a. Typeable a => String
 showType = show $ typeRep $ Proxy @a
 
--- | Type of 'a' as a 'String', with quotes removed.
+-- | Like 'showType' but with quotes removed.
 showType' :: forall a. Typeable a => String
 showType' = replace "\"" "" $ showType @a
 

@@ -4,12 +4,11 @@ Database access (local or over network) without boilerplate, via `Generic`.
 
 Summary of functionality:
  - Derive `Entity` instances to enable conversion to/from SQL.
- - Generate "create table" SQL commands for `Entity` types.
  - Interact with `Entity` in any HDBC-supported database via `MonadDb`.
  - Get a `servant` server for free, serving directly from your database!
- - `MonadDb` offer both singular value and streaming variants (via `Conduit`)!
+ - `MonadDb` offers both singular value and streaming variants (via `Conduit`)!
  
-## Quick start:
+## Quick Start
 
 Full working code example if you know what you're doing. To get this code
 working locally ASAP clone the `example` subdirectory of this repo, and then
@@ -22,26 +21,24 @@ TODO
 ## Introduction
 
 At the heart of this library is a typeclass called `MonadDb` which provides some
-functions for interacting with a database. With simplified type signatures these
-functions look like:
+class methods for interacting with a database. Simplifying the type signatures a
+bit, these functions look like:
 
 ``` hs
 upsert :: a -> m ()
 select :: b -> m (Maybe a)
--- etc..
+-- etc.
 ```
 
-In order to send your data types through the `MonadDb` functions your data type
-needs to A. derive `Generic` and B. implement `Entity`. This is as simple as:
+In order to send data types through the `MonadDb` methods we only need to derive
+`Entity` and `Generic`. This is as simple as:
 
 ``` hs
-data Person = Person { name :: String, age :: Int } deriving Generic
-
--- | Choosing 'name' as our primary key.
-instance Entity Person "name"
+data Person = Person { name :: String, age :: Int }
+  deriving (Entity "name", Generic) -- Choosing "name" as primary key.
 ```
 
-Now you can send your `Person` through `MonadDb` functions!
+Now `MonadDb` will accept the `Person` data type!
 
 ``` hs
 upsert $ Person "John" 21
@@ -50,12 +47,12 @@ print =<< select "John"
 
 ## Entity
 
-Writing an instance of `Entity` is really as easy as we showed above. The
-important part of writing an `instance Entity` is that you are defining a
-primary key for your data type, represented by the `f` parameter:
+Deriving an instance of `Entity` is really as easy as we showed above. The
+important reason we need to write an `instance Entity` is to choose a primary
+key for our data type, represented by the `f` parameter:
 
 ``` hs
-class Entity a f | a -> f where
+class Entity f a | a -> f where
   primaryKey :: forall b. (ToSqlValue b, HasField f a b) => a -> b
   primaryKey = getField @f
 ```
@@ -66,5 +63,5 @@ necessary. All the functions within `Entity` are used to convert to/from SQL.
 
 ## MonadDb
 
-`upsert` and `select` have more complicated type signatures than we let on. For
-example here is the full type signature of `upsertT`
+`upsert` and `select` have more complicated type signatures than shown above.
+For example here is the full type signature of `upsertT`

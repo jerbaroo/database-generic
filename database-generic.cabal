@@ -18,12 +18,14 @@ common warnings
 library
     import:           warnings
     exposed-modules:  Database.Generic.Class,
+                      Database.Generic.Database,
                       Database.Generic.Entity,
                       Database.Generic.Entity.FromSql,
-                      Database.Generic.Entity.SqlValue,
+                      Database.Generic.Entity.SqlTypes,
                       Database.Generic.Entity.ToSql,
                       Database.Generic.Operations,
                       Database.Generic.Prelude,
+                      Database.Generic.Statement,
     build-depends:    base,
                       comonad,
                       convertible,
@@ -46,17 +48,11 @@ executable database-generic-example
     import:           warnings
     main-is:          Main.hs
     build-depends:    base,
-                      database-generic
+                      database-generic,
+                      mtl,
+                      resource-pool,
     hs-source-dirs:   example
     default-language: GHC2021
-    default-extensions:
-                      AllowAmbiguousTypes,
-                      BlockArguments,
-                      DefaultSignatures,
-                      FunctionalDependencies,
-                      LambdaCase,
-                      OverloadedRecordDot,
-                      TypeFamilies,
 
 test-suite database-generic-test
     import:           warnings

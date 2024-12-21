@@ -3,7 +3,7 @@
 module Database.Generic.Entity.ToSql where
 
 import Database.Generic.Prelude
-import Database.Generic.Entity.SqlValue (SqlValue)
+import Database.Generic.Entity.SqlTypes (SqlType(..), SqlValue)
 import Generics.Eot qualified as G
 
 -- | Type of 'a' as a 'String'.
@@ -36,7 +36,6 @@ instance Convertible a SqlValue => ToSqlValue a where
 class ToSqlValues a where
   toSqlValues :: a -> [SqlValue]
 
--- | Generic instance for 'ToSqlValues'.
 instance (G.HasEot a, GToSqlValues (G.Eot a)) => ToSqlValues a where
   toSqlValues = gToSqlValues . G.toEot
 
@@ -61,26 +60,62 @@ instance (ToSqlValue a, GToSqlValues as) => GToSqlValues (a, as) where
   gToSqlValues (a, as) = toSqlValue a : gToSqlValues as
 
 instance GToSqlValues () where
-  gToSqlValues () = []
+  gToSqlValues _ = []
 
 instance GToSqlValues G.Void where
   gToSqlValues = G.absurd
 
--- * a -> [(String, SqlValue)]
+-- * @a [String]
 
-class ToSqlFields a where
-  toSqlFields :: a -> [(String, SqlValue)]
+class HasSqlFieldNames a where
+  sqlFieldNames :: [String]
 
-instance (G.HasEot a, GToSqlValues (G.Eot a), Typeable a) => ToSqlFields a where
-  toSqlFields a = zip (fieldNames a) (toSqlValues a)
+instance (G.HasEot a, Typeable a) => HasSqlFieldNames a where
+  sqlFieldNames =
+    case G.constructors $ G.datatype $ Proxy @a of
+      []  -> throw $ NoConstructors $ showType @a
+      [c] -> case G.fields c of
+        G.Selectors   fields -> fields
+        G.NoSelectors _      -> throw $ NoSelectors $ showType @a
+        G.NoFields           -> throw $ NoFields $ showType @a
+      _ -> throw $ MoreThanOneConstructor $ showType @a
 
--- | The names of a data type's fields.
-fieldNames :: forall a. (G.HasEot a, Typeable a) => a -> [String]
-fieldNames _ =
-  case G.constructors $ G.datatype $ Proxy @a of
-    []  -> throw $ NoConstructors $ showType @a
-    [c] -> case G.fields c of
-      G.Selectors   fields -> fields
-      G.NoSelectors _      -> throw $ NoSelectors $ showType @a
-      G.NoFields           -> throw $ NoFields $ showType @a
-    _ -> throw $ MoreThanOneConstructor $ showType @a
+-- * @a SqlType
+
+class HasSqlType a where
+  sqlType :: SqlType
+
+instance HasSqlType Int where
+  sqlType = SqlInt64
+
+instance HasSqlType String where
+  sqlType = SqlString
+
+-- * @a [SqlType]
+
+class HasSqlFieldTypes a where
+  sqlFieldTypes :: [SqlType]
+
+instance (G.HasEot a, GHasSqlFieldTypes G.Datatype (G.Eot a)) => HasSqlFieldTypes a where
+  sqlFieldTypes = gSqlFieldTypes @_ @(G.Eot a) $ G.datatype $ Proxy @a
+
+-- * Generic Proxy a -> [SqlType]
+
+class GHasSqlFieldTypes meta a where
+  gSqlFieldTypes :: meta -> [SqlType]
+
+instance GHasSqlFieldTypes [String] fields => GHasSqlFieldTypes G.Datatype (Either fields G.Void) where
+  gSqlFieldTypes datatype = case datatype of
+    G.Datatype _ [G.Constructor _ (G.Selectors fields)] ->
+      gSqlFieldTypes @_ @fields fields
+    G.Datatype name [G.Constructor cName (G.NoSelectors _)] ->
+      error $ name <> " constructor " <> cName <> " has no selectors"
+    G.Datatype name _ -> error $ name <> " must have exactly one constructor"
+
+instance (HasSqlType a, GHasSqlFieldTypes [String] as) => GHasSqlFieldTypes [String] (a, as) where
+  gSqlFieldTypes (_:as) = sqlType @a : gSqlFieldTypes @_ @as as
+  gSqlFieldTypes []     = error "impossible"
+
+instance GHasSqlFieldTypes [String] () where
+  gSqlFieldTypes [] = []
+  gSqlFieldTypes _  = error "impossible"

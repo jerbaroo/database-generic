@@ -2,7 +2,7 @@
 
 module Database.Generic.Entity.FromSql where
 
-import Database.Generic.Entity.SqlValue (SqlValue)
+import Database.Generic.Entity.SqlTypes (SqlValue)
 import Database.Generic.Entity.ToSql (showType)
 import Database.Generic.Prelude
 import Generics.Eot qualified as G

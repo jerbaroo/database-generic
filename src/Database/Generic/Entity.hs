@@ -2,24 +2,36 @@ module Database.Generic.Entity where
 
 import Database.Generic.Entity.FromSql (FromSqlValues)
 import Database.Generic.Entity.FromSql qualified as FromSql
-import Database.Generic.Entity.SqlValue (SqlValue)
-import Database.Generic.Entity.ToSql (ToSqlFields, ToSqlValue, showType')
+import Database.Generic.Entity.SqlTypes (SqlType, SqlValue)
+import Database.Generic.Entity.ToSql (HasSqlFieldNames, HasSqlFieldTypes, ToSqlValue, ToSqlValues)
 import Database.Generic.Entity.ToSql qualified as ToSql
 import Database.Generic.Prelude
 
 -- | An Entity can be converted to/from Sql and has a primary key.
-class Entity a f | a -> f where
-  primaryKey :: forall b. (ToSqlValue b, HasField f a b) => a -> b
+class Entity f a | a -> f where
+  primaryKey :: forall b. (HasField f a b, ToSqlValue b) => a -> b
   primaryKey = getField @f
 
   primaryKeyFieldName         ::               String
   default primaryKeyFieldName :: Typeable f => String
-  primaryKeyFieldName = showType' @f
+  primaryKeyFieldName = ToSql.showType' @f
 
-  entityFromSql         ::                    [SqlValue] -> a
-  default entityFromSql :: FromSqlValues a => [SqlValue] -> a
-  entityFromSql = FromSql.fromSqlValues
+  tableName         ::               String
+  default tableName :: Typeable a => String
+  tableName = ToSql.showType @a
 
-  entityToSql         ::                  a -> [(String, SqlValue)]
-  default entityToSql :: ToSqlFields a => a -> [(String, SqlValue)]
-  entityToSql = ToSql.toSqlFields
+  fromSqlValues         ::                    [SqlValue] -> a
+  default fromSqlValues :: FromSqlValues a => [SqlValue] -> a
+  fromSqlValues = FromSql.fromSqlValues
+
+  toSqlValues         ::                  a -> [SqlValue]
+  default toSqlValues :: ToSqlValues a => a -> [SqlValue]
+  toSqlValues = ToSql.toSqlValues
+
+  sqlFieldNames         ::                       [String]
+  default sqlFieldNames :: HasSqlFieldNames a => [String]
+  sqlFieldNames = ToSql.sqlFieldNames @a
+
+  sqlFieldTypes         ::                       [SqlType]
+  default sqlFieldTypes :: HasSqlFieldTypes a => [SqlType]
+  sqlFieldTypes = ToSql.sqlFieldTypes @a

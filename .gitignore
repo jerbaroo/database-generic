@@ -1,2 +1,4 @@
 .direnv
+.stack-work
 dist-newstyle/
+stack.yaml.work

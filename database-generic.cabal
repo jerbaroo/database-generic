@@ -19,25 +19,46 @@ library
     import:           warnings
     exposed-modules:  Database.Generic.Class,
                       Database.Generic.Entity,
+                      Database.Generic.Entity.FromSql,
+                      Database.Generic.Entity.SqlValue,
+                      Database.Generic.Entity.ToSql,
                       Database.Generic.Operations,
                       Database.Generic.Prelude,
-    build-depends:    base
+    build-depends:    base,
+                      comonad,
+                      convertible,
+                      extra,
+                      generics-eot,
+                      HDBC,
     hs-source-dirs:   src
     default-language: GHC2021
     default-extensions:
+                      AllowAmbiguousTypes,
                       BlockArguments,
+                      DefaultSignatures,
+                      FunctionalDependencies,
                       LambdaCase,
-                      OverloadedRecordDot
+                      NoImplicitPrelude,
+                      OverloadedRecordDot,
+                      TypeFamilies,
 
-executable advent
+executable database-generic-example
     import:           warnings
     main-is:          Main.hs
     build-depends:    base,
                       database-generic
-    hs-source-dirs:   app
+    hs-source-dirs:   example
     default-language: GHC2021
+    default-extensions:
+                      AllowAmbiguousTypes,
+                      BlockArguments,
+                      DefaultSignatures,
+                      FunctionalDependencies,
+                      LambdaCase,
+                      OverloadedRecordDot,
+                      TypeFamilies,
 
-test-suite advent-test
+test-suite database-generic-test
     import:           warnings
     main-is:          Main.hs
     build-depends:    base,

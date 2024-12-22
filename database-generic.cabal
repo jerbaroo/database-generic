@@ -50,9 +50,14 @@ executable database-generic-example
     import:           warnings
     main-is:          Main.hs
     build-depends:    base,
+                      bytestring,
                       database-generic,
+                      HDBC,
+                      HDBC-postgresql,
                       mtl,
+                      postgres-options,
                       resource-pool,
+                      witch,
     hs-source-dirs:   example
     default-language: GHC2021
 

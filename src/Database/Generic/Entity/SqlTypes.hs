@@ -1,11 +1,3 @@
-module Database.Generic.Entity.SqlTypes where
+module Database.Generic.Entity.SqlTypes (module X) where
 
-import Database.Generic.Prelude
-import Database.HDBC qualified as HDBC
-
-type SqlValue = HDBC.SqlValue
-
-data SqlType
-  = SqlInt64
-  | SqlString
-  deriving Show
+import Database.HDBC as X (SqlTypeId(..), SqlValue(..))

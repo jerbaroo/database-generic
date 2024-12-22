@@ -1,13 +1,19 @@
 module Database.Generic.Database where
 
-import Database.Generic.Entity.SqlTypes (SqlType(..))
+import Database.Generic.Entity.SqlTypes (SqlTypeId(..))
 import Database.Generic.Prelude
 
 class Database db where
-  columnType :: SqlType -> String
+  columnType :: SqlTypeId -> String
+
+data PostgreSQL
+
+instance Database PostgreSQL where
+  columnType SqlLongVarCharT = "VARCHAR"
+  columnType SqlBigIntT      = "BIGINT"
 
 data SQLite
 
 instance Database SQLite where
-  columnType SqlString = "TEXT"
-  columnType SqlInt64  = "BIGINT"
+  columnType SqlLongVarCharT = "VARCHAR"
+  columnType SqlBigIntT      = "BIGINT"

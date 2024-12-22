@@ -2,7 +2,7 @@ module Database.Generic.Entity where
 
 import Database.Generic.Entity.FromSql (FromSqlValues)
 import Database.Generic.Entity.FromSql qualified as FromSql
-import Database.Generic.Entity.SqlTypes (SqlType, SqlValue)
+import Database.Generic.Entity.SqlTypes (SqlTypeId, SqlValue)
 import Database.Generic.Entity.ToSql (HasSqlFieldNames, HasSqlFieldTypes, ToSqlValue, ToSqlValues)
 import Database.Generic.Entity.ToSql qualified as ToSql
 import Database.Generic.Prelude
@@ -32,6 +32,6 @@ class Entity f a | a -> f where
   default sqlFieldNames :: HasSqlFieldNames a => [String]
   sqlFieldNames = ToSql.sqlFieldNames @a
 
-  sqlFieldTypes         ::                       [SqlType]
-  default sqlFieldTypes :: HasSqlFieldTypes a => [SqlType]
+  sqlFieldTypes         ::                       [SqlTypeId]
+  default sqlFieldTypes :: HasSqlFieldTypes a => [SqlTypeId]
   sqlFieldTypes = ToSql.sqlFieldTypes @a

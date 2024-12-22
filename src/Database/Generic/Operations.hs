@@ -6,7 +6,7 @@ import Database.Generic.Entity (Entity)
 import Database.Generic.Prelude
 import Database.Generic.Statement qualified as Statement
 
--- * Create table.
+-- * Create table
 
 createTable :: forall a f m.
   (Entity f a, Functor m, MonadDb m Identity) =>
@@ -18,7 +18,7 @@ createTableT :: forall a f m t.
   t Bool -> m (Either (Error m t) (t ()))
 createTableT = MonadDb.createTable . fmap (Statement.createTable @a)
 
--- * Delete.
+-- * Delete
 
 delete :: forall a f b m.
   (Entity f a, Functor m, HasField f a b, MonadDb m Identity) =>
@@ -30,7 +30,7 @@ deleteT :: forall a f b m t.
   t b -> m (Either (Error m t) (t ()))
 deleteT = MonadDb.delete @_ @_ @a
 
--- * Select.
+-- * Select
 
 select :: forall a f b m.
   (Entity f a, Functor m, HasField f a b, MonadDb m Identity) =>
@@ -42,7 +42,7 @@ selectT :: forall a f b m t.
   t b -> m (Either (Error m t) (Maybe (t a)))
 selectT = MonadDb.select
 
--- * Upsert.
+-- * Upsert
 
 upsert :: forall a f m.
   (Entity f a, Functor m, MonadDb m Identity) =>

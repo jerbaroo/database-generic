@@ -3,7 +3,7 @@
 module Database.Generic.Entity.ToSql where
 
 import Database.Generic.Prelude
-import Database.Generic.Entity.SqlTypes (SqlType(..), SqlValue)
+import Database.Generic.Entity.SqlTypes (SqlTypeId(..), SqlValue)
 import Generics.Eot qualified as G
 
 -- | Type of 'a' as a 'String'.
@@ -83,18 +83,18 @@ instance (G.HasEot a, Typeable a) => HasSqlFieldNames a where
 -- * @a SqlType
 
 class HasSqlType a where
-  sqlType :: SqlType
+  sqlType :: SqlTypeId
 
 instance HasSqlType Int where
-  sqlType = SqlInt64
+  sqlType = SqlBigIntT
 
 instance HasSqlType String where
-  sqlType = SqlString
+  sqlType = SqlLongVarCharT
 
 -- * @a [SqlType]
 
 class HasSqlFieldTypes a where
-  sqlFieldTypes :: [SqlType]
+  sqlFieldTypes :: [SqlTypeId]
 
 instance (G.HasEot a, GHasSqlFieldTypes G.Datatype (G.Eot a)) => HasSqlFieldTypes a where
   sqlFieldTypes = gSqlFieldTypes @_ @(G.Eot a) $ G.datatype $ Proxy @a
@@ -102,7 +102,7 @@ instance (G.HasEot a, GHasSqlFieldTypes G.Datatype (G.Eot a)) => HasSqlFieldType
 -- * Generic Proxy a -> [SqlType]
 
 class GHasSqlFieldTypes meta a where
-  gSqlFieldTypes :: meta -> [SqlType]
+  gSqlFieldTypes :: meta -> [SqlTypeId]
 
 instance GHasSqlFieldTypes [String] fields => GHasSqlFieldTypes G.Datatype (Either fields G.Void) where
   gSqlFieldTypes datatype = case datatype of

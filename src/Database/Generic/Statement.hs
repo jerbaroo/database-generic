@@ -1,20 +1,32 @@
+{-# OPTIONS_GHC -Wno-loopy-superclass-solve #-}
 module Database.Generic.Statement where
 
 import Database.Generic.Database (Database(..))
 import Database.Generic.Entity (Entity)
 import Database.Generic.Entity qualified as Entity
-import Database.Generic.Entity.SqlTypes (SqlType)
+import Database.Generic.Entity.SqlTypes (SqlTypeId)
 import Database.Generic.Prelude
 
-class Database db => ToStatement a db where
-  toStatement :: a -> String
+newtype TableName = TableName String
 
-newtype TableName = TableName String deriving Show
+instance Show TableName where
+  show (TableName s) = s
 
 tableName :: forall a f. Entity f a => TableName
 tableName = TableName $ Entity.tableName @_ @a
 
--- * Create table.
+-- * Statement
+
+data Statement
+  = StatementCreateTable CreateTable
+
+class Database db => SerializeStatement a db where
+  serializeStatement :: a -> String
+
+instance SerializeStatement CreateTable db => (SerializeStatement Statement db) where
+  serializeStatement (StatementCreateTable c) = serializeStatement @_ @db c
+
+-- * Create Table
 
 data CreateTable = CreateTable
   { ifNotExists :: Bool
@@ -25,20 +37,20 @@ data CreateTable = CreateTable
 data CreateTableColumn = CreateTableColumn
   { name    :: !String
   , primary :: !Bool
-  , type'   :: !SqlType
+  , type'   :: !SqlTypeId
   }
 
-instance Database db => ToStatement CreateTable db where
-  toStatement c = intercalate " "
+instance Database db => SerializeStatement CreateTable db where
+  serializeStatement c = unwords
     [ "CREATE TABLE"
     , if c.ifNotExists then "IF NOT EXISTS" else ""
     , show c.name
-    , intercalate "," $ c.columns <&> \c' -> intercalate " "
+    , "("
+    , intercalate ", " $ c.columns <&> \c' -> unwords
           [ c'.name
           , columnType @db c'.type'
           , if c'.primary then "PRIMARY KEY" else ""
           ]
-    , "("
     , ");"
     ]
 

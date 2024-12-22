@@ -17,7 +17,8 @@ execute = fmap extract . (askConn >>=) . flip (Db.execute @_ @Identity) . pure
 executeTx :: forall m c.
   (MonadDb m Identity c, MonadDbWithConn m c) =>
   Statements -> m (Either (Error m Identity) ())
-executeTx = tx . Database.Generic.Operations.execute
+executeTx = fmap extract . withConn .
+  flip (Db.execute @_ @Identity) . pure . Statement.transaction
 
 -- | Execute each 'Statements' atomically, each as a transaction.
 executeTxs :: forall m t c.
@@ -25,7 +26,7 @@ executeTxs :: forall m t c.
   t Statements -> m (t (Either (Error m t) ()))
 executeTxs = (newConn >>=) . flip Db.execute . fmap Statement.transaction
 
--- | Run the provided database actions between calls to 'begin' and 'commit'.
+-- | Run the provided actions, finally followed by a "COMMIT TRANSACTION".
 tx :: forall m c a.
   (MonadDb m Identity c, MonadDbWithConn m c) =>
   Tx m c (Either (Error m Identity) a) -> m (Either (Error m Identity) a)

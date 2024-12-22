@@ -59,7 +59,6 @@ executable database-generic-example
                       HDBC-postgresql,
                       mtl,
                       postgres-options,
-                      resource-pool,
     hs-source-dirs:   example
     default-language: GHC2021
 

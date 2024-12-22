@@ -1,61 +1,36 @@
 module Database.Generic.Operations where
 
-import Database.Generic.Class (Error, MonadDb, MonadDbActiveConn(..), MonadDbConn, tx, Tx)
-import Database.Generic.Class qualified as MonadDb
-import Database.Generic.Entity (Entity)
+import Database.Generic.Class (MonadDb(..), MonadDbHasConn(..), MonadDbNewConn(..), MonadDbWithConn(..))
+import Database.Generic.Class qualified as Db
 import Database.Generic.Prelude
+import Database.Generic.Statement (Statements)
 import Database.Generic.Statement qualified as Statement
+import Database.Generic.Transaction (Tx, runTx)
 
--- * Create table
+-- | Execute 'Statements' within a transaction.
+execute :: forall m c.
+  (MonadDb m Identity c, MonadDbHasConn m c) =>
+  Statements -> m (Either (Error m Identity) ())
+execute = fmap extract . (askConn >>=) . flip (Db.execute @_ @Identity) . pure
 
-createTable' :: forall a f m c.
-  (Entity f a, Functor m, Monad m, MonadDb m Identity c, MonadDbActiveConn m c) =>
-  Bool -> m (Either Error ())
-createTable' = fmap (fmap extract) . createTableT' @a @_ @_ @Identity @c . pure
+-- | Execute 'Statements' atomically, as a transaction.
+executeTx :: forall m c.
+  (MonadDb m Identity c, MonadDbWithConn m c) =>
+  Statements -> m (Either (Error m Identity) ())
+executeTx = tx . Database.Generic.Operations.execute
 
-createTableT :: forall a f m t c.
-  (Entity f a, Functor t, Monad m, MonadDb m t c, MonadDbConn m c) =>
-  t Bool -> m (Either Error (t ()))
-createTableT = tx @_ @t . createTableT' @a @_ @(Tx _ c) @_ @c
+-- | Execute each 'Statements' atomically, each as a transaction.
+executeTxs :: forall m t c.
+  (MonadDb m t c, MonadDbNewConn m c) =>
+  t Statements -> m (t (Either (Error m t) ()))
+executeTxs = (newConn >>=) . flip Db.execute . fmap Statement.transaction
 
-createTableT' :: forall a f m t c.
-  (Entity f a, Functor t, Monad m, MonadDb m t c, MonadDbActiveConn m c) =>
-  t Bool -> m (Either Error (t ()))
-createTableT' = (activeConn @_ @c >>=)
-  . flip (MonadDb.createTable @_ @_ @c) . fmap (Statement.createTable @a)
-
--- -- * Delete
-
--- delete :: forall a f b m c.
---   (Entity f a, Functor m, HasField f a b, MonadDb m Identity c) =>
---   b -> m (Either (Error m Identity c) ())
--- delete = fmap (fmap extract) . deleteT @a @_ @_ @_ @Identity . pure
-
--- deleteT :: forall a f b m t c.
---   (Entity f a, HasField f a b, MonadDb m t c) =>
---   t b -> m (Either (Error m t c) (t ()))
--- deleteT = MonadDb.delete @_ @_ @a
-
--- -- * Select
-
--- select :: forall a f b m c.
---   (Entity f a, Functor m, HasField f a b, MonadDb m Identity c) =>
---   b -> m (Either (Error m Identity c) (Maybe a))
--- select = fmap (fmap $ fmap extract) . selectT @_ @_ @_ @_ @Identity . pure
-
--- selectT :: forall a f b m t c.
---   (Entity f a, HasField f a b, MonadDb m t c) =>
---   t b -> m (Either (Error m t c) (Maybe (t a)))
--- selectT = MonadDb.select
-
--- -- * Upsert
-
--- upsert :: forall a f m c.
---   (Entity f a, Functor m, MonadDb m Identity c) =>
---   a -> m (Either (Error m Identity c) ())
--- upsert = fmap (fmap extract) . upsertT @_ @_ @_ @Identity . pure
-
--- upsertT :: forall a f m t c.
---   (Entity f a, MonadDb m t c) =>
---   t a -> m (Either (Error m t c) (t ()))
--- upsertT = MonadDb.upsert
+-- | Run the provided database actions between calls to 'begin' and 'commit'.
+tx :: forall m c a.
+  (MonadDb m Identity c, MonadDbWithConn m c) =>
+  Tx m c (Either (Error m Identity) a) -> m (Either (Error m Identity) a)
+tx m = withConn \c -> runTx c $ m >>= \case
+  Left  e1 -> pure $ Left e1
+  Right a  -> Database.Generic.Operations.execute Statement.commitTx >>= \case
+    Left  e2 -> pure $ Left e2
+    Right () -> pure $ Right a

@@ -11,9 +11,11 @@ data PostgreSQL
 instance Database PostgreSQL where
   columnType SqlLongVarCharT = "VARCHAR"
   columnType SqlBigIntT      = "BIGINT"
+  columnType _               = "undefined"
 
 data SQLite
 
 instance Database SQLite where
   columnType SqlLongVarCharT = "VARCHAR"
   columnType SqlBigIntT      = "BIGINT"
+  columnType _               = "undefined"

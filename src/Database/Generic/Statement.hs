@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -Wno-loopy-superclass-solve #-}
 module Database.Generic.Statement where
 
 import Database.Generic.Database (Database(..))
@@ -7,30 +6,44 @@ import Database.Generic.Entity qualified as Entity
 import Database.Generic.Entity.SqlTypes (SqlTypeId)
 import Database.Generic.Prelude
 
-newtype TableName = TableName String
-
-instance Show TableName where
-  show (TableName s) = s
-
-tableName :: forall a f. Entity f a => TableName
-tableName = TableName $ Entity.tableName @_ @a
+class Database db => Serialize a db where
+  serialize :: a -> String
 
 -- * Statement
 
 data Statement
   = StatementCreateTable CreateTable
+  | BeginTx
+  | CommitTx
 
-class Database db => SerializeStatement a db where
-  serializeStatement :: a -> String
+instance (Database db, Serialize CreateTable db) => Serialize Statement db where
+  serialize (StatementCreateTable s) = serialize @_ @db s
+  serialize BeginTx                  = "BEGIN TRANSACTION;"
+  serialize CommitTx                 = "COMMIT TRANSACTION;"
 
-instance SerializeStatement CreateTable db => (SerializeStatement Statement db) where
-  serializeStatement (StatementCreateTable c) = serializeStatement @_ @db c
+-- * Statements
+
+newtype Statements = Statements [Statement]
+
+instance (Database db, Serialize Statement db) => Serialize Statements db where
+  serialize (Statements s) = intercalate "\n" $ serialize @_ @db <$> s
+
+-- * Transaction
+
+beginTx :: Statements
+beginTx = Statements [BeginTx]
+
+commitTx :: Statements
+commitTx = Statements [CommitTx]
+
+transaction :: Statements -> Statements
+transaction (Statements s) = Statements $ BeginTx : s <> [CommitTx]
 
 -- * Create Table
 
 data CreateTable = CreateTable
   { ifNotExists :: Bool
-  , name        :: TableName
+  , name        :: String
   , columns     :: [CreateTableColumn]
   }
 
@@ -40,8 +53,8 @@ data CreateTableColumn = CreateTableColumn
   , type'   :: !SqlTypeId
   }
 
-instance Database db => SerializeStatement CreateTable db where
-  serializeStatement c = unwords
+instance Database db => Serialize CreateTable db where
+  serialize c = unwords
     [ "CREATE TABLE"
     , if c.ifNotExists then "IF NOT EXISTS" else ""
     , show c.name
@@ -54,11 +67,14 @@ instance Database db => SerializeStatement CreateTable db where
     , ");"
     ]
 
-createTable :: forall a f. Entity f a => Bool -> CreateTable
+createTable :: forall a f. Entity f a => Bool -> Statements
 createTable ifNotExists = do
   let primaryName = Entity.primaryKeyFieldName @_ @a
   let columns =
         zip (Entity.sqlFieldNames @_ @a) (Entity.sqlFieldTypes @_ @a) <&>
           \(name, type') -> CreateTableColumn
             { primary = name == primaryName, .. }
-  CreateTable { name = tableName @a, columns, .. }
+  Statements
+    [ StatementCreateTable $ CreateTable
+        { name = Entity.tableName @_ @a, columns, .. }
+    ]

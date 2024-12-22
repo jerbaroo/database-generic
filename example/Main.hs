@@ -6,6 +6,7 @@
 
 module Main where
 
+import Control.Exception (Exception)
 import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.ByteString.Char8 qualified as BS
@@ -15,9 +16,9 @@ import Data.Pool qualified as Pool
 import Database.Generic.Database (PostgreSQL)
 import Database.Generic.Entity (Entity(..))
 import Database.Generic.Entity.ToSql (toSqlValue)
-import Database.Generic.Class (MonadDb(..))
+import Database.Generic.Class (MonadDb(..), MonadDbWithConn(..))
 import Database.Generic.Operations qualified as Db
-import Database.Generic.Statement (serializeStatement)
+import Database.Generic.Statement qualified as Statement
 import Database.HDBC qualified as HDBC
 import Database.HDBC.PostgreSQL qualified as PSQL
 import Database.PostgreSQL.Simple.Options as PSQL
@@ -40,17 +41,22 @@ mkEnv host port dbname user password = do
   Pool.newPool $ Pool.defaultPoolConfig
     (PSQL.connectPostgreSQL connStr) HDBC.disconnect 10 10
 
-type Db = PostgreSQL
-
 newtype AppM a = AppM (ReaderT Env IO a)
   deriving newtype (Applicative, Functor, Monad, MonadIO, MonadReader Env)
 
-instance MonadDb AppM Identity where
-  type Error AppM Identity = String
-  createTable (Identity statement) =
-    ask >>= liftIO . flip Pool.withResource \conn -> fmap (Right . Identity) do
-      HDBC.runRaw conn (serializeStatement @_ @Db statement)
-      HDBC.commit conn
+type Db = PostgreSQL
+
+newtype DbError = DbError String deriving Show
+
+instance Exception DbError
+
+instance MonadDb AppM Identity PSQL.Connection where
+  type Error AppM Identity = DbError
+  execute conn (Identity statement) = fmap (Identity . Right) do
+    liftIO $ HDBC.runRaw conn (Statement.serialize @_ @Db statement)
+
+instance MonadDbWithConn AppM PSQL.Connection where
+  withConn f = ask >>= \env -> liftIO $ Pool.withResource env $ runAppM env . f
 
 runAppM :: Env -> AppM a -> IO a
 runAppM e (AppM m) = runReaderT m e
@@ -59,9 +65,12 @@ main :: IO ()
 main = do
   let p = Person "John" 21
   env <- mkEnv "127.0.0.1" 5432 "postgres" "demo" "demo"
-  runAppM env do
-    _ <- Db.createTable @Person True
+  _ <- runAppM env $ Db.tx do
+    x <- Db.execute $ Statement.createTable @Person True
+    x <- Db.execute $ Statement.createTable @Person True
+    liftIO $ print x
     liftIO $ print "ran AppM"
+    pure $ Right 6
   print p
   print $ primaryKeyFieldName @_ @Person
   print $ primaryKey p

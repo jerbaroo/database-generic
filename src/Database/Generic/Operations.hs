@@ -1,6 +1,6 @@
 module Database.Generic.Operations where
 
-import Database.Generic.Class (Error, MonadDb, MonadDbActiveConn(..))
+import Database.Generic.Class (Error, MonadDb, MonadDbActiveConn(..), MonadDbConn, tx, Tx)
 import Database.Generic.Class qualified as MonadDb
 import Database.Generic.Entity (Entity)
 import Database.Generic.Prelude
@@ -8,16 +8,21 @@ import Database.Generic.Statement qualified as Statement
 
 -- * Create table
 
-createTable :: forall a f m c.
+createTable' :: forall a f m c.
   (Entity f a, Functor m, Monad m, MonadDb m Identity c, MonadDbActiveConn m c) =>
-  Bool -> m (Either (Error m Identity c) ())
-createTable = fmap (fmap extract) . createTableT @a @_ @_ @Identity @c . pure
+  Bool -> m (Either Error ())
+createTable' = fmap (fmap extract) . createTableT' @a @_ @_ @Identity @c . pure
 
 createTableT :: forall a f m t c.
+  (Entity f a, Functor t, Monad m, MonadDb m t c, MonadDbConn m c) =>
+  t Bool -> m (Either Error (t ()))
+createTableT = tx @_ @t . createTableT' @a @_ @(Tx _ c) @_ @c
+
+createTableT' :: forall a f m t c.
   (Entity f a, Functor t, Monad m, MonadDb m t c, MonadDbActiveConn m c) =>
-  t Bool -> m (Either (Error m t c) (t ()))
-createTableT ts = activeConn @_ @c >>=
-  (flip (MonadDb.createTable @_ @_ @c) $ fmap (Statement.createTable @a) ts)
+  t Bool -> m (Either Error (t ()))
+createTableT' = (activeConn @_ @c >>=)
+  . flip (MonadDb.createTable @_ @_ @c) . fmap (Statement.createTable @a)
 
 -- -- * Delete
 

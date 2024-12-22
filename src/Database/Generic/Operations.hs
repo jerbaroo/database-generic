@@ -13,18 +13,18 @@ execute :: forall m c.
   Statements -> m (Either (Error m Identity) ())
 execute = fmap extract . (askConn >>=) . flip (Db.execute @_ @Identity) . pure
 
--- | Execute 'Statements' atomically, as a transaction.
+-- | Execute ('Statements' appended with "COMMIT TRANSACTION") atomically.
 executeTx :: forall m c.
   (MonadDb m Identity c, MonadDbWithConn m c) =>
   Statements -> m (Either (Error m Identity) ())
 executeTx = fmap extract . withConn .
-  flip (Db.execute @_ @Identity) . pure . Statement.transaction
+  flip (Db.execute @_ @Identity) . pure . (<> Statement.commitTx)
 
--- | Execute each 'Statements' atomically, each as a transaction.
+-- | Execute each ('Statements' appended with "COMMIT TRANSACTION") atomically.
 executeTxs :: forall m t c.
   (MonadDb m t c, MonadDbNewConn m c) =>
   t Statements -> m (t (Either (Error m t) ()))
-executeTxs = (newConn >>=) . flip Db.execute . fmap Statement.transaction
+executeTxs = (newConn >>=) . flip Db.execute . fmap (<> Statement.commitTx)
 
 -- | Run the provided actions, finally followed by a "COMMIT TRANSACTION".
 tx :: forall m c a.

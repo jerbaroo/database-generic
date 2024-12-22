@@ -25,6 +25,9 @@ instance (Database db, Serialize CreateTable db) => Serialize Statement db where
 
 newtype Statements = Statements [Statement]
 
+instance Semigroup Statements where
+  (Statements a) <> (Statements b) = Statements $ a <> b
+
 instance (Database db, Serialize Statement db) => Serialize Statements db where
   serialize (Statements s) = intercalate "\n" $ serialize @_ @db <$> s
 
@@ -35,9 +38,6 @@ beginTx = Statements [BeginTx]
 
 commitTx :: Statements
 commitTx = Statements [CommitTx]
-
-transaction :: Statements -> Statements
-transaction (Statements s) = Statements $ BeginTx : s <> [CommitTx]
 
 -- * Create Table
 

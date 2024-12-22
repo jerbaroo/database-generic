@@ -61,12 +61,14 @@ main :: IO ()
 main = do
   let p    = Person "John" 21
   let env' = env "127.0.0.1" 5432 "postgres" "demo" "demo"
+  _ <- runAppM env' $ Db.executeTx $ Statement.createTable @Person True
   _ <- runAppM env' $ Db.tx do
     x <- Db.execute $ Statement.createTable @Person True
     x <- Db.execute $ Statement.createTable @Person True
     liftIO $ print x
     liftIO $ print "ran AppM"
     pure $ Right 6
+  _ <- runAppM env' $ Db.tx $ Db.execute $ Statement.createTable @Person True
   print p
   print $ primaryKeyFieldName @_ @Person
   print $ primaryKey p

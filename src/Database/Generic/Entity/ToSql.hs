@@ -15,10 +15,10 @@ showType' :: forall a. Typeable a => String
 showType' = replace "\"" "" $ showType @a
 
 data ToSqlError
-  = MoreThanOneConstructor String
-  | NoConstructors         String
-  | NoFields               String
-  | NoSelectors            String
+  = MoreThanOneConstructor !String
+  | NoConstructors         !String
+  | NoFields               !String
+  | NoSelectors            !String
   deriving Show
 
 instance Exception ToSqlError

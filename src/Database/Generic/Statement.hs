@@ -1,25 +1,25 @@
 module Database.Generic.Statement where
 
-import Database.Generic.Database (Database(..))
 import Database.Generic.Entity (Entity)
 import Database.Generic.Entity qualified as Entity
-import Database.Generic.Entity.SqlTypes (SqlTypeId)
+import Database.Generic.Entity.SqlTypes (SqlTypeId, SqlValue(..))
+import Database.Generic.Entity.ToSql (ToSqlValue(toSqlValue))
 import Database.Generic.Prelude
-
-class Database db => Serialize a db where
-  serialize :: a -> String
+import Database.Generic.Serialize (Serialize(..), TableName, tableName)
 
 -- * Statement
 
 data Statement
-  = StatementCreateTable CreateTable
-  | BeginTx
+  = BeginTx
   | CommitTx
+  | StatementDelete      !Delete
+  | StatementCreateTable !CreateTable
 
-instance (Database db, Serialize CreateTable db) => Serialize Statement db where
-  serialize (StatementCreateTable s) = serialize @_ @db s
+instance (Serialize CreateTable db, Serialize Delete db) => Serialize Statement db where
   serialize BeginTx                  = "BEGIN TRANSACTION;"
   serialize CommitTx                 = "COMMIT TRANSACTION;"
+  serialize (StatementDelete      s) = serialize @_ @db s
+  serialize (StatementCreateTable s) = serialize @_ @db s
 
 -- * Statements
 
@@ -28,7 +28,7 @@ newtype Statements = Statements [Statement]
 instance Semigroup Statements where
   (Statements a) <> (Statements b) = Statements $ a <> b
 
-instance (Database db, Serialize Statement db) => Serialize Statements db where
+instance Serialize Statement db => Serialize Statements db where
   serialize (Statements s) = intercalate "\n" $ serialize @_ @db <$> s
 
 -- * Transaction
@@ -42,9 +42,9 @@ commitTx = Statements [CommitTx]
 -- * Create Table
 
 data CreateTable = CreateTable
-  { ifNotExists :: Bool
-  , name        :: String
-  , columns     :: [CreateTableColumn]
+  { ifNotExists :: !Bool
+  , name        :: !TableName
+  , columns     :: ![CreateTableColumn]
   }
 
 data CreateTableColumn = CreateTableColumn
@@ -53,15 +53,17 @@ data CreateTableColumn = CreateTableColumn
   , type'   :: !SqlTypeId
   }
 
-instance Database db => Serialize CreateTable db where
+type S db = (Serialize SqlTypeId db, Serialize TableName db)
+
+instance S db => Serialize CreateTable db where
   serialize c = unwords
     [ "CREATE TABLE"
     , if c.ifNotExists then "IF NOT EXISTS" else ""
-    , show c.name
+    , serialize @_ @db c.name
     , "("
     , intercalate ", " $ c.columns <&> \c' -> unwords
           [ c'.name
-          , columnType @db c'.type'
+          , serialize @_ @db c'.type'
           , if c'.primary then "PRIMARY KEY" else ""
           ]
     , ");"
@@ -74,7 +76,26 @@ createTable ifNotExists = do
         zip (Entity.sqlFieldNames @_ @a) (Entity.sqlFieldTypes @_ @a) <&>
           \(name, type') -> CreateTableColumn
             { primary = name == primaryName, .. }
-  Statements
-    [ StatementCreateTable $ CreateTable
-        { name = Entity.tableName @_ @a, columns, .. }
-    ]
+  Statements [ StatementCreateTable $ CreateTable
+    { name = tableName @a, columns, .. } ]
+
+-- * Delete By ID
+
+data Delete = Delete
+  { table :: !String
+  , id    :: !SqlValue
+  , idCol :: !String
+  }
+
+instance S db => Serialize Delete db where
+  serialize d = unwords
+    [ "DELETE FROM", d.table, "WHERE", d.idCol, "=", serialize @_ @db d.id, ";"]
+
+deleteById :: forall a f b.
+  (ToSqlValue b, Entity f a, HasField f a b) => b -> Statements
+deleteById b =
+  Statements [ StatementDelete $ Delete
+    { table = Entity.tableName @_ @a
+    , id    = toSqlValue b
+    , idCol = Entity.primaryKeyFieldName @_ @a
+    } ]

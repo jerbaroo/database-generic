@@ -25,6 +25,7 @@ library
                       Database.Generic.Entity.ToSql,
                       Database.Generic.Operations,
                       Database.Generic.Prelude,
+                      Database.Generic.Serialize,
                       Database.Generic.Statement,
                       Database.Generic.Transaction,
     build-depends:    base,

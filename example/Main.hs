@@ -16,6 +16,7 @@ import Database.Generic.Entity (Entity(..))
 import Database.Generic.Entity.ToSql (toSqlValue)
 import Database.Generic.Class (MonadDb(..), MonadDbNewConn(..))
 import Database.Generic.Operations qualified as Db
+import Database.Generic.Serialize (serialize)
 import Database.Generic.Statement qualified as Statement
 import Database.HDBC qualified as HDBC
 import Database.HDBC.PostgreSQL qualified as PSQL
@@ -49,7 +50,7 @@ instance Exception DbError
 instance MonadDb AppM Identity PSQL.Connection where
   type Error AppM Identity = DbError
   execute conn (Identity s) = fmap (Identity . Right) do
-    liftIO $ HDBC.runRaw conn $ Statement.serialize @_ @Db s
+    liftIO $ HDBC.runRaw conn $ serialize @_ @Db s
 
 instance MonadDbNewConn AppM PSQL.Connection where
   newConn = liftIO . PSQL.connectPostgreSQL =<< ask
@@ -69,6 +70,8 @@ main = do
     liftIO $ print "ran AppM"
     pure $ Right 6
   _ <- runAppM env' $ Db.tx $ Db.execute $ Statement.createTable @Person True
+  f <- runAppM env' $ Db.tx $ Db.execute $ Statement.deleteById @Person "John"
+  print f
   print p
   print $ primaryKeyFieldName @_ @Person
   print $ primaryKey p

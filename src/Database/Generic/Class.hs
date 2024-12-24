@@ -6,7 +6,10 @@ import Database.Generic.Statement (Statements)
 -- | Monads that can communicate with a database over a given connection.
 class (Exception (Error m t), Functor t, Monad m) => MonadDb m t c | m -> c where
   type Error m t :: Type
-  execute :: c -> t Statements -> m (t (Either (Error m t) ()))
+  type Error m t = SomeException -- Placeholder for convenience.
+
+  -- | Information about the type of statement is thrown away at this point.
+  execute :: c -> t (Statements r) -> m (t (Either (Error m t) ()))
 
 -- | Monads that can provide a dedicated NEW connection.
 class MonadDbNewConn m c where

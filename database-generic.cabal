@@ -27,6 +27,7 @@ library
                       Database.Generic.Prelude,
                       Database.Generic.Serialize,
                       Database.Generic.Statement,
+                      Database.Generic.Table,
                       Database.Generic.Transaction,
     build-depends:    base,
                       comonad,

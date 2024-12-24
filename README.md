@@ -1,22 +1,21 @@
 # database-generic
 
-Database access (local or over network) without boilerplate, via `Generic`.
+Database access (local or over network) with minimal boilerplate, via `Generic`.
 
 Summary of functionality:
  - Derive `Entity` instances to enable conversion to/from SQL.
- - Interact with `Entity` in any HDBC-supported database via `MonadDb`.
+ - Persist `Entity` in any supported database via `MonadDb`.
  - Get a `servant` server for free, serving directly from your database!
  - `MonadDb` offers both singular value and streaming variants (via `Conduit`)!
+ - Use `MonadDb` in your web app, including streaming directly from database! 
  
 ## Quick Start
 
-Full working code example if you know what you're doing. To get this code
-working locally ASAP clone the `example` subdirectory of this repo, and then
-either use nix-shell and cabal, or stack.
-
-``` hs
-TODO
-```
+Full working code example [HERE]. To get it running locally ASAP:
+1. clone the `demo` subdirectory of this repo
+2. Start a PostgreSQL instance with username and password `"demo"`, e.g.:
+  `docker run -it --rm --env POSTGRES_PASSWORD=demo --env POSTGRES_USER=demo --publish 5432:5432 postgres`
+3. use `cabal` via provided `nix-shell`, or use `stack` to run the executable
 
 ## Introduction
 

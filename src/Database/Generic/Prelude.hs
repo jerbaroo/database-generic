@@ -17,7 +17,7 @@ import Data.Semigroup as X (Semigroup((<>)))
 import Data.Typeable as X (Typeable, typeRep)
 import Debug.Trace as X (trace)
 import GHC.Records as X (HasField(getField))
-import Prelude as X (Applicative(pure), Bool, Functor(fmap), Int, Monad((>>=)), Monoid, Show(show), String, (.), ($), (==), (>>=), (<$>), const, flip, error, unwords, zip)
+import Prelude as X (Applicative(pure), Bool, Functor(fmap), Int, Monad((>>=)), Monoid, Show(show), String, (.), ($), (==), (/=), (>>=), (<$>), const, flip, error, undefined, unwords, zip)
 
 debug :: Show a => a -> a
 debug a = trace (show a) a

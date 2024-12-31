@@ -11,10 +11,79 @@ import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Table (TableName)
 
--- TODO OneMaybe a
--- TODO OneMaybeAffected
--- | Return type of a statement.
-data Returning a = One a | Many a | OneAffected a | ManyAffected a | Nada
+-- | Types of values returned from SQL statements.
+-- TODO One a
+-- TODO MaybeOneAffected
+data Returning a where
+  MaybeOne    :: Type -> Returning a-- | Many !a | OneAffected !a | ManyAffected !a | Nada
+  OneAffected :: Type -> Returning a
+  Nada        :: Returning a
+
+-- type ReturningF :: forall a b. Returning a -> b
+-- type family ReturningF r where
+--   ReturningF (MaybeOne    a) = Maybe a
+--   ReturningF (OneAffected _) = ()
+
+class ParseOutput r where
+  type RetT r
+  parse :: Output -> Either String (RetT r)
+
+instance ParseOutput (MaybeOne a) where
+  type RetT (MaybeOne a) = Maybe a
+  parse (OutputRows [])    = Right Nothing
+  parse (OutputRows [row]) = Right $ Just undefined
+  parse output             = Left  $ "Expected 0 or 1 rows but got " <> show output
+
+executeAndParse'
+  :: forall m a r. (Functor m, ParseOutput r)
+  => ExecuteStatement m a r
+  -> Statement (r :: Returning a)
+  -> m (Either String (RetT r))
+executeAndParse' f s = f s <&> parse @r
+
+-- * Output.
+
+-- | Output of SQL statement before parsing into return value.
+data Output
+  = OutputAffected !Int
+  | OutputRows ![[SqlValue]]
+  | OutputNada
+  deriving Show
+
+-- | Types of output values from SQL statements.
+data OutputType = OutputTypeAffected | OutputTypeRows | OutputTypeNada
+
+class HasOutputType r where
+  outputType :: OutputType
+
+instance HasOutputType (MaybeOne a) where
+  outputType = OutputTypeRows
+
+class ExpectedAffected r where
+  expectedAffected :: Int
+
+-- | Execute a statement and gather the output.
+type ExecuteStatement m a r = Statement (r :: Returning a) -> m Output
+
+-- class StatementReturning a where
+--   type Ret a
+--   parse :: forall r.
+
+-- executeAndParse
+--   :: forall m a r. (ExpectedAffected r, HasOutputType r, Monad m)
+--   => ExecuteStatement m a r
+--   -> Statement (r :: Returning a)
+--   -> m (Either String (ReturningF r))
+-- executeAndParse f s = f s >>= \output -> case (outputType @r, output) of
+--   (OutputTypeAffected, OutputAffected affected) -> do
+--     if   expectedAffected @r /= affected
+--     then pure $ Left $ "Expected " <> show (expectedAffected @r) <> " affected rows but got " <> show affected
+--     else pure $ Left "Right ()"
+--   (OutputTypeRows    , OutputRows     rows    ) -> pure $ Left "ok"
+--   (OutputTypeAffected, _                      ) -> pure $ Left $ "Expected OutputAffected but got " <> show output
+--   (OutputTypeRows    , _                      ) -> pure $ Left $ "Expected OutputRows but got " <> show output
+--   (OutputTypeNada    , OutputNada             ) -> pure $ Left "ok"
+--   (OutputTypeNada    , _                      ) -> pure $ Left $ "Expected OutputNada but got " <> show output
 
 -- * Single Statement
 
@@ -32,8 +101,8 @@ instance
   , Serialize (Delete r) db
   , Serialize (Select r) db
   ) => Serialize (Statement r) db where
-  serialize StatementBeginTx                  = "BEGIN TRANSACTION;"
-  serialize StatementCommitTx                 = "COMMIT TRANSACTION;"
+  serialize StatementBeginTx                  = "BEGIN TRANSACTION;" -- TODO by db
+  serialize StatementCommitTx                 = "COMMIT TRANSACTION;" -- TODO by db
   serialize (StatementCreateTable s) = serialize @_ @db s
   serialize (StatementDelete      s) = serialize @_ @db s
   serialize (StatementInsert      s) = serialize @_ @db s
@@ -110,7 +179,7 @@ deleteById :: forall a f b.
   (Entity f a, HasField f a b, ToSqlValue b) => b -> Delete (OneAffected a)
 deleteById b = Delete
   { from   = Entity.tableName @_ @a
-  , where' = Wheres [Equals (Entity.primaryKeyFieldName @_ @a, toSqlValue b)]
+  , where' = Wheres [idEquals @a b]
   }
 
 -- * Insert
@@ -150,15 +219,19 @@ instance Serialize (Select r) db where
     ["SELECT FROM", serialize s.from, "WHERE", serialize s.where', ";"]
 
 selectById :: forall a f b.
-  (Entity f a, HasField f a b, ToSqlValue b) => b -> Select (One a)
+  (Entity f a, HasField f a b, ToSqlValue b) => b -> Select (MaybeOne a)
 selectById b = Select
   { from   = Entity.tableName @_ @a
-  , where' = Wheres [Equals (Entity.primaryKeyFieldName @_ @a, toSqlValue b)]
+  , where' = Wheres [idEquals @a b]
   }
 
 -- * Where
 
-data Where = Equals (String, SqlValue) -- TODO Column type
+newtype Where = Equals (String, SqlValue)
+
+idEquals :: forall a f b.
+  (Entity f a, HasField f a b, ToSqlValue b) => b -> Where
+idEquals b = Equals (Entity.primaryKeyFieldName @_ @a, toSqlValue b)
 
 instance Serialize Where db where
   serialize (Equals (column, value)) =

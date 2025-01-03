@@ -14,6 +14,7 @@ instance Monad m => MonadDbHasConn (Tx m c) c where
 instance MonadDb m t c => MonadDb (Tx m c) t c where
   type Error (Tx m c) t = Error m t
   execute c s = Tx $ ReaderT $ const $ execute @m @t c s
+  outputError = outputError @m @t
 
 runTx :: c -> Tx m c a -> m a
 runTx c (Tx m) = runReaderT m c

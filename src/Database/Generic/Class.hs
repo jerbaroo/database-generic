@@ -2,6 +2,7 @@ module Database.Generic.Class where
 
 import Database.Generic.Prelude
 import Database.Generic.Statement (Statements)
+import Database.Generic.Output (HasOutputType, Output, OutputError)
 
 -- | Monads that can communicate with a database over a given connection.
 class (Exception (Error m t), Functor t, Monad m) => MonadDb m t c | m -> c where
@@ -9,7 +10,12 @@ class (Exception (Error m t), Functor t, Monad m) => MonadDb m t c | m -> c wher
   type Error m t = SomeException -- Default for convenience.
 
   -- | Information about the type of statement is thrown away at this point.
-  execute :: c -> t (Statements r) -> m (t (Either (Error m t) ()))
+  execute :: HasOutputType r => c -> t (Statements r) -> m (t (Either (Error m t) Output))
+
+  -- | Lift an 'OutputError' into the error type for this instance.
+  outputError :: OutputError -> Error m t
+  default outputError :: (SomeException ~ Error m t) => OutputError -> Error m t
+  outputError = toException
 
 -- | Monads that can provide a dedicated NEW connection.
 class MonadDbNewConn m c where

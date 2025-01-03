@@ -1,8 +1,9 @@
-{-# LANGUAGE BlockArguments     #-}
-{-# LANGUAGE DataKinds          #-}
-{-# LANGUAGE DeriveAnyClass     #-}
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE TypeFamilies       #-}
+{-# LANGUAGE BlockArguments      #-}
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE DeriveAnyClass      #-}
+{-# LANGUAGE DerivingStrategies  #-}
+{-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE TypeFamilies        #-}
 
 module Main where
 
@@ -15,9 +16,10 @@ import Database.Generic.Entity (Entity(..))
 import Database.Generic.Entity.ToSql (toSqlValue)
 import Database.Generic.Class (MonadDb(..), MonadDbNewConn(..))
 import Database.Generic.Operations qualified as Db
-import Database.Generic.Prelude
+import Database.Generic.Prelude (debug)
 import Database.Generic.Serialize (serialize)
-import Database.Generic.Statement qualified as Statement
+import Database.Generic.Statement qualified as Db
+import Database.Generic.Output (Output(..), OutputType(..))
 import Database.HDBC qualified as HDBC
 import Database.HDBC.PostgreSQL qualified as PSQL
 import Database.PostgreSQL.Simple.Options as PSQL
@@ -42,8 +44,12 @@ newtype AppM a = AppM (ReaderT Env IO a)
   deriving newtype (Applicative, Functor, Monad, MonadIO, MonadReader Env)
 
 instance MonadDb AppM Identity PSQL.Connection where
-  execute conn (Identity s) = fmap (Identity . Right) do -- Ignoring errors.
-    liftIO $ HDBC.runRaw conn $ debug $ serialize @_ @PostgreSQL s
+  execute conn (Identity s) = fmap (Identity . Right) $ liftIO do -- Ignoring errors.
+    let x = debug $ serialize @_ @PostgreSQL s
+    case Db.outputType s of
+      OutputTypeAffected -> OutputAffected <$> HDBC.run conn x []
+      OutputTypeNada     -> OutputNada     <$  HDBC.runRaw conn x
+      OutputTypeRows     -> OutputRows     <$> HDBC.quickQuery' conn x []
 
 instance MonadDbNewConn AppM PSQL.Connection where
   newConn = liftIO . PSQL.connectPostgreSQL =<< ask
@@ -53,27 +59,29 @@ runAppM e (AppM m) = runReaderT m e
 
 main :: IO ()
 main = do
-  let env' = env "127.0.0.1" 5432 "postgres" "demo" "demo"
+  let e = env "127.0.0.1" 5432 "postgres" "demo" "demo"
   pure ()
-  -- _ <- runAppM env' $ Db.executeTx $ Statement.createTable @Person True
-  -- _ <- runAppM env' $ Db.tx do
-  --   x <- Db.execute $ Statement.createTable @Person True
-  --   x <- Db.execute $ Statement.createTable @Person True
-  --   liftIO $ print x
-  --   liftIO $ print "ran AppM"
-  --   pure $ Right 6
-  -- _ <- runAppM env' $ Db.tx $ Db.execute $ Statement.createTable @Person True
-  -- f <- runAppM env' $ Db.tx $ Db.execute $ Statement.deleteById @Person "John"
-  -- let john = Person "John" 21
-  -- f <- runAppM env' $ Db.tx $ Db.execute $ Statement.upsert john
-  -- print f
-  -- print john
-  -- print $ primaryKeyFieldName @_ @Person
-  -- print $ primaryKey john
-  -- print $ toSqlValue $ primaryKey john
-  -- print $ sqlFieldNames @_ @Person
-  -- print $ sqlFieldTypes @_ @Person
-  -- let asSql = toSqlValues john
-  -- print asSql
-  -- let john' = fromSqlValues asSql
-  -- print @Person john'
+  _ <- runAppM e $ Db.executeTx $ Db.createTable @Person True
+  _ <- runAppM e $ Db.tx do
+    x <- Db.execute $ Db.createTable @Person True
+    x <- Db.execute $ Db.createTable @Person True
+    liftIO $ print x
+    liftIO $ print "ran AppM"
+    pure $ Right 6
+  _ <- runAppM e $ Db.tx $ Db.execute $ Db.createTable @Person True
+  f <- runAppM e $ Db.tx $ Db.execute $ Db.deleteById @Person "John"
+  let john = Person "John" 21
+  f <- runAppM e $ Db.tx $ Db.execute $ Db.insertOne john
+  print f
+  print john
+  print $ primaryKeyFieldName @_ @Person
+  print $ primaryKey john
+  print $ toSqlValue $ primaryKey john
+  print $ sqlFieldNames @_ @Person
+  print $ sqlFieldTypes @_ @Person
+  let asSql = toSqlValues john
+  print asSql
+  let john' = fromSqlValues asSql
+  print @Person john'
+  g <- runAppM e $ Db.tx $ Db.execute $ Db.selectById @Person john.name
+  print g

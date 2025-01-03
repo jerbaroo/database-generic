@@ -24,6 +24,7 @@ library
                       Database.Generic.Entity.SqlTypes,
                       Database.Generic.Entity.ToSql,
                       Database.Generic.Operations,
+                      Database.Generic.Output,
                       Database.Generic.Prelude,
                       Database.Generic.Serialize,
                       Database.Generic.Statement,

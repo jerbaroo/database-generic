@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds            #-}
+{-# LANGUAGE PolyKinds            #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Database.Generic.Statement where
@@ -200,7 +201,7 @@ selectById = statements . StatementSelect . selectById'
 
 -- * Projection.
 
-class Projection p a b where
+class Projection p a b | p -> a, p -> b where
   fieldTypes :: p -> [String]
 
 instance Projection (Field fa a b) a b where
@@ -209,10 +210,29 @@ instance Projection (Field fa a b) a b where
 instance Projection (Field fa a b, Field fc a c) a (b, c) where
   fieldTypes (fb, fc) = [fieldType fb, fieldType fc]
 
+type ReturningProjected :: forall r a b. r a -> b -> r b
+type family ReturningProjected r b where
+  ReturningProjected (MaybeOne _) b = MaybeOne b
+
+type ReturningType :: forall r a. r a -> a
+type family ReturningType r where
+  ReturningType (MaybeOne a) = a
+
+class Projectible s where
+  project :: forall p b r. (Projection p (ReturningType r) b) =>
+    s r -> p -> s (ReturningProjected r b)
+
+instance Projectible Select where
+  project s p = Select
+    { columns = Columns $ fieldTypes p
+    , from    = s.from
+    , where'  = s.where'
+    }
+
 -- TODO Projectible class so we don't operate on just Selects.
-project :: forall f a p b. (Entity f a, Projection p a b) =>
-  Select (MaybeOne a) -> p -> Select (MaybeOne b)
-project s p = Select
+project' :: forall f a p b. (Entity f a, Projection p a b) =>
+  Select (MaybeOne a) -> p -> Select (ReturningProjected (MaybeOne a) b)
+project' s p = Select
   { columns = Columns $ fieldTypes @_ @a @b p
   , from    = s.from
   , where'  = s.where'

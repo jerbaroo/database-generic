@@ -8,11 +8,11 @@ import Database.Generic.Entity (Entity)
 import Database.Generic.Entity qualified as Entity
 import Database.Generic.Entity.SqlTypes (SqlTypeId, SqlValue(..))
 import Database.Generic.Entity.ToSql (HasSqlFieldNames(..), HasSqlFieldTypes(..), ToSqlValue(..), toSqlValues)
-import Database.Generic.Field (Field, fieldType)
 import Database.Generic.Output (HasOutputType, OutputType, Returning(..))
 import Database.Generic.Output qualified as Output
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
+import Database.Generic.Statement.Projection (Projectible(project), fieldTypes)
 import Database.Generic.Table (TableName)
 
 -- * Single Statement
@@ -179,6 +179,13 @@ data Select (r :: Returning a) = Select
   , where'  :: !Wheres
   }
 
+instance Projectible Select where
+  project s p = Select
+    { columns = Columns $ fieldTypes p
+    , from    = s.from
+    , where'  = s.where'
+    }
+
 instance Serialize SqlValue db => Serialize (Select r) db where
   serialize s = unwords
     [ "SELECT", serialize s.columns
@@ -198,45 +205,6 @@ selectById' b = Select
 selectById :: forall a f b.
   (Entity f a, HasField f a b, ToSqlValue b) => b -> Statements (MaybeOne a)
 selectById = statements . StatementSelect . selectById'
-
--- * Projection.
-
-class Projection p a b | p -> a, p -> b where
-  fieldTypes :: p -> [String]
-
-instance Projection (Field fa a b) a b where
-  fieldTypes fb = [fieldType fb]
-
-instance Projection (Field fa a b, Field fc a c) a (b, c) where
-  fieldTypes (fb, fc) = [fieldType fb, fieldType fc]
-
-type ReturningProjected :: forall r a b. r a -> b -> r b
-type family ReturningProjected r b where
-  ReturningProjected (MaybeOne _) b = MaybeOne b
-
-type ReturningType :: forall r a. r a -> a
-type family ReturningType r where
-  ReturningType (MaybeOne a) = a
-
-class Projectible s where
-  project :: forall p b r. (Projection p (ReturningType r) b) =>
-    s r -> p -> s (ReturningProjected r b)
-
-instance Projectible Select where
-  project s p = Select
-    { columns = Columns $ fieldTypes p
-    , from    = s.from
-    , where'  = s.where'
-    }
-
--- TODO Projectible class so we don't operate on just Selects.
-project' :: forall f a p b. (Entity f a, Projection p a b) =>
-  Select (MaybeOne a) -> p -> Select (ReturningProjected (MaybeOne a) b)
-project' s p = Select
-  { columns = Columns $ fieldTypes @_ @a @b p
-  , from    = s.from
-  , where'  = s.where'
-  }
 
 -- * Where
 

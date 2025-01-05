@@ -22,6 +22,7 @@ import Database.Generic.Operations qualified as Db
 import Database.Generic.Prelude (debug)
 import Database.Generic.Serialize (serialize)
 import Database.Generic.Statement qualified as Db
+import Database.Generic.Statement.Projection (project)
 import Database.Generic.Output (Output(..), OutputType(..))
 import Database.HDBC qualified as HDBC
 import Database.HDBC.PostgreSQL qualified as PSQL
@@ -87,5 +88,5 @@ main = do
   let john' = fromSqlValues asSql
   print @Person john'
   print =<< runAppM e (Db.tx $ Db.execute $ Db.selectById @Person john.name)
-  let x = Db.project (Db.selectById' @Person john.name) (field @"age" @Person)
+  let x = project (Db.selectById' @Person john.name) (field @"age" @Person)
   print =<< runAppM e (Db.tx $ Db.execute $ Db.statements $ Db.StatementSelect $ x)

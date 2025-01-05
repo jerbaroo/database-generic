@@ -14,6 +14,10 @@ data Returning a where
   Nada        ::         Returning a
   OneAffected :: Type -> Returning a
 
+type ReturningType :: forall r a. r a -> a
+type family ReturningType r where
+  ReturningType (MaybeOne a) = a
+
 -- * Output.
 
 -- | Output of SQL statement before parsing into return value.

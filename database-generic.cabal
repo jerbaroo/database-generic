@@ -29,6 +29,7 @@ library
                       Database.Generic.Prelude,
                       Database.Generic.Serialize,
                       Database.Generic.Statement,
+                      Database.Generic.Statement.Projection,
                       Database.Generic.Table,
                       Database.Generic.Transaction,
     build-depends:    base,

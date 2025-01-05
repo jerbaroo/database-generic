@@ -2,7 +2,6 @@
 
 module Database.Generic.Entity.FromSql where
 
-import Data.ByteString.Char8 qualified as BS
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.ToSql (showType)
 import Database.Generic.Prelude
@@ -31,8 +30,13 @@ class FromSqlValues a where
 
 instance FromSqlValues String where
   fromSqlValues [SqlString s] = s
-  fromSqlValues [SqlByteString s] = BS.unpack s
+  fromSqlValues [SqlByteString b] = unsafeFrom $ into @Utf8S b
   fromSqlValues xs = error $ "fromSqlValues @String got: " <> show xs
+
+instance FromSqlValues Int64 where
+  fromSqlValues [SqlInteger i] = unsafeFrom i
+  fromSqlValues [SqlInt64 i] = i
+  fromSqlValues xs = error $ "fromSqlValues @Int64 got: " <> show xs
 
 instance {-# OVERLAPPABLE #-} (G.HasEot a, GFromSqlValues (G.Eot a)) => FromSqlValues a where
   fromSqlValues = G.fromEot . gFromSqlValues

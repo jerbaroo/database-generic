@@ -85,7 +85,7 @@ instance (G.HasEot a, Typeable a) => HasSqlFieldNames a where
 class HasSqlType a where
   sqlType :: SqlTypeId
 
-instance HasSqlType Int where
+instance HasSqlType Int64 where
   sqlType = SqlBigIntT
 
 instance HasSqlType String where

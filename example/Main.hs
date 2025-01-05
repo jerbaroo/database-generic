@@ -11,6 +11,7 @@ import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.ByteString.Char8 qualified as BS
 import Data.Functor.Identity (Identity(..))
+import Data.Int (Int64)
 import Database.Generic.Class (MonadDb(..), MonadDbNewConn(..))
 import Database.Generic.Database (PostgreSQL)
 import Database.Generic.Entity (Entity(..), primaryKeyFieldName)
@@ -27,7 +28,7 @@ import Database.HDBC.PostgreSQL qualified as PSQL
 import Database.PostgreSQL.Simple.Options as PSQL
 import GHC.Generics (Generic)
 
-data Person = Person { name :: String, age :: Int }
+data Person = Person { name :: String, age :: Int64 }
   deriving (Entity "name", Generic, Show)
 
 type Env = String -- Connection string to access DB.
@@ -86,5 +87,5 @@ main = do
   let john' = fromSqlValues asSql
   print @Person john'
   print =<< runAppM e (Db.tx $ Db.execute $ Db.selectById @Person john.name)
-  let x = Db.project (Db.selectById' @Person john.name) (field @"name")
+  let x = Db.project (Db.selectById' @Person john.name) (field @"age" @Person)
   print =<< runAppM e (Db.tx $ Db.execute $ Db.statements $ Db.StatementSelect $ x)

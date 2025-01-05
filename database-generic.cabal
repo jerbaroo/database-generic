@@ -39,6 +39,7 @@ library
                       generics-eot,
                       HDBC,
                       mtl,
+                      witch,
     hs-source-dirs:   src
     default-language: GHC2021
     default-extensions:

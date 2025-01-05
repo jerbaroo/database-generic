@@ -87,5 +87,4 @@ main = do
   print @Person john'
   print =<< runAppM e (Db.tx $ Db.execute $ Db.selectById @Person john.name)
   let x = Db.project (Db.selectById' @Person john.name) (field @"name")
-  -- TODO fix output type.
   print =<< runAppM e (Db.tx $ Db.execute $ Db.statements $ Db.StatementSelect $ x)

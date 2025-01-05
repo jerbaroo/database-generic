@@ -2,15 +2,16 @@
 
 module Database.Generic.Entity.FromSql where
 
-import Database.Generic.Entity.SqlTypes (SqlValue)
+import Data.ByteString.Char8 qualified as BS
+import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.ToSql (showType)
 import Database.Generic.Prelude
 import Generics.Eot qualified as G
 
 data FromSqlError
-  = Constructing()   ![SqlValue]
-  | ConstructingVoid ![SqlValue]
-  | NoSqlValues      !String
+  = ErrorConstructing()   ![SqlValue]
+  | ErrorConstructingVoid ![SqlValue]
+  | NoSqlValues           !String
   deriving Show
 
 instance Exception FromSqlError
@@ -27,6 +28,11 @@ instance Convertible SqlValue a => FromSqlValue a where
 
 class FromSqlValues a where
   fromSqlValues :: [SqlValue] -> a
+
+instance FromSqlValues String where
+  fromSqlValues [SqlString s] = s
+  fromSqlValues [SqlByteString s] = BS.unpack s
+  fromSqlValues xs = error $ "fromSqlValues @String got: " <> show xs
 
 instance {-# OVERLAPPABLE #-} (G.HasEot a, GFromSqlValues (G.Eot a)) => FromSqlValues a where
   fromSqlValues = G.fromEot . gFromSqlValues
@@ -46,9 +52,9 @@ instance (FromSqlValue a, GFromSqlValues as, Typeable a, Typeable as) => GFromSq
 
 -- | The end of the right-nested tuples.
 instance GFromSqlValues () where
-  gFromSqlValues []    = ()
-  gFromSqlValues xs = throw $ Constructing() xs
+  gFromSqlValues [] = ()
+  gFromSqlValues xs = throw $ ErrorConstructing() xs
 
 -- | Necessary boilerplate.
 instance GFromSqlValues G.Void where
-  gFromSqlValues = throw . ConstructingVoid
+  gFromSqlValues = throw . ErrorConstructingVoid

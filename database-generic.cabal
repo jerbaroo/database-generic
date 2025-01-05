@@ -32,6 +32,7 @@ library
                       Database.Generic.Table,
                       Database.Generic.Transaction,
     build-depends:    base,
+                      bytestring,
                       comonad,
                       convertible,
                       extra,

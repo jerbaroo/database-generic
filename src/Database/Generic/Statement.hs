@@ -2,6 +2,7 @@
 {-# LANGUAGE PolyKinds            #-}
 {-# LANGUAGE UndecidableInstances #-}
 
+-- TODO split up into modules
 module Database.Generic.Statement where
 
 import Database.Generic.Entity (Entity)

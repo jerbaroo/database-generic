@@ -1,9 +1,8 @@
-{-# LANGUAGE DataKinds #-}
 
 module Database.Generic.Statement.Projection where
 
 import Database.Generic.Field (Field, fieldType)
-import Database.Generic.Output (Returning(..), ReturningType)
+import Database.Generic.Statement.Returning (Returning(..), ReturningType)
 import Database.Generic.Prelude
 
 class Projection p a b | p -> a, p -> b where

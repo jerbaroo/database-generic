@@ -1,10 +1,10 @@
-{-# LANGUAGE DataKinds #-}
 
 module Database.Generic.Operations where
 
 import Database.Generic.Class (MonadDb(..), MonadDbHasConn(..), MonadDbNewConn(..), MonadDbWithConn(..))
 import Database.Generic.Class qualified as Db
-import Database.Generic.Output (HasOutputType, OutputT, ParseOutput(..), Returning)
+import Database.Generic.Statement.Output (HasOutputType, OutputT, ParseOutput(..))
+import Database.Generic.Statement.Returning (Returning)
 import Database.Generic.Prelude
 import Database.Generic.Statement (Statements)
 import Database.Generic.Statement qualified as Statement

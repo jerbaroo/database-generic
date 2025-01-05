@@ -2,7 +2,7 @@ module Database.Generic.Class where
 
 import Database.Generic.Prelude
 import Database.Generic.Statement (Statements)
-import Database.Generic.Output (HasOutputType, Output, OutputError)
+import Database.Generic.Statement.Output (HasOutputType, Output, OutputError)
 
 -- | Monads that can communicate with a database over a given connection.
 class (Exception (Error m t), Functor t, Monad m) => MonadDb m t c | m -> c where

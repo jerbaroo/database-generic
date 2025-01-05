@@ -1,35 +1,24 @@
-{-# LANGUAGE DataKinds            #-}
-{-# LANGUAGE UndecidableInstances #-}
 
--- | Parsing output.
-module Database.Generic.Output where
+module Database.Generic.Statement.Output where
 
 import Database.Generic.Prelude
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.FromSql (FromSqlValues(..))
+import Database.Generic.Statement.Returning (Returning(..))
 
--- | Types of values returned from SQL statements.
-data Returning a where
-  MaybeOne    :: Type -> Returning a
-  Nada        ::         Returning a
-  OneAffected :: Type -> Returning a
-
-type ReturningType :: forall r a. r a -> a
-type family ReturningType r where
-  ReturningType (MaybeOne a) = a
-
--- * Output.
-
--- | Output of SQL statement before parsing into return value.
+-- | Output of an SQL statement.
 data Output
   = OutputAffected !Integer
   | OutputRows     ![[SqlValue]]
   | OutputNada
   deriving Show
 
--- | Types of output values from SQL statements.
+-- | The different types of output from SQL statements.
+--
+-- These constructors correspond to the constructors of 'Output'.
 data OutputType = OutputTypeAffected | OutputTypeRows | OutputTypeNada
 
+-- | The type of output expected from an SQL statement returning type 'r'.
 class HasOutputType r where
   outputType :: OutputType
 
@@ -42,8 +31,6 @@ instance HasOutputType Nada where
 instance HasOutputType (OneAffected a) where
   outputType = OutputTypeAffected
 
--- * Parsing output.
-
 data OutputError
   = ExpectedMaybeOne    !Output
   | ExpectedNada        !Output
@@ -55,6 +42,7 @@ instance Exception OutputError where
   displayException (ExpectedNada        o) = "Expected OutputNada but got " <> show o
   displayException (ExpectedOneAffected o) = "Expected OutputAffected but got " <> show o
 
+-- | Parse 'Output' into the value expected from executing a 'Statements r'.
 class ParseOutput r where
   type OutputT r
   parse :: Output -> Either OutputError (OutputT r)

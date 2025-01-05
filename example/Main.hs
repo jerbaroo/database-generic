@@ -1,5 +1,4 @@
 {-# LANGUAGE BlockArguments      #-}
-{-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE DeriveAnyClass      #-}
 {-# LANGUAGE DerivingStrategies  #-}
 {-# LANGUAGE OverloadedRecordDot #-}

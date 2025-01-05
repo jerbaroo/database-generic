@@ -6,7 +6,8 @@ module Database.Generic.Statement where
 import Database.Generic.Entity (Entity)
 import Database.Generic.Entity qualified as Entity
 import Database.Generic.Entity.SqlTypes (SqlTypeId, SqlValue(..))
-import Database.Generic.Entity.ToSql (ToSqlValue(toSqlValue))
+import Database.Generic.Entity.ToSql (HasSqlFieldNames(..), HasSqlFieldTypes(..), ToSqlValue(..), toSqlValues)
+import Database.Generic.Field (Field, fieldType)
 import Database.Generic.Output (HasOutputType, OutputType, Returning(..))
 import Database.Generic.Output qualified as Output
 import Database.Generic.Prelude
@@ -102,9 +103,9 @@ instance Serialize SqlTypeId db => Serialize (CreateTable a) db where
 
 createTable' :: forall a f. Entity f a => Bool -> CreateTable a
 createTable' ifNotExists = do
-  let primaryName = Entity.primaryKeyFieldName @_ @a
+  let primaryName = Entity.primaryKeyFieldName @a
   let columns =
-        zip (Entity.sqlFieldNames @_ @a) (Entity.sqlFieldTypes @_ @a) <&>
+        zip (sqlFieldNames @a) (sqlFieldTypes @a) <&>
           \(name, type') -> CreateTableColumn
             { primary = name == primaryName, .. }
   CreateTable { name = Entity.tableName @_ @a, columns, .. }
@@ -155,8 +156,8 @@ instance Serialize SqlValue db => Serialize (Insert r) db where
 insertOne' :: forall a f. Entity f a => a -> Insert (OneAffected a)
 insertOne' a = Insert
   { table   = Entity.tableName @_ @a
-  , columns = Entity.sqlFieldNames @_ @a
-  , rows    = [Values $ Entity.toSqlValues a]
+  , columns = sqlFieldNames @a
+  , rows    = [Values $ toSqlValues a]
   }
 
 insertOne :: forall a f. Entity f a => a -> Statements (OneAffected a)
@@ -164,26 +165,58 @@ insertOne = statements . StatementInsert . insertOne'
 
 -- * Select
 
+data Columns = ColumnsAll | Columns ![String]
+
+instance Serialize Columns db where
+  serialize ColumnsAll   = "*"
+  serialize (Columns cs) = intercalate ", " cs
+
 -- | Select one or many values of type 'a' from table 't'.
 data Select (r :: Returning a) = Select
-  { from   :: !TableName
-  , where' :: !Wheres
+  { columns :: !Columns
+  , from    :: !TableName
+  , where'  :: !Wheres
   }
 
 instance Serialize SqlValue db => Serialize (Select r) db where
   serialize s = unwords
-    ["SELECT * FROM", serialize s.from, "WHERE", serialize @_ @db s.where', ";"]
+    [ "SELECT", serialize s.columns
+    , "FROM", serialize s.from
+    , "WHERE", serialize @_ @db s.where'
+    , ";"
+    ]
 
 selectById' :: forall a f b.
   (Entity f a, HasField f a b, ToSqlValue b) => b -> Select (MaybeOne a)
 selectById' b = Select
-  { from   = Entity.tableName @_ @a
-  , where' = Wheres [idEquals @a b]
+  { columns = ColumnsAll
+  , from    = Entity.tableName @_ @a
+  , where'  = Wheres [idEquals @a b]
   }
 
 selectById :: forall a f b.
   (Entity f a, HasField f a b, ToSqlValue b) => b -> Statements (MaybeOne a)
 selectById = statements . StatementSelect . selectById'
+
+-- * Projection.
+
+class Projection p a b where
+  fieldTypes :: p -> [String]
+
+instance Projection (Field fa a b) a b where
+  fieldTypes fb = [fieldType fb]
+
+instance Projection (Field fa a b, Field fc a c) a (b, c) where
+  fieldTypes (fb, fc) = [fieldType fb, fieldType fc]
+
+-- TODO Projectible class so we don't operate on just Selects.
+project :: forall f a p b. (Entity f a, Projection p a b) =>
+  Select (MaybeOne a) -> p -> Select (MaybeOne b)
+project s p = Select
+  { columns = Columns $ fieldTypes @_ @a @b p
+  , from    = s.from
+  , where'  = s.where'
+  }
 
 -- * Where
 
@@ -191,7 +224,7 @@ newtype Where = Equals (String, SqlValue)
 
 idEquals :: forall a f b.
   (Entity f a, HasField f a b, ToSqlValue b) => b -> Where
-idEquals b = Equals (Entity.primaryKeyFieldName @_ @a, toSqlValue b)
+idEquals b = Equals (Entity.primaryKeyFieldName @a, toSqlValue b)
 
 instance Serialize SqlValue db => Serialize Where db where
   serialize (Equals (column, value)) =

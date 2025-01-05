@@ -23,6 +23,7 @@ library
                       Database.Generic.Entity.FromSql,
                       Database.Generic.Entity.SqlTypes,
                       Database.Generic.Entity.ToSql,
+                      Database.Generic.Field,
                       Database.Generic.Operations,
                       Database.Generic.Output,
                       Database.Generic.Prelude,

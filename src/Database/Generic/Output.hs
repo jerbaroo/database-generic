@@ -4,15 +4,14 @@
 -- | Parsing output.
 module Database.Generic.Output where
 
-import Database.Generic.Entity (Entity)
-import Database.Generic.Entity qualified as Entity
 import Database.Generic.Prelude
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
+import Database.Generic.Entity.FromSql (FromSqlValues(..))
 
 -- | Types of values returned from SQL statements.
 data Returning a where
   MaybeOne    :: Type -> Returning a
-  Nada        :: Returning a
+  Nada        ::         Returning a
   OneAffected :: Type -> Returning a
 
 -- * Output.
@@ -20,7 +19,7 @@ data Returning a where
 -- | Output of SQL statement before parsing into return value.
 data Output
   = OutputAffected !Integer
-  | OutputRows ![[SqlValue]]
+  | OutputRows     ![[SqlValue]]
   | OutputNada
   deriving Show
 
@@ -42,9 +41,9 @@ instance HasOutputType (OneAffected a) where
 -- * Parsing output.
 
 data OutputError
-  = ExpectedMaybeOne Output
-  | ExpectedNada Output
-  | ExpectedOneAffected Output
+  = ExpectedMaybeOne    !Output
+  | ExpectedNada        !Output
+  | ExpectedOneAffected !Output
   deriving Show
 
 instance Exception OutputError where
@@ -56,10 +55,10 @@ class ParseOutput r where
   type OutputT r
   parse :: Output -> Either OutputError (OutputT r)
 
-instance forall f a. Entity f a => ParseOutput (MaybeOne a) where
+instance forall a. FromSqlValues a => ParseOutput (MaybeOne a) where
   type OutputT (MaybeOne a) = Maybe a
   parse (OutputRows [])     = Right Nothing
-  parse (OutputRows [row])  = Right $ Just $ Entity.fromSqlValues row
+  parse (OutputRows [row])  = Right $ Just $ fromSqlValues row
   parse output              = Left  $ ExpectedMaybeOne output
 
 instance ParseOutput Nada where

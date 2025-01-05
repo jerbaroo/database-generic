@@ -11,10 +11,12 @@ import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.ByteString.Char8 qualified as BS
 import Data.Functor.Identity (Identity(..))
-import Database.Generic.Database (PostgreSQL)
-import Database.Generic.Entity (Entity(..))
-import Database.Generic.Entity.ToSql (toSqlValue)
 import Database.Generic.Class (MonadDb(..), MonadDbNewConn(..))
+import Database.Generic.Database (PostgreSQL)
+import Database.Generic.Entity (Entity(..), primaryKeyFieldName)
+import Database.Generic.Entity.FromSql (fromSqlValues)
+import Database.Generic.Entity.ToSql (sqlFieldNames, sqlFieldTypes, toSqlValue, toSqlValues)
+import Database.Generic.Field (field)
 import Database.Generic.Operations qualified as Db
 import Database.Generic.Prelude (debug)
 import Database.Generic.Serialize (serialize)
@@ -74,14 +76,14 @@ main = do
   f <- runAppM e $ Db.tx $ Db.execute $ Db.insertOne john
   print f
   print john
-  print $ primaryKeyFieldName @_ @Person
+  print $ primaryKeyFieldName @Person
   print $ primaryKey john
   print $ toSqlValue $ primaryKey john
-  print $ sqlFieldNames @_ @Person
-  print $ sqlFieldTypes @_ @Person
+  print $ sqlFieldNames @Person
+  print $ sqlFieldTypes @Person
   let asSql = toSqlValues john
   print asSql
   let john' = fromSqlValues asSql
   print @Person john'
-  g <- runAppM e $ Db.tx $ Db.execute $ Db.selectById @Person john.name
-  print g
+  print =<< runAppM e (Db.tx $ Db.execute $ Db.selectById @Person john.name)
+  print =<< runAppM e (Db.tx $ Db.execute $ Db.selectById @Person john.name `Db.project` field @"name")

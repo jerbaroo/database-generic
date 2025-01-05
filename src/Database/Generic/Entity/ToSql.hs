@@ -36,7 +36,7 @@ instance Convertible a SqlValue => ToSqlValue a where
 class ToSqlValues a where
   toSqlValues :: a -> [SqlValue]
 
-instance (G.HasEot a, GToSqlValues (G.Eot a)) => ToSqlValues a where
+instance {-# OVERLAPPABLE #-} (G.HasEot a, GToSqlValues (G.Eot a)) => ToSqlValues a where
   toSqlValues = gToSqlValues . G.toEot
 
 -- * Generic a -> [SqlValue]

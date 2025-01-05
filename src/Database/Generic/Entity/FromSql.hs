@@ -8,9 +8,9 @@ import Database.Generic.Prelude
 import Generics.Eot qualified as G
 
 data FromSqlError
-  = Constructing()   [SqlValue]
-  | ConstructingVoid [SqlValue]
-  | NoSqlValues      String
+  = Constructing()   ![SqlValue]
+  | ConstructingVoid ![SqlValue]
+  | NoSqlValues      !String
   deriving Show
 
 instance Exception FromSqlError
@@ -28,7 +28,7 @@ instance Convertible SqlValue a => FromSqlValue a where
 class FromSqlValues a where
   fromSqlValues :: [SqlValue] -> a
 
-instance (G.HasEot a, GFromSqlValues (G.Eot a)) => FromSqlValues a where
+instance {-# OVERLAPPABLE #-} (G.HasEot a, GFromSqlValues (G.Eot a)) => FromSqlValues a where
   fromSqlValues = G.fromEot . gFromSqlValues
 
 -- * Generic [SqlValue] -> a

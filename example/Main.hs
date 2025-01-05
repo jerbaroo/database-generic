@@ -1,4 +1,5 @@
 {-# LANGUAGE BlockArguments      #-}
+{-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE DeriveAnyClass      #-}
 {-# LANGUAGE DerivingStrategies  #-}
 {-# LANGUAGE OverloadedRecordDot #-}
@@ -21,12 +22,17 @@ import Database.Generic.Operations qualified as Db
 import Database.Generic.Prelude (debug)
 import Database.Generic.Serialize (serialize)
 import Database.Generic.Statement qualified as Db
+import Database.Generic.Statement.CreateTable qualified as Db
+import Database.Generic.Statement.Delete qualified as Db
+import Database.Generic.Statement.Insert qualified as Db
+import Database.Generic.Statement.Select qualified as Db
 import Database.Generic.Statement.Projection (project)
-import Database.Generic.Output (Output(..), OutputType(..))
+import Database.Generic.Statement.Output (Output(..), OutputType(..))
 import Database.HDBC qualified as HDBC
 import Database.HDBC.PostgreSQL qualified as PSQL
 import Database.PostgreSQL.Simple.Options as PSQL
 import GHC.Generics (Generic)
+import Witch (from)
 
 data Person = Person { name :: String, age :: Int64 }
   deriving (Entity "name", Generic, Show)
@@ -64,17 +70,17 @@ main :: IO ()
 main = do
   let e = env "127.0.0.1" 5432 "postgres" "demo" "demo"
   pure ()
-  _ <- runAppM e $ Db.executeTx $ Db.createTable @Person True
+  _ <- runAppM e $ Db.executeTx $ from $ Db.createTable @Person True
   _ <- runAppM e $ Db.tx do
-    x <- Db.execute $ Db.createTable @Person True
-    x <- Db.execute $ Db.createTable @Person True
+    x <- Db.execute $ from $ Db.createTable @Person True
+    x <- Db.execute $ from $ Db.createTable @Person True
     liftIO $ print x
     liftIO $ print "ran AppM"
     pure $ Right 6
-  _ <- runAppM e $ Db.tx $ Db.execute $ Db.createTable @Person True
-  f <- runAppM e $ Db.tx $ Db.execute $ Db.deleteById @Person "John"
+  _ <- runAppM e $ Db.tx $ Db.execute $ from $ Db.createTable @Person True
+  f <- runAppM e $ Db.tx $ Db.execute $ from $ Db.deleteById @Person "John"
   let john = Person "John" 21
-  f <- runAppM e $ Db.tx $ Db.execute $ Db.insertOne john
+  f <- runAppM e $ Db.tx $ Db.execute $ from $ Db.insertOne john
   print f
   print john
   print $ primaryKeyFieldName @Person
@@ -86,6 +92,6 @@ main = do
   print asSql
   let john' = fromSqlValues asSql
   print @Person john'
-  print =<< runAppM e (Db.tx $ Db.execute $ Db.selectById @Person john.name)
-  let x = project (Db.selectById' @Person john.name) (field @"age" @Person)
-  print =<< runAppM e (Db.tx $ Db.execute $ Db.statements $ Db.StatementSelect $ x)
+  print =<< runAppM e (Db.tx $ Db.execute $ from $ Db.selectById @Person john.name)
+  let x = project (Db.selectById @Person john.name) (field @"age" @Person)
+  print =<< runAppM e (Db.tx $ Db.execute $ Db.StatementSelect $ x)

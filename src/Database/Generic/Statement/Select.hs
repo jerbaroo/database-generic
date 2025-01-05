@@ -1,4 +1,3 @@
-
 module Database.Generic.Statement.Select where
 
 import Database.Generic.Entity (Entity)
@@ -18,7 +17,7 @@ instance Serialize Columns db where
   serialize ColumnsAll   = "*"
   serialize (Columns cs) = intercalate ", " cs
 
--- | Select one or many values of type 'a' from table 't'.
+-- | Select values of type 'a'.
 data Select (r :: Returning a) = Select
   { columns :: !Columns
   , from    :: !TableName

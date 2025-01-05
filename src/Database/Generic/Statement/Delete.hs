@@ -10,7 +10,7 @@ import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Table (TableName)
 
--- | Delete one or many values from table 'a'.
+-- | Delete values of type 'a'.
 data Delete (r :: Returning a) = Delete
   { from   :: !TableName
   , where' :: !Wheres

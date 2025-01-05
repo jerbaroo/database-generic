@@ -1,4 +1,3 @@
-
 module Database.Generic.Statement.Returning where
 
 import Database.Generic.Prelude

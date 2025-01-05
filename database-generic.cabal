@@ -28,7 +28,9 @@ library
                       Database.Generic.Prelude,
                       Database.Generic.Serialize,
                       Database.Generic.Statement,
+                      Database.Generic.Statement.CreateTable,
                       Database.Generic.Statement.Delete,
+                      Database.Generic.Statement.Insert,
                       Database.Generic.Statement.Output,
                       Database.Generic.Statement.Projection,
                       Database.Generic.Statement.Returning,
@@ -72,6 +74,7 @@ executable database-generic-example
                       HDBC-postgresql,
                       mtl,
                       postgres-options,
+                      witch,
     hs-source-dirs:   example
     default-language: GHC2021
 

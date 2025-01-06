@@ -1,10 +1,10 @@
 module Database.Generic.Entity where
 
 import Database.Generic.Entity.FromSql (FromSqlValues)
-import Database.Generic.Entity.ToSql (HasSqlColumnNames, HasSqlColumnTypes, ToSqlValues)
+import Database.Generic.Entity.ToSql (HasSqlColumns, ToSqlValue, ToSqlValues)
 import Database.Generic.Prelude
 import Database.Generic.Table (TableName(TableName))
-import Database.Generic.Field (Field, field, fieldName)
+import Database.Generic.Field (Field(..), field, fieldName)
 
 -- | An 'Entity' can be converted to/from SQL and has a primary key.
 --
@@ -12,19 +12,23 @@ import Database.Generic.Field (Field, field, fieldName)
 -- you can derive an instance via 'Generic' needing only to specify primary key:
 -- > data Person { name :: String, age :: Int }
 -- >   deriving (Entity "name", Generic)
-class ( FromSqlValues     a
-      , HasSqlColumnNames a
-      , HasSqlColumnTypes a
-      , ToSqlValues       a
+class ( FromSqlValues a
+      , HasSqlColumns a
+      , ToSqlValues   a
       ) => Entity f a | a -> f where
 
-  primaryKey         :: forall b. Field f a b
-  default primaryKey :: forall b. (HasField f a b, Typeable f) => Field f a b
-  primaryKey = field
+  primaryKeyField         :: forall b. (HasField f a b, ToSqlValue b) => Field f a b
+  default primaryKeyField :: forall b. (HasField f a b, ToSqlValue b, Typeable f) => Field f a b
+  primaryKeyField = field @f @a
 
   tableName         ::               TableName
   default tableName :: Typeable a => TableName
   tableName = TableName $ toLower <$> showType @a
 
-primaryKeyFieldName :: forall a f. Entity f a => String
-primaryKeyFieldName = fieldName $ primaryKey @f @a
+type EntityP f a b = (Entity f a, HasField f a b, ToSqlValue b)
+
+primaryKey :: forall a f b. (EntityP f a b) => a -> b
+primaryKey a = let (Field _ f) = primaryKeyField @_ @a in f a
+
+primaryKeyFieldName :: forall a f b. (EntityP f a b) => String
+primaryKeyFieldName = fieldName $ primaryKeyField @_ @a

@@ -1,9 +1,9 @@
 module Database.Generic.Statement.CreateTable where
 
-import Database.Generic.Entity (Entity)
+import Database.Generic.Entity (EntityP)
 import Database.Generic.Entity qualified as Entity
 import Database.Generic.Entity.SqlTypes (SqlTypeId)
-import Database.Generic.Entity.ToSql (HasSqlColumnNames(..), HasSqlColumnTypes(..))
+import Database.Generic.Entity.ToSql (HasSqlColumns(..))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Table (ColumnName(..), TableName)
@@ -35,11 +35,9 @@ instance Serialize SqlTypeId db => Serialize (CreateTable a) db where
     , ");"
     ]
 
-createTable :: forall a f. Entity f a => Bool -> CreateTable a
+createTable :: forall a f b. EntityP f a b => Bool -> CreateTable a
 createTable ifNotExists = do
   let primaryName = Entity.primaryKeyFieldName @a
-  let columns =
-        zip (sqlColumnNames @a) (sqlFieldTypes @a) <&>
-          \(name, type') -> CreateTableColumn
-            { primary = from name == primaryName, .. }
+  let columns = sqlColumns @a <&> \(name, type') ->
+        CreateTableColumn { primary = from name == primaryName, .. }
   CreateTable { name = Entity.tableName @_ @a, columns, .. }

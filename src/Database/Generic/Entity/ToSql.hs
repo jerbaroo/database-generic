@@ -20,7 +20,7 @@ instance Exception ToSqlError
 class ToSqlValue a where
   toSqlValue :: a -> SqlValue
 
-instance Convertible a SqlValue => ToSqlValue a where
+instance {-# OVERLAPPABLE #-} Convertible a SqlValue => ToSqlValue a where
   toSqlValue = convert
 
 -- | Values that can be converted into a list of 'SqlValue'.
@@ -81,30 +81,33 @@ instance HasSqlType String where
 
 -- | Types that have an SQL type for each field.
 class HasSqlColumnTypes a where
-  sqlFieldTypes :: [SqlTypeId]
+  sqlColumnTypes :: [SqlTypeId]
 
 instance (G.HasEot a, GHasSqlColumnTypes G.Datatype (G.Eot a)) => HasSqlColumnTypes a where
-  sqlFieldTypes = gSqlFieldTypes @_ @(G.Eot a) $ G.datatype $ Proxy @a
+  sqlColumnTypes = gSqlColumnTypes @_ @(G.Eot a) $ G.datatype $ Proxy @a
 
 class GHasSqlColumnTypes meta a where
-  gSqlFieldTypes :: meta -> [SqlTypeId]
+  gSqlColumnTypes :: meta -> [SqlTypeId]
 
 instance GHasSqlColumnTypes [String] fields => GHasSqlColumnTypes G.Datatype (Either fields G.Void) where
-  gSqlFieldTypes datatype = case datatype of
+  gSqlColumnTypes datatype = case datatype of
     G.Datatype _ [G.Constructor _ (G.Selectors fields)] ->
-      gSqlFieldTypes @_ @fields fields
+      gSqlColumnTypes @_ @fields fields
     G.Datatype name [G.Constructor cName (G.NoSelectors _)] ->
       error $ name <> " constructor " <> cName <> " has no selectors"
     G.Datatype name _ -> error $ name <> " must have exactly one constructor"
 
 instance (HasSqlType a, GHasSqlColumnTypes [String] as) => GHasSqlColumnTypes [String] (a, as) where
-  gSqlFieldTypes (_:as) = sqlType @a : gSqlFieldTypes @_ @as as
-  gSqlFieldTypes []     = error "impossible"
+  gSqlColumnTypes (_:as) = sqlType @a : gSqlColumnTypes @_ @as as
+  gSqlColumnTypes []     = error "impossible"
 
 instance GHasSqlColumnTypes [String] () where
-  gSqlFieldTypes [] = []
-  gSqlFieldTypes _  = error "impossible"
+  gSqlColumnTypes [] = []
+  gSqlColumnTypes _  = error "impossible"
 
--- | Values that have both SQL types and named columns for each field.
-class HasSqlFields a where
-  sqlFields :: [(SqlTypeId, ColumnName)]
+-- | Values that have both named a SQL column and SQL type for each field.
+class (HasSqlColumnNames a, HasSqlColumnTypes a) => HasSqlColumns a where
+  sqlColumns :: [(ColumnName, SqlTypeId)]
+
+instance (HasSqlColumnNames a, HasSqlColumnTypes a) => HasSqlColumns a where
+  sqlColumns = zip (sqlColumnNames @a) (sqlColumnTypes @a)

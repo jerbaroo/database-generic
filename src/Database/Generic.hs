@@ -1,7 +1,6 @@
 module Database.Generic (module Database.Generic, module X) where
 
-import Database.Generic.Entity (Entity)
-import Database.Generic.Entity.ToSql (ToSqlValue)
+import Database.Generic.Entity (Entity, EntityP)
 import Database.Generic.Statement (Statement, statement)
 import Database.Generic.Statement.CreateTable qualified as CreateTable
 import Database.Generic.Statement.CreateTable as X (createTable)
@@ -14,16 +13,14 @@ import Database.Generic.Statement.Select as X (selectById)
 import Database.Generic.Statement.Returning (Returning(..))
 import Database.Generic.Prelude
 
-createTable' :: forall a f. Entity f a => Bool -> Statement Nada
+createTable' :: forall a f b. EntityP f a b => Bool -> Statement Nada
 createTable' = statement . CreateTable.createTable @a
 
-deleteById' :: forall a f b.
-  (Entity f a, HasField f a b, ToSqlValue b) => b -> Statement (OneAffected a)
+deleteById' :: forall a f b. EntityP f a b => b -> Statement (OneAffected a)
 deleteById' = statement . Delete.deleteById
 
 insertOne' :: forall a f. Entity f a => a -> Statement (OneAffected a)
 insertOne' = statement . Insert.insertOne
 
-selectById' :: forall a f b.
-  (Entity f a, HasField f a b, ToSqlValue b) => b -> Statement (MaybeOne a)
+selectById' :: forall a f b. EntityP f a b => b -> Statement (MaybeOne a)
 selectById' = statement . Select.selectById

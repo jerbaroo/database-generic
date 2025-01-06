@@ -12,24 +12,23 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.ByteString.Char8 qualified as BS
 import Data.Functor.Identity (Identity(..))
 import Data.Int (Int64)
+import Database.Generic qualified as Db
 import Database.Generic.Class (MonadDb(..), MonadDbNewConn(..))
 import Database.Generic.Database (PostgreSQL)
-import Database.Generic.Entity (Entity(..), primaryKeyFieldName)
+import Database.Generic.Entity (Entity(..), primaryKey, primaryKeyFieldName)
 import Database.Generic.Entity.FromSql (fromSqlValues)
-import Database.Generic.Entity.ToSql (sqlFieldNames, sqlFieldTypes, toSqlValue, toSqlValues)
+import Database.Generic.Entity.ToSql (sqlColumnNames, sqlColumnTypes, toSqlValue, toSqlValues)
 import Database.Generic.Field (field)
 import Database.Generic.Operations qualified as Db
 import Database.Generic.Prelude (debug)
 import Database.Generic.Serialize (serialize)
 import Database.Generic.Statement qualified as Db
-import Database.Generic.Statement.Select qualified as Db
-import Database.Generic.Statement.Projection (project)
+import Database.Generic.Statement.Fields (fields)
 import Database.Generic.Statement.Output (Output(..), OutputType(..), outputType)
 import Database.HDBC qualified as HDBC
 import Database.HDBC.PostgreSQL qualified as PSQL
 import Database.PostgreSQL.Simple.Options as PSQL
 import GHC.Generics (Generic)
-import Witch (from)
 
 data Person = Person { name :: String, age :: Int64 }
   deriving (Entity "name", Generic, Show)
@@ -69,13 +68,13 @@ main = do
   pure ()
   _ <- runAppM e $ Db.executeTx $ Db.createTable' @Person True
   _ <- runAppM e $ Db.tx do
-    x <- Db.execute $ Db.createTable' @Person True
+    _ <- Db.execute $ Db.createTable' @Person True
     x <- Db.execute $ Db.createTable' @Person True
     liftIO $ print x
     liftIO $ print "ran AppM"
-    pure $ Right 6
+    pure $ Right ()
   _ <- runAppM e $ Db.tx $ Db.execute $ Db.createTable' @Person True
-  f <- runAppM e $ Db.tx $ Db.execute $ Db.deleteById' @Person "John"
+  _ <- runAppM e $ Db.tx $ Db.execute $ Db.deleteById' @Person "John"
   let john = Person "John" 21
   f <- runAppM e $ Db.tx $ Db.execute $ Db.insertOne' john
   print f
@@ -83,12 +82,12 @@ main = do
   print $ primaryKeyFieldName @Person
   print $ primaryKey john
   print $ toSqlValue $ primaryKey john
-  print $ sqlFieldNames @Person
-  print $ sqlFieldTypes @Person
+  print $ sqlColumnNames @Person
+  print $ sqlColumnTypes @Person
   let asSql = toSqlValues john
   print asSql
   let john' = fromSqlValues asSql
   print @Person john'
   print =<< runAppM e (Db.tx $ Db.execute $ Db.selectById' @Person john.name)
-  let x = project (Db.selectById @Person john.name) (field @"age" @Person)
+  let x = fields (Db.selectById @Person john.name) (field @"age" @Person)
   print =<< runAppM e (Db.tx $ Db.execute $ Db.StatementSelect $ x)

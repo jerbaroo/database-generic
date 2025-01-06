@@ -1,17 +1,21 @@
 module Database.Generic.Entity where
 
 import Database.Generic.Entity.FromSql (FromSqlValues)
-import Database.Generic.Entity.ToSql (HasSqlFieldNames, HasSqlFieldTypes, ToSqlValue, ToSqlValues)
-import Database.Generic.Entity.ToSql qualified as ToSql
+import Database.Generic.Entity.ToSql (HasSqlColumnNames, HasSqlColumnTypes, ToSqlValue, ToSqlValues)
 import Database.Generic.Prelude
 import Database.Generic.Table (TableName(TableName))
-import Database.Generic.Field (FieldE, fieldE, fieldType)
+import Database.Generic.Field (FieldE, fieldE, fieldName)
 
--- | An Entity can be converted to/from SQL, and has primary key and table name.
-class ( FromSqlValues    a
-      , HasSqlFieldNames a -- TODO merge with HasSqlFieldTypes into HasSqlFields
-      , HasSqlFieldTypes a
-      , ToSqlValues      a
+-- | An 'Entity' can be converted to/from SQL and has a primary key.
+--
+-- For simple Haskell records with a single data constructor and named fields
+-- you can derive an instance via 'Generic':
+-- > data Person { name :: String, age :: Int }
+-- >   deriving (Entity "name", Generic)
+class ( FromSqlValues     a
+      , HasSqlColumnNames a
+      , HasSqlColumnTypes a
+      , ToSqlValues       a
       ) => Entity f a | a -> f where
 
   -- TODO merge with primaryKeyField
@@ -24,7 +28,7 @@ class ( FromSqlValues    a
 
   tableName         ::               TableName
   default tableName :: Typeable a => TableName
-  tableName = TableName $ toLower <$> ToSql.showType @a
+  tableName = TableName $ toLower <$> showType @a
 
 primaryKeyFieldName :: forall a f. Entity f a => String
-primaryKeyFieldName = fieldType $ primaryKeyField @f @a
+primaryKeyFieldName = fieldName $ primaryKeyField @f @a

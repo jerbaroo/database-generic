@@ -3,10 +3,10 @@ module Database.Generic.Statement.CreateTable where
 import Database.Generic.Entity (Entity)
 import Database.Generic.Entity qualified as Entity
 import Database.Generic.Entity.SqlTypes (SqlTypeId)
-import Database.Generic.Entity.ToSql (HasSqlFieldNames(..), HasSqlFieldTypes(..))
+import Database.Generic.Entity.ToSql (HasSqlColumnNames(..), HasSqlColumnTypes(..))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
-import Database.Generic.Table (TableName)
+import Database.Generic.Table (ColumnName(..), TableName)
 
 -- | Create a table for values of type 'a'.
 data CreateTable a = CreateTable
@@ -16,7 +16,7 @@ data CreateTable a = CreateTable
   }
 
 data CreateTableColumn = CreateTableColumn
-  { name    :: !String
+  { name    :: !ColumnName
   , primary :: !Bool
   , type'   :: !SqlTypeId
   }
@@ -28,7 +28,7 @@ instance Serialize SqlTypeId db => Serialize (CreateTable a) db where
     , serialize @_ @db c.name
     , "("
     , intercalate ", " $ c.columns <&> \c' -> unwords
-          [ c'.name
+          [ from c'.name
           , serialize @_ @db c'.type'
           , if c'.primary then "PRIMARY KEY" else ""
           ]
@@ -39,7 +39,7 @@ createTable :: forall a f. Entity f a => Bool -> CreateTable a
 createTable ifNotExists = do
   let primaryName = Entity.primaryKeyFieldName @a
   let columns =
-        zip (sqlFieldNames @a) (sqlFieldTypes @a) <&>
+        zip (sqlColumnNames @a) (sqlFieldTypes @a) <&>
           \(name, type') -> CreateTableColumn
-            { primary = name == primaryName, .. }
+            { primary = from name == primaryName, .. }
   CreateTable { name = Entity.tableName @_ @a, columns, .. }

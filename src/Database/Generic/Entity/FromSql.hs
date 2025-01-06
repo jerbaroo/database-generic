@@ -3,7 +3,6 @@
 module Database.Generic.Entity.FromSql where
 
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
-import Database.Generic.Entity.ToSql (showType)
 import Database.Generic.Prelude
 import Generics.Eot qualified as G
 
@@ -15,16 +14,14 @@ data FromSqlError
 
 instance Exception FromSqlError
 
--- * SqlValue -> a
-
+-- | Values that can be converted from a single 'SqlValue'.
 class FromSqlValue a where
   fromSqlValue :: SqlValue -> a
 
 instance Convertible SqlValue a => FromSqlValue a where
   fromSqlValue = convert
 
--- * [SqlValue] -> a
-
+-- | Values that can be converted from a list of 'SqlValue'.
 class FromSqlValues a where
   fromSqlValues :: [SqlValue] -> a
 
@@ -41,8 +38,7 @@ instance FromSqlValues Int64 where
 instance {-# OVERLAPPABLE #-} (G.HasEot a, GFromSqlValues (G.Eot a)) => FromSqlValues a where
   fromSqlValues = G.fromEot . gFromSqlValues
 
--- * Generic [SqlValue] -> a
-
+-- | Typeclass for generic implementation of 'FromSqlValues'.
 class GFromSqlValues a where
   gFromSqlValues :: [SqlValue] -> a
 

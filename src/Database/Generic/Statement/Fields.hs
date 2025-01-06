@@ -1,6 +1,6 @@
 module Database.Generic.Statement.Fields where
 
-import Database.Generic.Field (Field, fieldType)
+import Database.Generic.Field (Field, fieldName)
 import Database.Generic.Statement.Returning (Returning(..), ReturningType)
 import Database.Generic.Prelude
 
@@ -9,10 +9,10 @@ class FieldsOf f a b | f -> a, f -> b where
   fieldNames :: f -> [String]
 
 instance FieldsOf (Field fa a b) a b where
-  fieldNames fb = [fieldType fb]
+  fieldNames fb = [fieldName fb]
 
 instance FieldsOf (Field fa a b, Field fc a c) a (b, c) where
-  fieldNames (fb, fc) = [fieldType fb, fieldType fc]
+  fieldNames (fb, fc) = [fieldName fb, fieldName fc]
 
 type ReturningFields :: forall r1 b r2. r1 -> b -> r2
 type family ReturningFields r b where

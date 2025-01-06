@@ -1,27 +1,31 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 module Database.Generic.Field where
 
 import Database.Generic.Prelude
-import Database.Generic.Entity.ToSql (showType')
 
--- | Value representing a field of a data type.
-data Field f a b = (HasField f a b, Typeable f) => Field (Proxy f)
+-- | Value-level representation of a field of a data type.
+data Field f a b where
+  Field :: (HasField f a b, Typeable f) => Proxy f -> Field f a b
 
+-- | Construct a 'Field'.
 field :: forall f a b. (HasField f a b, Typeable f) => Field f a b
-field = Field (Proxy :: Proxy f)
+field = Field $ Proxy @f
 
-data FieldE = forall f a b. FieldE (Field f a b)
+-- | Existential wrapper over 'Field'.
+data FieldE where
+  FieldE :: forall f a b. Field f a b -> FieldE
 
+-- | Construct a 'FieldE'.
 fieldE :: forall f a b. (HasField f a b, Typeable f) => FieldE
-fieldE = FieldE $ field @f @a @b
+fieldE = FieldE $ field @f @a
 
-class FieldType a where
-  fieldType :: a -> String
+-- | Types that have a single named field.
+class HasFieldName f where
+  fieldName :: f -> String
 
-instance Typeable f => FieldType (Proxy f) where
-  fieldType _ = showType' @f
+instance HasFieldName (Field f a b) where
+  fieldName (Field _) = showType' @f
 
-instance FieldType (Field f a b) where
-  fieldType (Field p) = fieldType p
-
-instance FieldType FieldE where
-  fieldType (FieldE f) = fieldType f
+instance HasFieldName FieldE where
+  fieldName (FieldE f) = fieldName f

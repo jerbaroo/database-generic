@@ -1,4 +1,4 @@
-module Database.Generic.Prelude (debug, module X) where
+module Database.Generic.Prelude (debug, showType, showType', module X) where
 
 import Control.Comonad as X (Comonad(extract))
 import Control.Exception as X (Exception(displayException), SomeException, throw, toException)
@@ -24,3 +24,11 @@ import Witch as X (Utf8S, From(from), into, unsafeFrom, via)
 
 debug :: Show a => a -> a
 debug a = trace (show a) a
+
+-- | Type of 'a' as a 'String'.
+showType :: forall a. Typeable a => String
+showType = show $ typeRep $ Proxy @a
+
+-- | Like 'showType' but with quotes removed.
+showType' :: forall a. Typeable a => String
+showType' = replace "\"" "" $ showType @a

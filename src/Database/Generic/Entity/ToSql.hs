@@ -2,17 +2,10 @@
 
 module Database.Generic.Entity.ToSql where
 
-import Database.Generic.Prelude
 import Database.Generic.Entity.SqlTypes (SqlTypeId(..), SqlValue)
+import Database.Generic.Prelude
+import Database.Generic.Table (ColumnName(..))
 import Generics.Eot qualified as G
-
--- | Type of 'a' as a 'String'.
-showType :: forall a. Typeable a => String
-showType = show $ typeRep $ Proxy @a
-
--- | Like 'showType' but with quotes removed.
-showType' :: forall a. Typeable a => String
-showType' = replace "\"" "" $ showType @a
 
 data ToSqlError
   = MoreThanOneConstructor !String
@@ -23,24 +16,21 @@ data ToSqlError
 
 instance Exception ToSqlError
 
--- * a -> SqlValue
-
+-- | Values that can be converted into a single 'SqlValue'.
 class ToSqlValue a where
   toSqlValue :: a -> SqlValue
 
 instance Convertible a SqlValue => ToSqlValue a where
   toSqlValue = convert
 
--- * a -> [SqlValue]
-
+-- | Values that can be converted into a list of 'SqlValue'.
 class ToSqlValues a where
   toSqlValues :: a -> [SqlValue]
 
 instance {-# OVERLAPPABLE #-} (G.HasEot a, GToSqlValues (G.Eot a)) => ToSqlValues a where
   toSqlValues = gToSqlValues . G.toEot
 
--- * Generic a -> [SqlValue]
-
+-- | Typeclass for generic implementation of 'ToSqlValues'.
 class GToSqlValues a where
   gToSqlValues :: a -> [SqlValue]
 
@@ -65,23 +55,21 @@ instance GToSqlValues () where
 instance GToSqlValues G.Void where
   gToSqlValues = G.absurd
 
--- * @a [String]
+-- | Values that have named fields.
+class HasSqlColumnNames a where
+  sqlColumnNames :: [ColumnName]
 
-class HasSqlFieldNames a where
-  sqlFieldNames :: [String]
-
-instance (G.HasEot a, Typeable a) => HasSqlFieldNames a where
-  sqlFieldNames =
+instance (G.HasEot a, Typeable a) => HasSqlColumnNames a where
+  sqlColumnNames =
     case G.constructors $ G.datatype $ Proxy @a of
       []  -> throw $ NoConstructors $ showType @a
       [c] -> case G.fields c of
-        G.Selectors   fields -> fields
+        G.Selectors   fields -> ColumnName <$> fields
         G.NoSelectors _      -> throw $ NoSelectors $ showType @a
         G.NoFields           -> throw $ NoFields $ showType @a
       _ -> throw $ MoreThanOneConstructor $ showType @a
 
--- * @a SqlType
-
+-- | Types that have a corresponding SQL type.
 class HasSqlType a where
   sqlType :: SqlTypeId
 
@@ -91,20 +79,17 @@ instance HasSqlType Int64 where
 instance HasSqlType String where
   sqlType = SqlLongVarCharT
 
--- * @a [SqlType]
-
-class HasSqlFieldTypes a where
+-- | Types that have an SQL type for each field.
+class HasSqlColumnTypes a where
   sqlFieldTypes :: [SqlTypeId]
 
-instance (G.HasEot a, GHasSqlFieldTypes G.Datatype (G.Eot a)) => HasSqlFieldTypes a where
+instance (G.HasEot a, GHasSqlColumnTypes G.Datatype (G.Eot a)) => HasSqlColumnTypes a where
   sqlFieldTypes = gSqlFieldTypes @_ @(G.Eot a) $ G.datatype $ Proxy @a
 
--- * Generic Proxy a -> [SqlType]
-
-class GHasSqlFieldTypes meta a where
+class GHasSqlColumnTypes meta a where
   gSqlFieldTypes :: meta -> [SqlTypeId]
 
-instance GHasSqlFieldTypes [String] fields => GHasSqlFieldTypes G.Datatype (Either fields G.Void) where
+instance GHasSqlColumnTypes [String] fields => GHasSqlColumnTypes G.Datatype (Either fields G.Void) where
   gSqlFieldTypes datatype = case datatype of
     G.Datatype _ [G.Constructor _ (G.Selectors fields)] ->
       gSqlFieldTypes @_ @fields fields
@@ -112,10 +97,14 @@ instance GHasSqlFieldTypes [String] fields => GHasSqlFieldTypes G.Datatype (Eith
       error $ name <> " constructor " <> cName <> " has no selectors"
     G.Datatype name _ -> error $ name <> " must have exactly one constructor"
 
-instance (HasSqlType a, GHasSqlFieldTypes [String] as) => GHasSqlFieldTypes [String] (a, as) where
+instance (HasSqlType a, GHasSqlColumnTypes [String] as) => GHasSqlColumnTypes [String] (a, as) where
   gSqlFieldTypes (_:as) = sqlType @a : gSqlFieldTypes @_ @as as
   gSqlFieldTypes []     = error "impossible"
 
-instance GHasSqlFieldTypes [String] () where
+instance GHasSqlColumnTypes [String] () where
   gSqlFieldTypes [] = []
   gSqlFieldTypes _  = error "impossible"
+
+-- | Values that have both SQL types and named columns for each field.
+class HasSqlFields a where
+  sqlFields :: [(SqlTypeId, ColumnName)]

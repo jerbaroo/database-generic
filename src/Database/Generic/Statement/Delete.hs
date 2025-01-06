@@ -11,7 +11,7 @@ import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Table (TableName)
 
 -- | Delete values of type 'a'.
-data Delete (r :: Returning a) = Delete
+data Delete (r :: Returning) = Delete
   { from   :: !TableName
   , where' :: !Wheres
   }

@@ -16,7 +16,7 @@ instance Projection (Field fa a b, Field fc a c) a (b, c) where
   fieldTypes (fb, fc) = [fieldType fb, fieldType fc]
 
 -- TODO class ReturningFields
-type ReturningProjected :: forall r a b. r a -> b -> r b
+type ReturningProjected :: forall r1 b r2. r1 -> b -> r2
 type family ReturningProjected r b where
   ReturningProjected (MaybeOne _) b = MaybeOne b
 

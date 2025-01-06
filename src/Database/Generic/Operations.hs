@@ -6,8 +6,9 @@ import Database.Generic.Class qualified as Db
 import Database.Generic.Statement.Output (HasOutputType, OutputT, ParseOutput(..))
 import Database.Generic.Statement.Returning (Returning)
 import Database.Generic.Prelude
-import Database.Generic.Statement (Statement)
+import Database.Generic.Statement (Statement(..))
 import Database.Generic.Statement qualified as Statement
+import Database.Generic.Statement.Tx (CommitTx(..))
 import Database.Generic.Transaction (Tx, runTx)
 
 -- | Execute 'Statement' via the current database connection 'c'.
@@ -37,7 +38,7 @@ tx :: forall m c a.
 tx m = withConn \c -> runTx c $ m >>= \case
   Left  e1 -> pure $ Left e1
   Right a  ->
-    Database.Generic.Operations.execute Statement.StatementCommitTx >>= \case
+    Database.Generic.Operations.execute (StatementCommitTx CommitTx) >>= \case
       Left  e2 -> pure $ Left e2
       Right () -> pure $ Right a
 
@@ -45,9 +46,9 @@ tx m = withConn \c -> runTx c $ m >>= \case
 
 -- | Slim wrapper over 'Db.execute' which also parses output.
 executeAndParse
-  :: forall m t c a r. (HasOutputType r, MonadDb m t c, ParseOutput r)
+  :: forall m t c r. (HasOutputType r, MonadDb m t c, ParseOutput r)
   => c
-  -> t (Statement (r :: Returning a))
+  -> t (Statement (r :: Returning))
   -> m (t (Either (Db.Error m t) (OutputT r)))
 executeAndParse c ts = fmap f <$> Db.execute @_ @t c ts
  where

@@ -18,7 +18,7 @@ instance Serialize Columns db where
   serialize (Columns cs) = intercalate ", " cs
 
 -- | Select values of type 'a'.
-data Select (r :: Returning a) = Select
+data Select (r :: Returning) = Select
   { columns :: !Columns
   , from    :: !TableName
   , where'  :: !Wheres

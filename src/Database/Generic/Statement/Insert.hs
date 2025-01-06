@@ -12,7 +12,7 @@ import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Table (TableName)
 
 -- | Insert values of type 'a'.
-data Insert (r :: Returning a) = Insert
+data Insert (r :: Returning) = Insert
   { table   :: !TableName
   , columns :: ![String]
   , rows    :: ![Values]

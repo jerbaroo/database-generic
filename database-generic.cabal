@@ -17,7 +17,8 @@ common warnings
 
 library
     import:           warnings
-    exposed-modules:  Database.Generic.Class,
+    exposed-modules:  Database.Generic,
+                      Database.Generic.Class,
                       Database.Generic.Database,
                       Database.Generic.Entity,
                       Database.Generic.Entity.FromSql,
@@ -35,6 +36,7 @@ library
                       Database.Generic.Statement.Projection,
                       Database.Generic.Statement.Returning,
                       Database.Generic.Statement.Select,
+                      Database.Generic.Statement.Tx,
                       Database.Generic.Statement.Values,
                       Database.Generic.Statement.Where,
                       Database.Generic.Table,

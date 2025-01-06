@@ -11,7 +11,7 @@ import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Table (TableName)
 
--- | Insert values of type 'a'.
+-- | Insert statement with return type 'r'.
 data Insert (r :: Returning) = Insert
   { table   :: !TableName
   , columns :: ![String]

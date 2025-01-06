@@ -4,11 +4,11 @@ import Database.Generic.Entity (Entity)
 import Database.Generic.Entity qualified as Entity
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.ToSql (ToSqlValue)
+import Database.Generic.Statement.Fields (SelectFields(..), fieldNames)
 import Database.Generic.Statement.Where (Wheres(..), idEquals)
 import Database.Generic.Statement.Returning (Returning(..))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
-import Database.Generic.Statement.Projection (Projectible(project), fieldTypes)
 import Database.Generic.Table (TableName)
 
 data Columns = ColumnsAll | Columns ![String]
@@ -17,16 +17,16 @@ instance Serialize Columns db where
   serialize ColumnsAll   = "*"
   serialize (Columns cs) = intercalate ", " cs
 
--- | Select values of type 'a'.
+-- | Select statement with return type 'r'.
 data Select (r :: Returning) = Select
   { columns :: !Columns
   , from    :: !TableName
   , where'  :: !Wheres
   }
 
-instance Projectible Select where
-  project s p = Select
-    { columns = Columns $ fieldTypes p
+instance SelectFields Select where
+  fields s p = Select
+    { columns = Columns $ fieldNames p
     , from    = s.from
     , where'  = s.where'
     }

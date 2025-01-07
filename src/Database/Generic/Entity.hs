@@ -12,12 +12,10 @@ import Database.Generic.Field (Field(..), field, fieldName)
 -- you can derive an instance via 'Generic' needing only to specify primary key:
 -- > data Person { name :: String, age :: Int }
 -- >   deriving (Entity "name", Generic)
-class ( FromSqlValues a
-      , HasSqlColumns a
-      , ToSqlValues   a
+class (FromSqlValues a, HasSqlColumns a, ToSqlValues a
       ) => Entity f a | a -> f where
 
-  primaryKeyField         :: forall b. (HasField f a b, ToSqlValue b) => Field f a b
+  primaryKeyField         :: forall b. (HasField f a b, ToSqlValue b)             => Field f a b
   default primaryKeyField :: forall b. (HasField f a b, ToSqlValue b, Typeable f) => Field f a b
   primaryKeyField = field @f @a
 
@@ -25,10 +23,11 @@ class ( FromSqlValues a
   default tableName :: Typeable a => TableName
   tableName = TableName $ toLower <$> showType @a
 
+-- | 'Entity' but with additional type parameter 'b' in scope.
 type EntityP f a b = (Entity f a, HasField f a b, ToSqlValue b)
 
 primaryKey :: forall a f b. (EntityP f a b) => a -> b
-primaryKey a = let (Field _ f) = primaryKeyField @_ @a in f a
+primaryKey = let (Field _ f) = primaryKeyField @_ @a in f
 
 primaryKeyFieldName :: forall a f b. (EntityP f a b) => String
 primaryKeyFieldName = fieldName $ primaryKeyField @_ @a

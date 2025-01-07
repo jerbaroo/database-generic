@@ -52,7 +52,7 @@ instance MonadDb AppM Identity PSQL.Connection where
   execute conn (Identity (s :: s)) = fmap (Identity . Right) $ liftIO do -- Ignoring errors.
     let x = debug $ serialize @_ @PostgreSQL s
     case outputType @s of
-      OutputTypeAffected -> OutputAffected <$> HDBC.run conn x []
+      OutputTypeAffected -> (\x -> OutputAffected $ debug x) <$> HDBC.run conn x []
       OutputTypeNada     -> OutputNada     <$  HDBC.runRaw conn x
       OutputTypeRows     -> OutputRows     <$> HDBC.quickQuery' conn x []
 
@@ -76,7 +76,9 @@ main = do
   _ <- runAppM e $ Db.tx $ Db.execute $ Db.createTable' @Person True
   _ <- runAppM e $ Db.tx $ Db.execute $ Db.deleteById' @Person "John"
   let john = Person "John" 21
-  f <- runAppM e $ Db.tx $ Db.execute $ Db.insertOne' john
+  f <- runAppM e $ Db.executeTx $ Db.insertOne' $ john{age=55 }
+  print f
+  f <- runAppM e $ Db.executeTx $ Db.insertMany' [john{name="Foo"}, john {name = "Mary"}]
   print f
   print john
   print $ primaryKeyFieldName @Person
@@ -88,6 +90,6 @@ main = do
   print asSql
   let john' = fromSqlValues asSql
   print @Person john'
-  print =<< runAppM e (Db.tx $ Db.execute $ Db.selectById' @Person john.name)
+  print =<< runAppM e (Db.executeTx $ Db.selectById' @Person john.name)
   let x = fields (Db.selectById @Person john.name) (field @"age" @Person)
   print =<< runAppM e (Db.tx $ Db.execute $ Db.StatementSelect $ x)

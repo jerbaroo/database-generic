@@ -6,7 +6,7 @@ import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.ToSql (ToSqlValue)
 import Database.Generic.Statement.Fields (SelectFields(..), fieldNames)
 import Database.Generic.Statement.Where (Wheres(..), idEquals)
-import Database.Generic.Statement.Returning (Returning(..))
+import Database.Generic.Statement.Returning (StatementType(..))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Table (TableName)
@@ -18,7 +18,7 @@ instance Serialize Columns db where
   serialize (Columns cs) = intercalate ", " cs
 
 -- | Select statement with return type 'r'.
-data Select (r :: Returning) = Select
+data Select (r :: StatementType) = Select
   { columns :: !Columns
   , from    :: !TableName
   , where'  :: !Wheres

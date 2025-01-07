@@ -6,21 +6,21 @@ import Database.Generic.Statement.Delete (Delete)
 import Database.Generic.Statement.Insert (Insert)
 import Database.Generic.Statement.Output (HasOutputType(..))
 import Database.Generic.Statement.Select (Select)
-import Database.Generic.Statement.Tx (BeginTx, CommitTx(..))
-import Database.Generic.Statement.Returning (Returning(..))
+import Database.Generic.Statement.Tx qualified as Tx
+import Database.Generic.Statement.Returning (StatementType(..))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 
 -- | Sum type of the various statements.
-data Statement r where
-  StatementBeginTx     :: !BeginTx                                   -> Statement Nada
-  StatementCommitTx    :: !CommitTx                                  -> Statement Nada
-  StatementCreateTable :: !(CreateTable a)                           -> Statement Nada
-  StatementDelete      :: !(Delete x)                                -> Statement x
-  StatementInsert      :: !(Insert x)                                -> Statement x
-  StatementSelect      :: !(Select x)                                -> Statement x
-  Statements           :: !([StatementE], Statement x, [StatementE]) -> Statement x
-  StatementX           :: String                                     -> Statement x
+data Statement (s :: StatementType) where
+  StatementBeginTx     :: !Tx.BeginTx      -> Statement Nada
+  StatementCommitTx    :: !Tx.CommitTx     -> Statement Nada
+  StatementCreateTable :: !(CreateTable a) -> Statement Nada
+  StatementDelete      :: !(Delete x)      -> Statement x
+  StatementInsert      :: !(Insert x)      -> Statement x
+  StatementSelect      :: !(Select x)      -> Statement x
+  Statements           :: ![StatementE]    -> Statement x
+  StatementX           :: String           -> Statement x
 
 instance HasOutputType r => HasOutputType (Statement r) where
   outputType = outputType @r
@@ -35,13 +35,12 @@ instance
   serialize (StatementDelete      s) = serialize @_ @db s
   serialize (StatementInsert      s) = serialize @_ @db s
   serialize (StatementSelect      s) = serialize @_ @db s
-  serialize (Statements (as, b, cs)) =
-    unwords $ serialize @_ @db <$> (as <> [StatementE b] <> cs)
+  serialize (Statements          ss) = unwords $ serialize @_ @db <$> ss
   serialize (StatementX           s) = s
 
 -- | Typeclass to lift various statements into 'Statement'.
 class ToStatement s where
-  type R s :: Returning
+  type R s :: StatementType
   statement :: s -> Statement (R s)
 
 instance ToStatement (CreateTable a) where
@@ -69,12 +68,20 @@ instance
   ) => Serialize StatementE db where
   serialize (StatementE s) = serialize @_ @db s
 
+-- | Return type of a statement after a 'CommitTx' is appended.
+type        CommitType :: StatementType -> StatementType
+type family CommitType a where
+  CommitType (MaybeOne a) = MaybeOne a
+  CommitType _            = Nada
+
+-- class AppendCommit s1 s2 where
+
 -- | Append a commit statement to a 'Statement'.
-commitTx :: Statement r -> Statement r
-commitTx (Statements (as, b, cs)) =
-  Statements (as, b, cs <> [StatementE $ StatementCommitTx CommitTx])
+commitTx :: Statement r -> Statement (CommitType r)
+commitTx (Statements ss) = undefined
+  -- Statements (as <> [StatementE b], StatementCommitTx CommitTx)
 commitTx s = commitTx $ toStatements s
 
 toStatements :: Statement r -> Statement r
 toStatements s@Statements{} = s
-toStatements s              = Statements ([], s, [])
+toStatements s              = undefined -- Statements ([], s)

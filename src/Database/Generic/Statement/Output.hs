@@ -1,3 +1,4 @@
+{-# LANGUAGE UndecidableInstances #-}
 
 module Database.Generic.Statement.Output where
 
@@ -9,8 +10,8 @@ import Database.Generic.Statement.Returning (StatementType(..))
 -- | Output of an SQL statement.
 data Output
   = OutputAffected !Integer
-  | OutputRows     ![[SqlValue]]
   | OutputNada
+  | OutputRows     ![[SqlValue]]
   deriving Show
 
 -- | The different types of output from SQL statements.
@@ -18,9 +19,12 @@ data Output
 -- These constructors correspond to the constructors of 'Output'.
 data OutputType = OutputTypeAffected | OutputTypeRows | OutputTypeNada
 
--- | The type of output expected from an SQL statement of type 's'.
+-- | The type of output expected from execution of a statement of type 's'.
 class HasOutputType s where
   outputType :: OutputType
+
+instance HasOutputType CommitTx where
+  outputType = OutputTypeNada
 
 instance HasOutputType (ManyAffected a) where
   outputType = OutputTypeAffected
@@ -33,6 +37,14 @@ instance HasOutputType Nada where
 
 instance HasOutputType (OneAffected a) where
   outputType = OutputTypeAffected
+
+type Head :: forall a. [a] -> a
+type family Head xs where
+  Head '[a]   = a
+  Head (a:as) = a
+
+instance HasOutputType (Head s) => HasOutputType (s :: [StatementType]) where
+  outputType = outputType @(Head s)
 
 data OutputError
   = ExpectedMaybeOne       !Output
@@ -48,9 +60,14 @@ instance Exception OutputError where
   displayException (ExpectedOutputAffected o) = "Expected OutputAffected but got " <> show o
 
 -- | Parse 'Output' into the value expected from executing a statement.
-class ParseOutput (s :: StatementType) where
+class ParseOutput s where
   type OutputT s
   parse :: Output -> Either OutputError (OutputT s)
+
+instance ParseOutput CommitTx where
+  type OutputT CommitTx = ()
+  parse OutputNada      = Right ()
+  parse output          = Left $ ExpectedNada output
 
 instance ParseOutput (ManyAffected a) where
   type OutputT (ManyAffected a) = ()
@@ -72,3 +89,7 @@ instance ParseOutput (OneAffected a) where
   type OutputT (OneAffected a) = ()
   parse (OutputAffected 1)     = Right ()
   parse output                 = Left $ ExpectedOneAffected output
+
+instance ParseOutput (Head s) => ParseOutput (s :: [StatementType]) where
+  type OutputT s = OutputT (Head s)
+  parse = parse @(Head s)

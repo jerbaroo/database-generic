@@ -57,8 +57,8 @@ instance MonadDb AppM Identity PSQL.Connection where
     let x = debug $ serialize @_ @PostgreSQL s
     case outputType @s of
       OutputTypeAffected -> OutputAffected . debug <$> HDBC.run conn x []
-      OutputTypeNada     -> OutputNada <$  HDBC.runRaw conn x
-      OutputTypeRows     -> OutputRows <$> HDBC.quickQuery' conn x []
+      OutputTypeNada     -> debug OutputNada <$  HDBC.runRaw conn x
+      OutputTypeRows     -> OutputRows . debug <$> HDBC.quickQuery' conn x []
 
 -- | Enable 'AppM' to connect to PostgreSQL.
 instance MonadDbNewConn AppM PSQL.Connection where
@@ -66,27 +66,11 @@ instance MonadDbNewConn AppM PSQL.Connection where
 
 main :: IO ()
 main = do
-  let e = env "127.0.0.1" 5432 "postgres" "demo" "demo"
-  -- Create table if not exists, twice.
-  runAppM e $ tx_ do
-    liftIO . print =<< execute (createTable @Person True)
-    liftIO . print =<< execute (createTable @Person True)
-    pure $ Right ()
-  -- Delete by ID.
-  _ <- runAppM e $ tx $ execute $ deleteById @Person "John"
+  let e    = env "127.0.0.1" 5432 "postgres" "demo" "demo"
   let john = Person "John" 21
-  -- Insert one.
-  print =<< runAppM e (executeTx $ insertOne $ john{age=55 })
-  -- Insert two.
-  print =<< runAppM e do
-    executeTx $ insertMany [john{name="Foo"}, john {name = "Mary"}]
-  -- Select by ID.
-  print =<< runAppM e (executeTx $ selectById @Person john.name)
-  -- Select specific fields by ID.
-  runAppM e $ tx_ do
-    liftIO . print =<< execute do
-      selectById @Person john.name ==> field @"age" @Person
-    pure $ Right ()
+  let p :: forall a. Show a => a -> IO ()
+      p = print
+  let br = putStrLn "\n"
   print $ Db.primaryKeyFieldName @Person
   print $ Db.primaryKey john
   print $ toSqlValue $ Db.primaryKey john
@@ -94,3 +78,26 @@ main = do
   print $ sqlColumnTypes @Person
   print $ toSqlValues john
   print @Person $ fromSqlValues $ toSqlValues john
+  br
+  -- Create table if not exists, twice.
+  runAppM e $ tx_ $ execute $ createTable @Person True
+  br
+  -- Delete All.
+  p =<< runAppM e (tx $ execute $ deleteAll @Person)
+  br
+  -- Delete by ID.
+  p =<< runAppM e (tx $ execute $ deleteById @Person "John")
+  br
+  -- Insert one.
+  p =<< runAppM e (executeTx $ insertOne $ john{age=55 })
+  br
+  -- Insert two.
+  p =<< runAppM e do
+    executeTx $ insertMany [john{name="Foo"}, john {name = "Mary"}]
+  -- Select by ID.
+  br
+  p =<< runAppM e (tx_ $ execute $ selectById @Person john.name)
+  -- Select specific fields by ID.
+  br
+  p =<< runAppM e ( tx_ $ execute $
+    selectById @Person john.name ==> field @"age" @Person )

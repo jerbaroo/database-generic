@@ -10,7 +10,6 @@ import Database.Generic.Statement.Returning (NowReturning, Returning)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Table (TableName)
-import Witch qualified as W
 
 data Columns = All | Some ![String]
 
@@ -24,7 +23,7 @@ instance Serialize Columns db where
 data Select (o :: OneOrMany) fs a = Select
   { columns :: !Columns
   , from    :: !TableName
-  , where'  :: !(Where a)
+  , where'  :: !(Maybe (Where a))
   }
 
 type instance Returning (Select o fs _) = fs
@@ -39,20 +38,25 @@ instance ReturningFields (Select o a a) where
     }
 
 instance Serialize SqlValue db => Serialize (Select o fs a) db where
-  serialize s = unwords
-    [ "SELECT", serialize s.columns
-    , "FROM", serialize s.from
-    , "WHERE", serialize @_ @db s.where'
-    , ";"
-    ]
+  serialize s = unwords $
+    ["SELECT", serialize s.columns, "FROM", serialize s.from ]
+    <> maybe [] (\w -> ["WHERE", serialize @_ @db w]) s.where'
+    <> [ ";" ]
+
+selectAll :: forall a f. Entity f a => Select Many a a
+selectAll = Select
+  { columns = All
+  , from    = Entity.tableName @_ @a
+  , where'  = Nothing
+  }
 
 selectById :: forall a f b.
   (Entity f a, HasField f a b, ToSqlValue b) => b -> Select One a a
 selectById b = Select
   { columns = All
   , from    = Entity.tableName @_ @a
-  , where'  = W.from $ idEquals @a b
+  , where'  = Just $ idEquals @a b
   }
 
 instance Whereable (Select o fs a) a where
-  where' s w = s { where' = s.where' `And` W.from w }
+  where' s w = s { where' = s.where' <&> (`And` w) }

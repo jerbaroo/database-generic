@@ -53,17 +53,19 @@ instance HasOutputType (Head s) => HasOutputType (s :: [StatementType]) where
   outputType = outputType @(Head s)
 
 data OutputError
-  = ExpectedMaybeOne       !Output
-  | ExpectedNada           !Output
-  | ExpectedOneAffected    !Output
-  | ExpectedOutputAffected !Output
+  = ExpectedMaybeOne         !Output
+  | ExpectedMaybeOneAffected !Output
+  | ExpectedNada             !Output
+  | ExpectedOneAffected      !Output
+  | ExpectedOutputAffected   !Output
   deriving Show
 
 instance Exception OutputError where
-  displayException (ExpectedMaybeOne       o) = "Expected 0 or 1 rows but got " <> show o
-  displayException (ExpectedNada           o) = "Expected OutputNada but got " <> show o
-  displayException (ExpectedOneAffected    o) = "Expected one affected but got " <> show o
-  displayException (ExpectedOutputAffected o) = "Expected OutputAffected but got " <> show o
+  displayException (ExpectedMaybeOne         o) = "Expected 0 or 1 rows but got " <> show o
+  displayException (ExpectedMaybeOneAffected o) = "Expected 0 or 1 affected but got " <> show o
+  displayException (ExpectedNada             o) = "Expected OutputNada but got " <> show o
+  displayException (ExpectedOneAffected      o) = "Expected one affected but got " <> show o
+  displayException (ExpectedOutputAffected   o) = "Expected OutputAffected but got " <> show o
 
 -- | Parse 'Output' into the return value expected from executing a statement.
 class ParseOutput s where
@@ -87,8 +89,9 @@ instance ParseOutput (CreateTable a) where
 
 instance ParseOutput (Delete D.One a) where
   type OutputT (Delete D.One a) = ()
+  parse (OutputAffected 0)      = Right ()
   parse (OutputAffected 1)      = Right ()
-  parse output                  = Left $ ExpectedOneAffected output
+  parse output                  = Left $ ExpectedMaybeOneAffected output
 
 instance ParseOutput (Delete D.Many a) where
   type OutputT (Delete D.Many a) = ()

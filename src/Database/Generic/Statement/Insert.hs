@@ -5,20 +5,21 @@ import Database.Generic.Entity (Entity)
 import Database.Generic.Entity qualified as Entity
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.ToSql (HasSqlColumnNames(..), toSqlValues)
-import Database.Generic.Statement.Returning (StatementType(..))
-import Database.Generic.Statement.Values (Values(..))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
+import Database.Generic.Statement.Values (Values(..))
 import Database.Generic.Table (ColumnName, TableName)
 
--- | Insert statement with return type 'r'.
-data Insert (r :: StatementType) = Insert
+data OneOrMany = One | Many
+
+-- | Insert one or many values of type 'a'.
+data Insert (o :: OneOrMany) a = Insert
   { table   :: !TableName
   , columns :: ![ColumnName]
   , rows    :: ![Values]
   }
 
-instance Serialize SqlValue db => Serialize (Insert r) db where
+instance Serialize SqlValue db => Serialize (Insert o a) db where
   serialize i = unwords
     [ "INSERT INTO", serialize i.table
     , "(", intercalate ", " $ from <$> i.columns, ") VALUES"
@@ -26,14 +27,14 @@ instance Serialize SqlValue db => Serialize (Insert r) db where
     , ";"
     ]
 
-insertOne :: forall a f. Entity f a => a -> Insert (OneAffected a)
+insertOne :: forall a f. Entity f a => a -> Insert One a
 insertOne a = Insert
   { table   = Entity.tableName @_ @a
   , columns = sqlColumnNames @a
   , rows    = [Values $ toSqlValues a]
   }
 
-insertMany :: forall a f. Entity f a => [a] -> Insert (ManyAffected a)
+insertMany :: forall a f. Entity f a => [a] -> Insert Many a
 insertMany as = Insert
   { table   = Entity.tableName @_ @a
   , columns = sqlColumnNames @a

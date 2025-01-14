@@ -4,11 +4,11 @@ import Database.Generic.Prelude
 
 type FieldName = String
 
--- | Value-level representation of a named-field of a data type.
+-- | Value-level representation of field 'f' of type 'b' belong to 'a'.
 data Field f a b where
   Field
     :: HasField f a b
-    => { name :: FieldName, get :: (a -> b) }
+    => { name :: FieldName, get :: a -> b }
     -> Field f a b
 
 -- | Construct a 'Field'.

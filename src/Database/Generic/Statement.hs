@@ -2,22 +2,22 @@ module Database.Generic.Statement where
 
 import Database.Generic.Entity.SqlTypes (SqlTypeId, SqlValue(..))
 import Database.Generic.Prelude
-import Database.Generic.Statement.CreateTable (CreateTable)
-import Database.Generic.Statement.Delete (Delete)
-import Database.Generic.Statement.Insert (Insert)
+import Database.Generic.Statement.CreateTable qualified as C
+import Database.Generic.Statement.Delete qualified as D
+import Database.Generic.Statement.Insert qualified as I
 import Database.Generic.Statement.Output (HasOutputType(..))
-import Database.Generic.Statement.Select (Select)
+import Database.Generic.Statement.Select qualified as S
 import Database.Generic.Statement.Tx qualified as Tx
-import Database.Generic.Statement.Returning (Cons, StatementType(..))
+import Database.Generic.Statement.Type (Cons, StatementType(..))
 import Database.Generic.Serialize (Serialize(..))
 
 data Statement (s :: [StatementType]) where
   StatementBeginTx     :: !Tx.BeginTx        -> Statement '[BeginTx]
   StatementCommitTx    :: !Tx.CommitTx       -> Statement '[CommitTx]
-  StatementCreateTable :: !(CreateTable a)   -> Statement '[Nada]
-  StatementDelete      :: !(Delete x)        -> Statement '[x]
-  StatementInsert      :: !(Insert x)        -> Statement '[x]
-  StatementSelect      :: !(Select x)        -> Statement '[x]
+  StatementCreateTable :: !(C.CreateTable a) -> Statement '[CreateTable a]
+  StatementDelete      :: !(D.Delete o a)    -> Statement '[Delete o a]
+  StatementInsert      :: !(I.Insert o a)    -> Statement '[Insert o a]
+  StatementSelect      :: !(S.Select o fs a) -> Statement '[Select o fs a]
   Cons                 :: !(Statement '[s1]) -> (Statement s2) -> Statement (Cons s1 s2)
 
 instance HasOutputType r => HasOutputType (Statement r) where
@@ -45,30 +45,21 @@ instance ToStatement Tx.CommitTx where
   type S Tx.CommitTx = '[CommitTx]
   statement = StatementCommitTx
 
-instance ToStatement (CreateTable a) where
-  type S (CreateTable a) = '[Nada]
+instance ToStatement (C.CreateTable (a :: Type)) where
+  type S (C.CreateTable a) = '[CreateTable a]
   statement = StatementCreateTable
 
-instance ToStatement (Delete r) where
-  type S (Delete r) = '[r]
+instance ToStatement (D.Delete o (a :: Type)) where
+  type S (D.Delete o a) = '[Delete o a]
   statement = StatementDelete
 
-instance ToStatement (Insert r) where
-  type S (Insert r) = '[r]
+instance ToStatement (I.Insert o (a :: Type)) where
+  type S (I.Insert o a) = '[Insert o a]
   statement = StatementInsert
 
-instance ToStatement (Select s) where
-  type S (Select s) = '[s]
+instance ToStatement (S.Select o (fs :: Type) (a :: Type)) where
+  type S (S.Select o fs a) = '[Select o fs a]
   statement = StatementSelect
-
--- | A statement without return type information.
-data StatementE = forall r. StatementE (Statement r)
-
-instance
-  ( Serialize SqlTypeId db
-  , Serialize SqlValue db
-  ) => Serialize StatementE db where
-  serialize (StatementE s) = serialize @_ @db s
 
 -- | Append a commit statement to a 'Statement'.
 commitTx :: Statement s -> Statement (Cons CommitTx s)

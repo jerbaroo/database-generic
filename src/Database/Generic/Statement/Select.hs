@@ -4,34 +4,41 @@ import Database.Generic.Entity (Entity)
 import Database.Generic.Entity qualified as Entity
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.ToSql (ToSqlValue)
-import Database.Generic.Statement.Fields (SelectFields(..), fieldNames)
-import Database.Generic.Statement.Where (Wheres(..), idEquals)
-import Database.Generic.Statement.Returning (StatementType(..))
+import Database.Generic.Statement.Fields (ReturningFields(..), fieldNames)
+import Database.Generic.Statement.Where (Where(..), Whereable(..), idEquals)
+import Database.Generic.Statement.Returning (NowReturning, Returning)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Table (TableName)
+import Witch qualified as W
 
-data Columns = ColumnsAll | Columns ![String]
+data Columns = All | Some ![String]
+
+data OneOrMany = One | Many
 
 instance Serialize Columns db where
-  serialize ColumnsAll   = "*"
-  serialize (Columns cs) = intercalate ", " cs
+  serialize All       = "*"
+  serialize (Some cs) = intercalate ", " cs
 
--- | Select statement with return type 'r'.
-data Select (r :: StatementType) = Select
+-- | Select one or many values of type 'a', but only fields 'fs'.
+data Select (o :: OneOrMany) fs a = Select
   { columns :: !Columns
   , from    :: !TableName
-  , where'  :: !Wheres
+  , where'  :: !(Where a)
   }
 
-instance SelectFields Select where
+type instance Returning (Select o fs _) = fs
+
+type instance NowReturning (Select o a a) fs = Select o fs a
+
+instance ReturningFields (Select o a a) where
   fields s p = Select
-    { columns = Columns $ fieldNames p
+    { columns = Some $ fieldNames p
     , from    = s.from
     , where'  = s.where'
     }
 
-instance Serialize SqlValue db => Serialize (Select r) db where
+instance Serialize SqlValue db => Serialize (Select o fs a) db where
   serialize s = unwords
     [ "SELECT", serialize s.columns
     , "FROM", serialize s.from
@@ -40,9 +47,12 @@ instance Serialize SqlValue db => Serialize (Select r) db where
     ]
 
 selectById :: forall a f b.
-  (Entity f a, HasField f a b, ToSqlValue b) => b -> Select (MaybeOne a)
+  (Entity f a, HasField f a b, ToSqlValue b) => b -> Select One a a
 selectById b = Select
-  { columns = ColumnsAll
+  { columns = All
   , from    = Entity.tableName @_ @a
-  , where'  = Wheres [idEquals @a b]
+  , where'  = W.from $ idEquals @a b
   }
+
+instance Whereable (Select o fs a) a where
+  where' s w = s { where' = s.where' `And` W.from w }

@@ -5,38 +5,44 @@ module Database.Generic.Statement.Output where
 import Database.Generic.Prelude
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.FromSql (FromSqlValues(..))
-import Database.Generic.Statement.Returning (StatementType(..))
+import Database.Generic.Statement.Delete qualified as D
+import Database.Generic.Statement.Insert qualified as I
+import Database.Generic.Statement.Select qualified as S
+import Database.Generic.Statement.Type (StatementType(..))
 
--- | Output of an SQL statement.
+-- | Output from executing an SQL statement.
 data Output
   = OutputAffected !Integer
   | OutputNada
-  | OutputRows     ![[SqlValue]]
+  | OutputRows ![[SqlValue]]
   deriving Show
 
--- | The different types of output from SQL statements.
+-- | The different types of output from executing SQL statements.
 --
 -- These constructors correspond to the constructors of 'Output'.
-data OutputType = OutputTypeAffected | OutputTypeRows | OutputTypeNada
+data OutputType = OutputTypeAffected | OutputTypeNada | OutputTypeRows
 
--- | The type of output expected from execution of a statement of type 's'.
+-- | The type of output expected from executing a statement of type 's'.
 class HasOutputType s where
   outputType :: OutputType
+
+instance HasOutputType BeginTx where
+  outputType = OutputTypeNada
 
 instance HasOutputType CommitTx where
   outputType = OutputTypeNada
 
-instance HasOutputType (ManyAffected a) where
-  outputType = OutputTypeAffected
-
-instance HasOutputType (MaybeOne a) where
-  outputType = OutputTypeRows
-
-instance HasOutputType Nada where
+instance HasOutputType (CreateTable a) where
   outputType = OutputTypeNada
 
-instance HasOutputType (OneAffected a) where
+instance HasOutputType (Delete o a) where
   outputType = OutputTypeAffected
+
+instance HasOutputType (Insert o a) where
+  outputType = OutputTypeAffected
+
+instance HasOutputType (Select o fs a) where
+  outputType = OutputTypeRows
 
 type Head :: forall a. [a] -> a
 type family Head xs where
@@ -59,37 +65,58 @@ instance Exception OutputError where
   displayException (ExpectedOneAffected    o) = "Expected one affected but got " <> show o
   displayException (ExpectedOutputAffected o) = "Expected OutputAffected but got " <> show o
 
--- | Parse 'Output' into the value expected from executing a statement.
+-- | Parse 'Output' into the return value expected from executing a statement.
 class ParseOutput s where
   type OutputT s
   parse :: Output -> Either OutputError (OutputT s)
+
+instance ParseOutput BeginTx where
+  type OutputT BeginTx = ()
+  parse OutputNada     = Right ()
+  parse output         = Left $ ExpectedNada output
 
 instance ParseOutput CommitTx where
   type OutputT CommitTx = ()
   parse OutputNada      = Right ()
   parse output          = Left $ ExpectedNada output
 
-instance ParseOutput (ManyAffected a) where
-  type OutputT (ManyAffected a) = ()
-  parse (OutputAffected _)      = Right ()
+instance ParseOutput (CreateTable a) where
+  type OutputT (CreateTable a) = ()
+  parse OutputNada             = Right ()
+  parse output                 = Left $ ExpectedNada output
+
+instance ParseOutput (Delete D.One a) where
+  type OutputT (Delete D.One a) = ()
+  parse (OutputAffected 1)      = Right ()
   parse output                  = Left $ ExpectedOneAffected output
 
-instance forall a. FromSqlValues a => ParseOutput (MaybeOne a) where
-  type OutputT (MaybeOne a) = Maybe a
-  parse (OutputRows [])     = Right Nothing
-  parse (OutputRows [row])  = Right $ Just $ fromSqlValues row
-  parse output              = Left  $ ExpectedMaybeOne output
+instance ParseOutput (Delete D.Many a) where
+  type OutputT (Delete D.Many a) = ()
+  parse (OutputAffected _)       = Right ()
+  parse output                   = Left $ ExpectedOneAffected output
 
-instance ParseOutput Nada where
-  type OutputT Nada = ()
-  parse OutputNada  = Right ()
-  parse output      = Left $ ExpectedNada output
+instance ParseOutput (Insert I.One a) where
+  type OutputT (Insert I.One a) = ()
+  parse (OutputAffected 1)      = Right ()
+  parse output                  = Left $ ExpectedOneAffected output
 
-instance ParseOutput (OneAffected a) where
-  type OutputT (OneAffected a) = ()
-  parse (OutputAffected 1)     = Right ()
-  parse output                 = Left $ ExpectedOneAffected output
+instance ParseOutput (Insert I.Many a) where
+  type OutputT (Insert I.Many a) = ()
+  parse (OutputAffected _)       = Right ()
+  parse output                   = Left $ ExpectedOneAffected output
 
+instance forall fs a. FromSqlValues fs => ParseOutput (Select S.One fs a) where
+  type OutputT (Select S.One fs a) = Maybe fs
+  parse (OutputRows [])            = Right Nothing
+  parse (OutputRows [row])         = Right $ Just $ fromSqlValues row
+  parse output                     = Left  $ ExpectedMaybeOne output
+
+instance forall fs a. FromSqlValues fs => ParseOutput (Select S.Many fs a) where
+  type OutputT (Select S.Many fs a) = [fs]
+  parse (OutputRows rows)           = Right $ fromSqlValues <$> rows
+  parse output                      = Left  $ ExpectedMaybeOne output
+
+-- TODO this needs to be made smarter. Requires knowledge of SQL behaviour.
 instance ParseOutput (Head s) => ParseOutput (s :: [StatementType]) where
   type OutputT s = OutputT (Head s)
   parse = parse @(Head s)

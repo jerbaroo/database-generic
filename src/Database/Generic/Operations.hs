@@ -6,7 +6,7 @@ import Database.Generic.Prelude
 import Database.Generic.Statement (Statement(..), ToStatement(..))
 import Database.Generic.Statement qualified as Statement
 import Database.Generic.Statement.Output (HasOutputType, OutputT, ParseOutput(..))
-import Database.Generic.Statement.Returning (StatementType(..), Cons)
+import Database.Generic.Statement.Type (StatementType(..), Cons)
 import Database.Generic.Statement.Tx qualified as Tx
 import Database.Generic.Transaction (Tx, runTx)
 

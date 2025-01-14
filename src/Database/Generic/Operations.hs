@@ -13,41 +13,57 @@ import Database.Generic.Transaction (Tx, runTx)
 
 -- | Execute 'Statement' via the current database connection 'c'.
 execute :: forall m c r.
-  (HasOutputType r, MonadDb m Identity c, MonadDbHasConn m c, ParseOutput r) =>
-  Statement r -> m (Either (Error m Identity) (OutputT r))
+  ( HasOutputType r
+  , MonadDb m Identity c
+  , MonadDbHasConn m c
+  , ParseOutput r
+  )
+  => Statement r
+  -> m (Either (Error m Identity) (OutputT r))
 execute =
   fmap extract . (askConn >>=) . flip (executeAndParse @_ @Identity) . pure
 
 -- | Like 'execute' but each 'Statement' is appended with a commit statement.
 executeTx :: forall m c r.
-  (HasOutputType (Cons CommitTx r), MonadDb m Identity c, MonadDbWithConn m c, ParseOutput (Cons CommitTx r)) =>
-  Statement r -> m (Either (Error m Identity) (OutputT (Cons CommitTx r)))
+  ( HasOutputType (Cons CommitTx r)
+  , MonadDb m Identity c
+  , MonadDbWithConn m c
+  , ParseOutput (Cons CommitTx r)
+  )
+  => Statement r
+  -> m (Either (Error m Identity) (OutputT (Cons CommitTx r)))
 executeTx = fmap extract . withConn .
   flip (executeAndParse @_ @Identity) . pure . Statement.commitTx
 
 -- | Like 'executeTx' but shape of input and output is of type 't'.
 executeTxs :: forall m t c r.
-  (HasOutputType (Cons CommitTx r), MonadDb m t c, MonadDbNewConn m c, ParseOutput (Cons CommitTx r)) =>
-  t (Statement r) -> m (t (Either (Error m t) (OutputT (Cons CommitTx r))))
+  ( HasOutputType (Cons CommitTx r)
+  , MonadDb m t c
+  , MonadDbNewConn m c
+  , ParseOutput (Cons CommitTx r)
+  )
+  => t (Statement r)
+  -> m (t (Either (Error m t) (OutputT (Cons CommitTx r))))
 executeTxs = (newConn >>=) . flip executeAndParse . fmap Statement.commitTx
 
 -- | Run the provided actions, then run a commit statement.
 tx :: forall m c a.
-  (MonadDb m Identity c, MonadDbWithConn m c) =>
-  Tx m c (Either (Error m Identity) a) -> m (Either (Error m Identity) a)
+  (MonadDb m Identity c, MonadDbWithConn m c)
+  => Tx m c (Either (Error m Identity) a)
+  -> m (Either (Error m Identity) a)
 tx m = withConn \c -> runTx c $ m >>= \case
   Left  e1 -> pure $ Left e1
-  Right a  -> pure $ Right a
-    -- Database.Generic.Operations.execute (StatementCommitTx Tx.CommitTx)
-    -- >>= \case
-    --   Left  e2 -> pure $ Left e2
-    --   Right () -> pure $ Right a
+  Right a  ->
+    Database.Generic.Operations.execute (StatementCommitTx Tx.CommitTx)
+    >>= \case
+      Left  e2 -> pure $ Left e2
+      Right () -> pure $ Right a
 
 -- * Internal.
 
 -- | Slim wrapper over 'Db.execute' which also parses output.
-executeAndParse
-  :: forall m t c r. (HasOutputType r, MonadDb m t c, ParseOutput r)
+executeAndParse :: forall m t c r.
+  (HasOutputType r, MonadDb m t c, ParseOutput r)
   => c
   -> t (Statement r)
   -> m (t (Either (Db.Error m t) (OutputT r)))

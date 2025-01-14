@@ -10,7 +10,8 @@ class (Exception (Error m t), Functor t, Monad m) => MonadDb m t c | m -> c wher
   type Error m t = SomeException -- Default for convenience.
 
   -- | Information about the type of statement is thrown away at this point.
-  execute :: HasOutputType r => c -> t (Statement r) -> m (t (Either (Error m t) Output))
+  executeStatement :: HasOutputType r =>
+    c -> t (Statement r) -> m (t (Either (Error m t) Output))
 
   -- | Lift an 'OutputError' into the error type for this instance.
   outputError :: OutputError -> Error m t
@@ -19,14 +20,14 @@ class (Exception (Error m t), Functor t, Monad m) => MonadDb m t c | m -> c wher
 
 -- | Monads that can provide a dedicated NEW connection.
 class MonadDbNewConn m c where
-  newConn :: m c
+  newDbConn :: m c
 
 -- | Monads that can provide temporary dedicated access to a connection.
 class MonadDbWithConn m c where
-  withConn :: (c -> m a) -> m a
+  withDbConn :: (c -> m a) -> m a
 
 instance {-# OVERLAPPABLE #-} (Monad m, MonadDbNewConn m c) => MonadDbWithConn m c where
-  withConn = (newConn >>=)
+  withDbConn = (newDbConn >>=)
 
 -- * Internal
 
@@ -34,4 +35,4 @@ instance {-# OVERLAPPABLE #-} (Monad m, MonadDbNewConn m c) => MonadDbWithConn m
 --
 -- DON'T create instances of this typeclass unless you know what you're doing!
 class MonadDbHasConn m c where
-  askConn :: m c
+  askDbConn :: m c

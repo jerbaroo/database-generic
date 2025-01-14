@@ -38,23 +38,27 @@ instance
 
 -- | Typeclass to lift individual statements into 'Statement'.
 class ToStatement s where
-  type S s :: StatementType
-  statement :: s -> Statement '[S s]
+  type S s :: [StatementType]
+  statement :: s -> Statement (S s)
+
+instance ToStatement Tx.CommitTx where
+  type S Tx.CommitTx = '[CommitTx]
+  statement = StatementCommitTx
 
 instance ToStatement (CreateTable a) where
-  type S (CreateTable a) = Nada
+  type S (CreateTable a) = '[Nada]
   statement = StatementCreateTable
 
 instance ToStatement (Delete r) where
-  type S (Delete r) = r
+  type S (Delete r) = '[r]
   statement = StatementDelete
 
 instance ToStatement (Insert r) where
-  type S (Insert r) = r
+  type S (Insert r) = '[r]
   statement = StatementInsert
 
 instance ToStatement (Select s) where
-  type S (Select s) = s
+  type S (Select s) = '[s]
   statement = StatementSelect
 
 -- | A statement without return type information.

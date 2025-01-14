@@ -9,11 +9,11 @@ newtype Tx m c a = Tx (ReaderT c m a)
   deriving newtype (Applicative, Functor, Monad, MonadIO, MonadReader c)
 
 instance Monad m => MonadDbHasConn (Tx m c) c where
-  askConn = ask
+  askDbConn = ask
 
 instance MonadDb m t c => MonadDb (Tx m c) t c where
   type Error (Tx m c) t = Error m t
-  execute c s = Tx $ ReaderT $ const $ execute @m @t c s
+  executeStatement c = Tx . ReaderT . const . executeStatement @m @t c
   outputError = outputError @m @t
 
 runTx :: c -> Tx m c a -> m a

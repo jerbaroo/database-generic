@@ -46,6 +46,7 @@ library
                       comonad,
                       convertible,
                       extra,
+                      from-sum,
                       generics-eot,
                       HDBC,
                       mtl,

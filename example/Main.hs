@@ -12,29 +12,28 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.ByteString.Char8 qualified as BS
 import Data.Functor.Identity (Identity(..))
 import Data.Int (Int64)
-import Database.Generic qualified as Db
-import Database.Generic.Class (MonadDb(..), MonadDbNewConn(..))
+import Database.Generic
 import Database.Generic.Database (PostgreSQL)
-import Database.Generic.Entity (Entity(..), primaryKey, primaryKeyFieldName)
+import Database.Generic.Entity qualified as Db
 import Database.Generic.Entity.FromSql (fromSqlValues)
 import Database.Generic.Entity.ToSql (sqlColumnNames, sqlColumnTypes, toSqlValue, toSqlValues)
 import Database.Generic.Field (field)
-import Database.Generic.Operations qualified as Db
 import Database.Generic.Prelude (debug)
 import Database.Generic.Serialize (serialize)
-import Database.Generic.Statement qualified as Db
-import Database.Generic.Statement.Fields (fields)
 import Database.Generic.Statement.Output (Output(..), OutputType(..), outputType)
 import Database.HDBC qualified as HDBC
 import Database.HDBC.PostgreSQL qualified as PSQL
 import Database.PostgreSQL.Simple.Options as PSQL
 import GHC.Generics (Generic)
 
+-- | Data type we want to store in our database.
 data Person = Person { name :: String, age :: Int64 }
   deriving (Entity "name", Generic, Show)
 
-type Env = String -- Connection string to access DB.
+-- | Connection string to access DB.
+type Env = String
 
+-- | Construct a connection string.
 env :: String -> Int -> String -> String -> String -> Env
 env host port dbname user password =
   BS.unpack $ PSQL.toConnectionString $ PSQL.defaultOptions
@@ -45,51 +44,55 @@ env host port dbname user password =
     , password = pure password
     }
 
+-- | Our application monad.
 newtype AppM a = AppM (ReaderT Env IO a)
   deriving newtype (Applicative, Functor, Monad, MonadIO, MonadReader Env)
-
-instance MonadDb AppM Identity PSQL.Connection where
-  execute conn (Identity (s :: s)) = fmap (Identity . Right) $ liftIO do -- Ignoring errors.
-    let x = debug $ serialize @_ @PostgreSQL s
-    case outputType @s of
-      OutputTypeAffected -> (\x -> OutputAffected $ debug x) <$> HDBC.run conn x []
-      OutputTypeNada     -> OutputNada     <$  HDBC.runRaw conn x
-      OutputTypeRows     -> OutputRows     <$> HDBC.quickQuery' conn x []
-
-instance MonadDbNewConn AppM PSQL.Connection where
-  newConn = liftIO . PSQL.connectPostgreSQL =<< ask
 
 runAppM :: Env -> AppM a -> IO a
 runAppM e (AppM m) = runReaderT m e
 
+-- | Enable 'AppM' to communicate with PostgreSQL.
+instance MonadDb AppM Identity PSQL.Connection where
+  executeStatement conn (Identity (s :: s)) = fmap (Identity . Right) $ liftIO do -- TODO error handling.
+    let x = debug $ serialize @_ @PostgreSQL s
+    case outputType @s of
+      OutputTypeAffected -> OutputAffected . debug <$> HDBC.run conn x []
+      OutputTypeNada     -> OutputNada <$  HDBC.runRaw conn x
+      OutputTypeRows     -> OutputRows <$> HDBC.quickQuery' conn x []
+
+-- | Enable 'AppM' to connect to PostgreSQL.
+instance MonadDbNewConn AppM PSQL.Connection where
+  newDbConn = liftIO . PSQL.connectPostgreSQL =<< ask
+
 main :: IO ()
 main = do
   let e = env "127.0.0.1" 5432 "postgres" "demo" "demo"
-  pure ()
-  _ <- runAppM e $ Db.executeTx $ Db.createTable' @Person True
-  _ <- runAppM e $ Db.tx do
-    _ <- Db.execute $ Db.createTable' @Person True
-    x <- Db.execute $ Db.createTable' @Person True
+  _ <- runAppM e $ executeTx $ createTable @Person True
+  _ <- runAppM e $ tx do
+    _ <- execute $ createTable @Person True
+    x <- execute $ createTable @Person True
     liftIO $ print x
     liftIO $ print "ran AppM"
     pure $ Right ()
-  _ <- runAppM e $ Db.tx $ Db.execute $ Db.createTable' @Person True
-  _ <- runAppM e $ Db.tx $ Db.execute $ Db.deleteById' @Person "John"
+  _ <- runAppM e $ tx $ execute $ createTable @Person True
+  _ <- runAppM e $ tx $ execute $ deleteById @Person "John"
   let john = Person "John" 21
-  f <- runAppM e $ Db.executeTx $ Db.insertOne' $ john{age=55 }
+  f <- runAppM e $ executeTx $ insertOne $ john{age=55 }
   print f
-  f <- runAppM e $ Db.executeTx $ Db.insertMany' [john{name="Foo"}, john {name = "Mary"}]
+  f <- runAppM e $ executeTx $ insertMany [john{name="Foo"}, john {name = "Mary"}]
   print f
   print john
-  print $ primaryKeyFieldName @Person
-  print $ primaryKey john
-  print $ toSqlValue $ primaryKey john
+  print $ Db.primaryKeyFieldName @Person
+  print $ Db.primaryKey john
+  print $ toSqlValue $ Db.primaryKey john
   print $ sqlColumnNames @Person
   print $ sqlColumnTypes @Person
   let asSql = toSqlValues john
   print asSql
   let john' = fromSqlValues asSql
   print @Person john'
-  print =<< runAppM e (Db.executeTx $ Db.selectById' @Person john.name)
-  let x = fields (Db.selectById @Person john.name) (field @"age" @Person)
-  print =<< runAppM e (Db.tx $ Db.execute $ Db.StatementSelect $ x)
+  print =<< runAppM e (executeTx $ selectById @Person john.name)
+  runAppM e $ tx_ do
+    x <- execute (selectById @Person john.name ==> field @"age" @Person)
+    liftIO $ print x
+    pure $ Right ()

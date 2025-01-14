@@ -17,3 +17,9 @@ instance FieldsOf (Field fa a b, Field fc a c) a (b, c) where
 class SelectFields s where
   fields :: forall p b r. (FieldsOf p (ReturnType r) b) =>
     s r -> p -> s (Returning r b)
+
+infixl 4 ==>
+
+(==>) :: forall s p b r. (FieldsOf p (ReturnType r) b, SelectFields s)
+  => s r -> p -> s (Returning r b)
+(==>) = fields

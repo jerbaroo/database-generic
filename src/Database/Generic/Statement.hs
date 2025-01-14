@@ -33,8 +33,8 @@ instance
   serialize (StatementDelete      s) = serialize @_ @db s
   serialize (StatementInsert      s) = serialize @_ @db s
   serialize (StatementSelect      s) = serialize @_ @db s
-  serialize (Cons             s1 s2) =
-    serialize @_ @db s1 <> ";" <> serialize @_ @db s2
+  serialize (Cons             s2 s1) =
+    serialize @_ @db s1 <> serialize @_ @db s2
 
 -- | Typeclass to lift individual statements into 'Statement'.
 class ToStatement s where

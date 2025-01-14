@@ -7,8 +7,8 @@
 
 module Main where
 
-import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
-import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Reader (MonadReader(..), ReaderT(..))
+import Control.Monad.IO.Class (MonadIO(..))
 import Data.ByteString.Char8 qualified as BS
 import Data.Functor.Identity (Identity(..))
 import Data.Int (Int64)
@@ -67,32 +67,30 @@ instance MonadDbNewConn AppM PSQL.Connection where
 main :: IO ()
 main = do
   let e = env "127.0.0.1" 5432 "postgres" "demo" "demo"
-  _ <- runAppM e $ executeTx $ createTable @Person True
-  _ <- runAppM e $ tx do
-    _ <- execute $ createTable @Person True
-    x <- execute $ createTable @Person True
-    liftIO $ print x
-    liftIO $ print "ran AppM"
+  -- Create table if not exists, twice.
+  runAppM e $ tx_ do
+    liftIO . print =<< execute (createTable @Person True)
+    liftIO . print =<< execute (createTable @Person True)
     pure $ Right ()
-  _ <- runAppM e $ tx $ execute $ createTable @Person True
+  -- Delete by ID.
   _ <- runAppM e $ tx $ execute $ deleteById @Person "John"
   let john = Person "John" 21
-  f <- runAppM e $ executeTx $ insertOne $ john{age=55 }
-  print f
-  f <- runAppM e $ executeTx $ insertMany [john{name="Foo"}, john {name = "Mary"}]
-  print f
-  print john
+  -- Insert one.
+  print =<< runAppM e (executeTx $ insertOne $ john{age=55 })
+  -- Insert two.
+  print =<< runAppM e do
+    executeTx $ insertMany [john{name="Foo"}, john {name = "Mary"}]
+  -- Select by ID.
+  print =<< runAppM e (executeTx $ selectById @Person john.name)
+  -- Select specific fields by ID.
+  runAppM e $ tx_ do
+    liftIO . print =<< execute do
+      selectById @Person john.name ==> field @"age" @Person
+    pure $ Right ()
   print $ Db.primaryKeyFieldName @Person
   print $ Db.primaryKey john
   print $ toSqlValue $ Db.primaryKey john
   print $ sqlColumnNames @Person
   print $ sqlColumnTypes @Person
-  let asSql = toSqlValues john
-  print asSql
-  let john' = fromSqlValues asSql
-  print @Person john'
-  print =<< runAppM e (executeTx $ selectById @Person john.name)
-  runAppM e $ tx_ do
-    x <- execute (selectById @Person john.name ==> field @"age" @Person)
-    liftIO $ print x
-    pure $ Right ()
+  print $ toSqlValues john
+  print @Person $ fromSqlValues $ toSqlValues john

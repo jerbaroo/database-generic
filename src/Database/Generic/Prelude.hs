@@ -3,6 +3,8 @@ module Database.Generic.Prelude (debug, showType, showType', module X) where
 import Control.Comonad as X (Comonad(extract))
 import Control.Exception as X (Exception(displayException), SomeException, throw, toException)
 import Control.FromSum as X (fromEither, fromEitherM)
+import Control.Monad.Trans.Class as X (lift)
+import Control.Monad.Trans.Except as X (ExceptT(ExceptT), runExceptT)
 import Data.Convertible as X (Convertible(safeConvert), convert)
 import Data.Char as X (toLower)
 import Data.Either as X (Either(Left, Right), fromLeft, fromRight)

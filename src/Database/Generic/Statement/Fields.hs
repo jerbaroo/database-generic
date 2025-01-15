@@ -2,7 +2,16 @@ module Database.Generic.Statement.Fields where
 
 import Database.Generic.Entity.Field (Field(..))
 import Database.Generic.Entity.FieldName (FieldName)
+import Database.Generic.Prelude
+import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Statement.Returning (NowReturning, Returning)
+import Witch qualified as W
+
+data Fields = All | Some ![FieldName]
+
+instance Serialize Fields db where
+  serialize All       = "*"
+  serialize (Some cs) = intercalate ", " $ W.from <$> cs
 
 -- | Fields of 'a' that can be parsed into a 'b'.
 class FieldsOf f a b | f -> a, f -> b where

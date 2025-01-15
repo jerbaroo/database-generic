@@ -63,7 +63,7 @@ main :: IO ()
 main = do
   let e    = env "127.0.0.1" 5432 "postgres" "demo" "demo"
   let john = Person "John" 21
-  let br = putStrLn "\n"
+  let br   = putStrLn "\n"
   br -- Create table if not exists, twice.
   runAppM e $ tx_ $ execute $ createTable @Person True
   br -- Delete All.
@@ -73,11 +73,11 @@ main = do
   br -- Insert one.
   print =<< runAppM e (tx $ execute $ returning $ insertOne $ john{age=55 })
   br -- Insert two.
-  print =<< runAppM e (tx $ execute $ returning (insertMany [john{name="Foo"}, john {name = "Mary"}]) ==> field @"age" @Person)
+  print =<< runAppM e (tx $ execute $ insertMany [john{name="Foo"}, john {name = "Mary"}] ==> field @"age")
   br -- Select by ID.
   print =<< runAppM e (tx_ $ execute $ selectById @Person john.name)
   br -- Select All.
   print =<< runAppM e (tx_ $ execute $ selectAll @Person)
   br -- Select specific fields by ID.
   print =<< runAppM e ( tx_ $ execute $
-    selectById @Person john.name ==> field @"age" @Person )
+    selectById @Person john.name ==> field @"age")

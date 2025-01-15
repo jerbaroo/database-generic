@@ -20,6 +20,7 @@ data Delete (o :: OneOrMany) (r :: Maybe fs) a = Delete
   , where'    :: !(Maybe (Where a))
   }
 
+type instance Returning (Delete _ Nothing   a) = a
 type instance Returning (Delete _ (Just fs) _) = fs
 
 type instance NowReturning (Delete o _ a) fs = Delete o (Just fs) a

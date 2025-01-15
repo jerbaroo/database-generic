@@ -1,6 +1,7 @@
 module Database.Generic.Statement.Returning where
 
--- | Type of Haskell value returned by executing a statement.
+-- | Type of Haskell value is returned by executing a statement OR that would be
+-- returned if the statement is modified via 'returning'.
 type        Returning :: forall s a. s -> a
 type family Returning s
 

@@ -24,6 +24,7 @@ data Insert (o :: OneOrMany) (r :: Maybe fs) a = Insert
   , values     :: ![Values]
   }
 
+type instance Returning (Insert _ Nothing   a) = a
 type instance Returning (Insert _ (Just fs) _) = fs
 
 type instance NowReturning (Insert o _ a) fs = Insert o (Just fs) a

@@ -1,21 +1,21 @@
 # database-generic
 
-Database access (local or over network) with minimal boilerplate, via `Generic`.
+Database access (local or over network) with minimal boilerplate.
 
 Summary of functionality:
- - Derive `Entity` instances to enable conversion to/from SQL.
- - Persist `Entity` in any supported database via `MonadDb`.
- - Get a `servant` server for free, serving directly from your database!
- - `MonadDb` offers both singular value and streaming variants (via `Conduit`)!
- - Use `MonadDb` in your web app, including streaming directly from database! 
+ - Derive (schemas) instances of `Entity` for your data types.
+ - Persist your instances of `Entity` via `MonadDb` operations.
+ - Serve your instances of `Entity` via a provided `servant` server.
+ - Stream your instances of `Entity` from the database via `Conduit`.
+ - Stream your instances of `Entity` over the network via WebSockets.
  
 ## Quick Start
 
-Full working code example [HERE]. To get it running locally ASAP:
-1. clone the `demo` subdirectory of this repo
+To get [THIS EXAMPLE] running on your machine:
+1. Clone this repo.
 2. Start a PostgreSQL instance with username and password `"demo"`, e.g.:
   `docker run -it --rm --env POSTGRES_PASSWORD=demo --env POSTGRES_USER=demo --publish 5432:5432 postgres`
-3. use `cabal` via provided `nix-shell`, or use `stack` to run the executable
+3. Either `cabal sun` via provided `nix-shell`, or `stack run`.
 
 ## Introduction
 
@@ -46,19 +46,28 @@ print =<< select "John"
 
 ## Entity
 
-Deriving an instance of `Entity` is really as easy as we showed above. The
-important reason we need to write an `instance Entity` is to choose a primary
-key for our data type, represented by the `f` parameter:
+An instance of `Entity` may be derived via `DeriveAnyClass`: 
 
 ``` hs
-class Entity f a | a -> f where
-  primaryKey :: forall b. (ToSqlValue b, HasField f a b) => a -> b
-  primaryKey = getField @f
+data Person = Person { name :: String, age :: Int }
+  deriving (Entity "name", Generic)
 ```
 
-The `Entity` typeclass contains a few other functions, but they all have
-`default` implementations. You can override them if you want but it's not
-necessary. All the functions within `Entity` are used to convert to/from SQL.
+The `Entity ` class has three superclasses:
+- `FromSqlValues`: for parsing from SQL
+- `HasSqlFields`: names and types of SQL columns
+- `ToSqlValues`: converting to SQL
+
+In addition, the `Entity` class has two methods with `default` implementations:
+- `entityName`: name of the SQL table
+- `primaryKeyField`: field used as primary key
+
+When `deriving` an instance of `Entity` you can decide the primary key by
+passing the field `f` to use as primary key as first type parameter to `Entity`.
+
+IMPORTANT NOTE: the implementations of the three superclasses and the two
+methods are consistent with each other. If you override any of these instances
+or implementations then you need to ensure they are still consistent.
 
 ## MonadDb
 

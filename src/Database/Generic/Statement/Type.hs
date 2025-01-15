@@ -1,18 +1,16 @@
 module Database.Generic.Statement.Type where
 
 import Database.Generic.Prelude
-import Database.Generic.Statement.Delete qualified as D
-import Database.Generic.Statement.Insert qualified as I
-import Database.Generic.Statement.Select qualified as S
+import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 
 -- | All the type information we have about a statement.
 data StatementType where
   BeginTx     :: StatementType
   CommitTx    :: StatementType
   CreateTable :: Type -> StatementType
-  Delete      :: D.OneOrMany -> Maybe x -> Type -> StatementType
-  Insert      :: I.OneOrMany -> Type    ->         StatementType
-  Select      :: S.OneOrMany -> Type    -> Type -> StatementType
+  Delete      :: OneOrMany -> Maybe x -> Type -> StatementType
+  Insert      :: OneOrMany -> Type    ->         StatementType
+  Select      :: OneOrMany -> Type    -> Type -> StatementType
 
 -- | Add a type to the front of a list of types.
 type Cons :: forall a. a -> [a] -> [a]

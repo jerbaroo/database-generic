@@ -5,6 +5,7 @@ import Database.Generic.Entity qualified as Entity
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.ToSql (ToSqlValue)
 import Database.Generic.Statement.Fields (ReturningFields(..), fieldNames)
+import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Where (Where(..), Whereable(..), idEquals)
 import Database.Generic.Statement.Returning (NowReturning, Returning)
 import Database.Generic.Prelude
@@ -12,8 +13,6 @@ import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Table (TableName)
 
 data Columns = All | Some ![String]
-
-data OneOrMany = One | Many
 
 instance Serialize Columns db where
   serialize All       = "*"

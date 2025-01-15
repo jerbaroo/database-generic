@@ -38,6 +38,7 @@ library
                       Database.Generic.Statement.Select,
                       Database.Generic.Statement.Tx,
                       Database.Generic.Statement.Type,
+                      Database.Generic.Statement.Type.OneOrMany,
                       Database.Generic.Statement.Values,
                       Database.Generic.Statement.Where,
                       Database.Generic.Table,

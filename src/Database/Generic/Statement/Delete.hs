@@ -8,6 +8,7 @@ import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Statement.Fields (ReturningFields(..), fieldNames)
 import Database.Generic.Statement.Returning (NowReturning, Returnable(..), Returning)
+import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Where (Where, idEquals)
 import Database.Generic.Table (TableName)
 
@@ -16,8 +17,6 @@ data Columns = All | Some ![String]
 instance Serialize Columns db where
   serialize All       = "*"
   serialize (Some cs) = intercalate ", " cs
-
-data OneOrMany = One | Many
 
 -- | Delete one or many values of type 'a', maybe returning fields 'fs'.
 data Delete (o :: OneOrMany) (r :: Maybe fs) a = Delete

@@ -5,10 +5,8 @@ module Database.Generic.Statement.Output where
 import Database.Generic.Prelude
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.FromSql (FromSqlValues(..))
-import Database.Generic.Statement.Delete qualified as D
-import Database.Generic.Statement.Insert qualified as I
-import Database.Generic.Statement.Select qualified as S
 import Database.Generic.Statement.Type (StatementType(..))
+import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 
 -- | Output from executing an SQL statement.
 data Output
@@ -90,48 +88,48 @@ instance ParseOutput (CreateTable a) where
   parse OutputNada             = Right ()
   parse output                 = Left $ ExpectedNada output
 
-instance ParseOutput (Delete D.One Nothing a) where
-  type OutputT (Delete D.One Nothing a) = ()
-  parse (OutputAffected 0)              = Right ()
-  parse (OutputAffected 1)              = Right ()
-  parse output                          = Left $ ExpectedMaybeOneAffected output
+instance ParseOutput (Delete One Nothing a) where
+  type OutputT (Delete One Nothing a) = ()
+  parse (OutputAffected 0)            = Right ()
+  parse (OutputAffected 1)             = Right ()
+  parse output                        = Left $ ExpectedMaybeOneAffected output
 
-instance forall fs a. FromSqlValues fs => ParseOutput (Delete D.One (Just fs) a) where
-  type OutputT (Delete D.One (Just fs) a) = Maybe fs
-  parse (OutputRows [])                   = Right Nothing
-  parse (OutputRows [row])                = Right $ Just $ fromSqlValues row
-  parse output                            = Left  $ ExpectedMaybeOne output
+instance forall fs a. FromSqlValues fs => ParseOutput (Delete One (Just fs) a) where
+  type OutputT (Delete One (Just fs) a) = Maybe fs
+  parse (OutputRows [])                 = Right Nothing
+  parse (OutputRows [row])              = Right $ Just $ fromSqlValues row
+  parse output                          = Left  $ ExpectedMaybeOne output
 
-instance ParseOutput (Delete D.Many Nothing a) where
-  type OutputT (Delete D.Many Nothing a) = ()
-  parse (OutputAffected _)               = Right ()
-  parse output                           = Left $ ExpectedOneAffected output
+instance ParseOutput (Delete Many Nothing a) where
+  type OutputT (Delete Many Nothing a) = ()
+  parse (OutputAffected _)             = Right ()
+  parse output                         = Left $ ExpectedOneAffected output
 
-instance forall fs a. FromSqlValues fs => ParseOutput (Delete D.Many (Just fs) a) where
-  type OutputT (Delete D.Many (Just fs) a) = [fs]
-  parse (OutputRows rows)                  = Right $ fromSqlValues <$> rows
-  parse output                             = Left  $ ExpectedMaybeOne output
+instance forall fs a. FromSqlValues fs => ParseOutput (Delete Many (Just fs) a) where
+  type OutputT (Delete Many (Just fs) a) = [fs]
+  parse (OutputRows rows)                = Right $ fromSqlValues <$> rows
+  parse output                           = Left  $ ExpectedMaybeOne output
 
-instance ParseOutput (Insert I.One a) where
-  type OutputT (Insert I.One a) = ()
-  parse (OutputAffected 1)      = Right ()
-  parse output                  = Left $ ExpectedOneAffected output
+instance ParseOutput (Insert One a) where
+  type OutputT (Insert One a) = ()
+  parse (OutputAffected 1)    = Right ()
+  parse output                = Left $ ExpectedOneAffected output
 
-instance ParseOutput (Insert I.Many a) where
-  type OutputT (Insert I.Many a) = ()
-  parse (OutputAffected _)       = Right ()
-  parse output                   = Left $ ExpectedOneAffected output
+instance ParseOutput (Insert Many a) where
+  type OutputT (Insert Many a) = ()
+  parse (OutputAffected _)     = Right ()
+  parse output                 = Left $ ExpectedOneAffected output
 
-instance forall fs a. FromSqlValues fs => ParseOutput (Select S.One fs a) where
-  type OutputT (Select S.One fs a) = Maybe fs
-  parse (OutputRows [])            = Right Nothing
-  parse (OutputRows [row])         = Right $ Just $ fromSqlValues row
-  parse output                     = Left  $ ExpectedMaybeOne output
+instance forall fs a. FromSqlValues fs => ParseOutput (Select One fs a) where
+  type OutputT (Select One fs a) = Maybe fs
+  parse (OutputRows [])          = Right Nothing
+  parse (OutputRows [row])       = Right $ Just $ fromSqlValues row
+  parse output                   = Left  $ ExpectedMaybeOne output
 
-instance forall fs a. FromSqlValues fs => ParseOutput (Select S.Many fs a) where
-  type OutputT (Select S.Many fs a) = [fs]
-  parse (OutputRows rows)           = Right $ fromSqlValues <$> rows
-  parse output                      = Left  $ ExpectedMaybeOne output
+instance forall fs a. FromSqlValues fs => ParseOutput (Select Many fs a) where
+  type OutputT (Select Many fs a) = [fs]
+  parse (OutputRows rows)         = Right $ fromSqlValues <$> rows
+  parse output                    = Left  $ ExpectedMaybeOne output
 
 -- TODO this needs to be made smarter. Requires knowledge of SQL behaviour.
 instance ParseOutput (Head s) => ParseOutput (s :: [StatementType]) where

@@ -7,10 +7,9 @@ import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.ToSql (HasSqlColumnNames(..), toSqlValues)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
+import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Values (Values(..))
 import Database.Generic.Table (ColumnName, TableName)
-
-data OneOrMany = One | Many
 
 -- | Insert one or many values of type 'a'.
 data Insert (o :: OneOrMany) a = Insert

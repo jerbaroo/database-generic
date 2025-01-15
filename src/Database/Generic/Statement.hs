@@ -15,7 +15,7 @@ data Statement (s :: [StatementType]) where
   StatementBeginTx     :: !Tx.BeginTx        -> Statement '[BeginTx]
   StatementCommitTx    :: !Tx.CommitTx       -> Statement '[CommitTx]
   StatementCreateTable :: !(C.CreateTable a) -> Statement '[CreateTable a]
-  StatementDelete      :: !(D.Delete o a)    -> Statement '[Delete o a]
+  StatementDelete      :: !(D.Delete o fs a) -> Statement '[Delete o fs a]
   StatementInsert      :: !(I.Insert o a)    -> Statement '[Insert o a]
   StatementSelect      :: !(S.Select o fs a) -> Statement '[Select o fs a]
   Cons                 :: !(Statement '[s1]) -> (Statement s2) -> Statement (Cons s1 s2)
@@ -49,8 +49,8 @@ instance ToStatement (C.CreateTable (a :: Type)) where
   type S (C.CreateTable a) = '[CreateTable a]
   statement = StatementCreateTable
 
-instance ToStatement (D.Delete o (a :: Type)) where
-  type S (D.Delete o a) = '[Delete o a]
+instance ToStatement (D.Delete o (fs :: Maybe x) (a :: Type)) where
+  type S (D.Delete o fs a) = '[Delete o fs a]
   statement = StatementDelete
 
 instance ToStatement (I.Insert o (a :: Type)) where

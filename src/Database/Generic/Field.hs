@@ -4,7 +4,7 @@ import Database.Generic.Prelude
 
 type FieldName = String
 
--- | Value-level representation of field 'f' of type 'b' belong to 'a'.
+-- | Value-level representation of field 'f' of type 'b' belonging to 'a'.
 data Field f a b where
   Field
     :: HasField f a b

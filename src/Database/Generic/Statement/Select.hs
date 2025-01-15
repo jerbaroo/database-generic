@@ -26,7 +26,7 @@ data Select (o :: OneOrMany) fs a = Select
   , where'  :: !(Maybe (Where a))
   }
 
-type instance Returning (Select o fs _) = fs
+type instance Returning (Select _ fs _) = fs
 
 type instance NowReturning (Select o a a) fs = Select o fs a
 

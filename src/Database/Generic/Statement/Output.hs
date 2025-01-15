@@ -35,8 +35,11 @@ instance HasOutputType CommitTx where
 instance HasOutputType (CreateTable a) where
   outputType = OutputTypeNada
 
-instance HasOutputType (Delete o a) where
+instance HasOutputType (Delete o Nothing a) where
   outputType = OutputTypeAffected
+
+instance HasOutputType (Delete o (Just fs) a) where
+  outputType = OutputTypeRows
 
 instance HasOutputType (Insert o a) where
   outputType = OutputTypeAffected
@@ -87,16 +90,27 @@ instance ParseOutput (CreateTable a) where
   parse OutputNada             = Right ()
   parse output                 = Left $ ExpectedNada output
 
-instance ParseOutput (Delete D.One a) where
-  type OutputT (Delete D.One a) = ()
-  parse (OutputAffected 0)      = Right ()
-  parse (OutputAffected 1)      = Right ()
-  parse output                  = Left $ ExpectedMaybeOneAffected output
+instance ParseOutput (Delete D.One Nothing a) where
+  type OutputT (Delete D.One Nothing a) = ()
+  parse (OutputAffected 0)              = Right ()
+  parse (OutputAffected 1)              = Right ()
+  parse output                          = Left $ ExpectedMaybeOneAffected output
 
-instance ParseOutput (Delete D.Many a) where
-  type OutputT (Delete D.Many a) = ()
-  parse (OutputAffected _)       = Right ()
-  parse output                   = Left $ ExpectedOneAffected output
+instance forall fs a. FromSqlValues fs => ParseOutput (Delete D.One (Just fs) a) where
+  type OutputT (Delete D.One (Just fs) a) = Maybe fs
+  parse (OutputRows [])                   = Right Nothing
+  parse (OutputRows [row])                = Right $ Just $ fromSqlValues row
+  parse output                            = Left  $ ExpectedMaybeOne output
+
+instance ParseOutput (Delete D.Many Nothing a) where
+  type OutputT (Delete D.Many Nothing a) = ()
+  parse (OutputAffected _)               = Right ()
+  parse output                           = Left $ ExpectedOneAffected output
+
+instance forall fs a. FromSqlValues fs => ParseOutput (Delete D.Many (Just fs) a) where
+  type OutputT (Delete D.Many (Just fs) a) = [fs]
+  parse (OutputRows rows)                  = Right $ fromSqlValues <$> rows
+  parse output                             = Left  $ ExpectedMaybeOne output
 
 instance ParseOutput (Insert I.One a) where
   type OutputT (Insert I.One a) = ()

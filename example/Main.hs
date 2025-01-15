@@ -3,7 +3,6 @@
 {-# LANGUAGE DeriveAnyClass      #-}
 {-# LANGUAGE DerivingStrategies  #-}
 {-# LANGUAGE OverloadedRecordDot #-}
-{-# LANGUAGE TypeFamilies        #-}
 
 module Main where
 
@@ -14,9 +13,6 @@ import Data.Functor.Identity (Identity(..))
 import Data.Int (Int64)
 import Database.Generic
 import Database.Generic.Database (PostgreSQL)
-import Database.Generic.Entity qualified as Db
-import Database.Generic.Entity.FromSql (fromSqlValues)
-import Database.Generic.Entity.ToSql (sqlColumnNames, sqlColumnTypes, toSqlValue, toSqlValues)
 import Database.Generic.Field (field)
 import Database.Generic.Prelude (debug)
 import Database.Generic.Serialize (serialize)
@@ -71,33 +67,21 @@ main = do
   let p :: forall a. Show a => a -> IO ()
       p = print
   let br = putStrLn "\n"
-  print $ Db.primaryKeyFieldName @Person
-  print $ Db.primaryKey john
-  print $ toSqlValue $ Db.primaryKey john
-  print $ sqlColumnNames @Person
-  print $ sqlColumnTypes @Person
-  print $ toSqlValues john
-  print @Person $ fromSqlValues $ toSqlValues john
-  br
-  -- Create table if not exists, twice.
+  br -- Create table if not exists, twice.
   runAppM e $ tx_ $ execute $ createTable @Person True
-  br
-  -- Delete All.
-  p =<< runAppM e (tx $ execute $ deleteAll @Person)
-  br
-  -- Delete by ID.
+  br -- Delete All.
+  p =<< runAppM e (tx $ execute $ returning $ deleteAll @Person)
+  br -- Delete by ID.
   p =<< runAppM e (tx $ execute $ deleteById @Person "John")
-  br
-  -- Insert one.
+  br -- Insert one.
   p =<< runAppM e (executeTx $ insertOne $ john{age=55 })
-  br
-  -- Insert two.
+  br -- Insert two.
   p =<< runAppM e do
     executeTx $ insertMany [john{name="Foo"}, john {name = "Mary"}]
-  -- Select by ID.
-  br
+  br -- Select by ID.
   p =<< runAppM e (tx_ $ execute $ selectById @Person john.name)
-  -- Select specific fields by ID.
-  br
+  br -- Select All.
+  p =<< runAppM e (tx_ $ execute $ selectAll @Person)
+  br -- Select specific fields by ID.
   p =<< runAppM e ( tx_ $ execute $
     selectById @Person john.name ==> field @"age" @Person )

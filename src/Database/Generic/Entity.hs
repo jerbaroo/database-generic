@@ -1,10 +1,11 @@
 module Database.Generic.Entity where
 
+import Database.Generic.Entity.EntityName (EntityName(..))
+import Database.Generic.Entity.Field (Field(..), field)
+import Database.Generic.Entity.FieldName (FieldName, HasFieldName)
 import Database.Generic.Entity.FromSql (FromSqlValues)
 import Database.Generic.Entity.ToSql (HasSqlColumns, ToSqlValue, ToSqlValues)
 import Database.Generic.Prelude
-import Database.Generic.Table (TableName(TableName))
-import Database.Generic.Field (Field(..), HasFieldName, field)
 
 -- | An 'Entity' can be converted to/from SQL and has a primary key.
 --
@@ -15,13 +16,15 @@ import Database.Generic.Field (Field(..), HasFieldName, field)
 class (FromSqlValues a, HasSqlColumns a, ToSqlValues a)
   => Entity f a | a -> f where
 
-  primaryKeyField         :: forall b. (HasField f a b,                 ToSqlValue b) => Field f a b
-  default primaryKeyField :: forall b. (HasField f a b, HasFieldName f, ToSqlValue b) => Field f a b
-  primaryKeyField = field @f @a
+  entityName         ::               EntityName
+  default entityName :: Typeable a => EntityName
+  entityName = EntityName $ toLower <$> showType @a
 
-  tableName         ::               TableName
-  default tableName :: Typeable a => TableName
-  tableName = TableName $ toLower <$> showType @a
+  primaryKeyField         ::
+    forall b. (HasField f a b,                 ToSqlValue b) => Field f a b
+  default primaryKeyField ::
+    forall b. (HasField f a b, HasFieldName f, ToSqlValue b) => Field f a b
+  primaryKeyField = field @f @a
 
 -- | 'Entity' but with additional type parameter 'b' in scope.
 type EntityP f a b = (Entity f a, HasField f a b, ToSqlValue b)
@@ -29,5 +32,5 @@ type EntityP f a b = (Entity f a, HasField f a b, ToSqlValue b)
 primaryKey :: forall a f b. (EntityP f a b) => a -> b
 primaryKey = let (Field _ f) = primaryKeyField @_ @a in f
 
-primaryKeyFieldName :: forall a f b. (EntityP f a b) => String
+primaryKeyFieldName :: forall a f b. (EntityP f a b) => FieldName
 primaryKeyFieldName = (primaryKeyField @_ @a).name

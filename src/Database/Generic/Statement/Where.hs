@@ -4,23 +4,23 @@ import Database.Generic.Entity (Entity)
 import Database.Generic.Entity qualified as Entity
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.ToSql (ToSqlValue(..))
-import Database.Generic.Field (HasFieldName(..))
+import Database.Generic.Entity.FieldName (FieldName, HasFieldName(..))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 
 -- | Condition to filter values of type 'a'.
 data Where a where
-  Equals :: !String -> !SqlValue -> Where a
-  IsNull :: !String -> !Bool -> Where a
+  Equals :: !FieldName -> !SqlValue  -> Where a
+  IsNull :: !FieldName -> !Bool      -> Where a
   And    :: !(Where a) -> !(Where a) -> Where a
 
 instance Serialize SqlValue db => Serialize (Where a) db where
   serialize (And a b) =
     "(" <> serialize @_ @db a <> " AND " <> serialize @_ @db b <> ")"
-  serialize (Equals column value) =
-    column <> " = " <> serialize @_ @db value
-  serialize (IsNull column is) =
-    column <> " IS " <> if is then "" else "NOT " <> "NULL"
+  serialize (Equals fieldName value) =
+    from fieldName <> " = " <> serialize @_ @db value
+  serialize (IsNull fieldName is) =
+    from fieldName <> " IS " <> if is then "" else "NOT " <> "NULL"
 
 idEquals :: forall a f b.
   (Entity f a, HasField f a b, ToSqlValue b) => b -> Where a

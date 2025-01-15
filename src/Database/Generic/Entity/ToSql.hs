@@ -2,9 +2,9 @@
 
 module Database.Generic.Entity.ToSql where
 
+import Database.Generic.Entity.FieldName (FieldName(..), HasFieldNames(..))
 import Database.Generic.Entity.SqlTypes (SqlTypeId(..), SqlValue)
 import Database.Generic.Prelude
-import Database.Generic.Table (ColumnName(..))
 import Generics.Eot qualified as G
 
 data ToSqlError
@@ -55,20 +55,6 @@ instance GToSqlValues () where
 instance GToSqlValues G.Void where
   gToSqlValues = G.absurd
 
--- | Values that have named fields.
-class HasSqlColumnNames a where
-  sqlColumnNames :: [ColumnName]
-
-instance (G.HasEot a, Typeable a) => HasSqlColumnNames a where
-  sqlColumnNames =
-    case G.constructors $ G.datatype $ Proxy @a of
-      []  -> throw $ NoConstructors $ showType @a
-      [c] -> case G.fields c of
-        G.Selectors   fields -> ColumnName <$> fields
-        G.NoSelectors _      -> throw $ NoSelectors $ showType @a
-        G.NoFields           -> throw $ NoFields $ showType @a
-      _ -> throw $ MoreThanOneConstructor $ showType @a
-
 -- | Types that have a corresponding SQL type.
 class HasSqlType a where
   sqlType :: SqlTypeId
@@ -106,8 +92,8 @@ instance GHasSqlColumnTypes [String] () where
   gSqlColumnTypes _  = error "impossible"
 
 -- | Values that have both named a SQL column and SQL type for each field.
-class (HasSqlColumnNames a, HasSqlColumnTypes a) => HasSqlColumns a where
-  sqlColumns :: [(ColumnName, SqlTypeId)]
+class (HasFieldNames a, HasSqlColumnTypes a) => HasSqlColumns a where
+  sqlColumns :: [(FieldName, SqlTypeId)]
 
-instance (HasSqlColumnNames a, HasSqlColumnTypes a) => HasSqlColumns a where
-  sqlColumns = zip (sqlColumnNames @a) (sqlColumnTypes @a)
+instance (HasFieldNames a, HasSqlColumnTypes a) => HasSqlColumns a where
+  sqlColumns = zip (fieldNames @a) (sqlColumnTypes @a)

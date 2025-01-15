@@ -3,7 +3,6 @@ module Database.Generic.Statement.Fields where
 import Database.Generic.Entity.Field (Field(..))
 import Database.Generic.Entity.FieldName (FieldName)
 import Database.Generic.Statement.Returning (NowReturning, Returning)
-import Database.Generic.Prelude
 
 -- | Fields of 'a' that can be parsed into a 'b'.
 class FieldsOf f a b | f -> a, f -> b where

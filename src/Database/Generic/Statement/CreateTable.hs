@@ -4,8 +4,8 @@ import Database.Generic.Entity (EntityP)
 import Database.Generic.Entity qualified as Entity
 import Database.Generic.Entity.EntityName (EntityName(..))
 import Database.Generic.Entity.FieldName (FieldName)
+import Database.Generic.Entity.SqlFields (HasSqlFields(..))
 import Database.Generic.Entity.SqlTypes (SqlTypeId)
-import Database.Generic.Entity.ToSql (HasSqlColumns(..))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 
@@ -39,6 +39,6 @@ instance Serialize SqlTypeId db => Serialize (CreateTable a) db where
 createTable :: forall a f b. EntityP f a b => Bool -> CreateTable a
 createTable ifNotExists = do
   let primaryName = Entity.primaryKeyFieldName @a
-  let fields = sqlColumns @a <&> \(name, type') ->
+  let fields = sqlFields @a <&> \(name, type') ->
         CreateTableColumn { primary = name == primaryName, .. }
   CreateTable { name = Entity.entityName @_ @a, fields, .. }

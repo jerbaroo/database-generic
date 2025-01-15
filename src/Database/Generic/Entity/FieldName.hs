@@ -1,7 +1,7 @@
 module Database.Generic.Entity.FieldName where
 
-import Database.Generic.Prelude
 import Generics.Eot qualified as G
+import Database.Generic.Prelude
 
 -- | Name of a field. For example: "foo" in 'data X = Y { foo :: Int }'.
 newtype FieldName = FieldName String deriving Eq

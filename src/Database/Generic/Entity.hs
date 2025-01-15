@@ -4,16 +4,17 @@ import Database.Generic.Entity.EntityName (EntityName(..))
 import Database.Generic.Entity.Field (Field(..), field)
 import Database.Generic.Entity.FieldName (FieldName, HasFieldName)
 import Database.Generic.Entity.FromSql (FromSqlValues)
-import Database.Generic.Entity.ToSql (HasSqlColumns, ToSqlValue, ToSqlValues)
+import Database.Generic.Entity.SqlFields (HasSqlFields)
+import Database.Generic.Entity.ToSql (ToSqlValue, ToSqlValues)
 import Database.Generic.Prelude
 
 -- | An 'Entity' can be converted to/from SQL and has a primary key.
 --
 -- For simple Haskell records with a single data constructor and named fields
--- you can derive an instance via 'Generic' needing only to specify primary key:
+-- you can derive an instance via 'Generic' by specifing the primary key field:
 -- > data Person { name :: String, age :: Int }
 -- >   deriving (Entity "name", Generic)
-class (FromSqlValues a, HasSqlColumns a, ToSqlValues a)
+class (FromSqlValues a, HasSqlFields a, ToSqlValues a)
   => Entity f a | a -> f where
 
   entityName         ::               EntityName

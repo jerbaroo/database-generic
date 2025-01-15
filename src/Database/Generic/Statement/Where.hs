@@ -10,17 +10,16 @@ import Database.Generic.Serialize (Serialize(..))
 
 -- | Condition to filter values of type 'a'.
 data Where a where
+  And    :: !(Where a) -> !(Where a) -> Where a
   Equals :: !FieldName -> !SqlValue  -> Where a
   IsNull :: !FieldName -> !Bool      -> Where a
-  And    :: !(Where a) -> !(Where a) -> Where a
 
 instance Serialize SqlValue db => Serialize (Where a) db where
   serialize (And a b) =
     "(" <> serialize @_ @db a <> " AND " <> serialize @_ @db b <> ")"
-  serialize (Equals fieldName value) =
-    from fieldName <> " = " <> serialize @_ @db value
-  serialize (IsNull fieldName is) =
-    from fieldName <> " IS " <> if is then "" else "NOT " <> "NULL"
+  serialize (Equals fName value) = from fName <> " = " <> serialize @_ @db value
+  serialize (IsNull fName is) =
+    from fName <> " IS " <> if is then "" else "NOT " <> "NULL"
 
 idEquals :: forall a f b.
   (Entity f a, HasField f a b, ToSqlValue b) => b -> Where a

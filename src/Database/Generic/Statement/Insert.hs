@@ -9,35 +9,62 @@ import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.ToSql (toSqlValues)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
+import Database.Generic.Statement.Fields (Fields(..), ReturningFields(..))
+import Database.Generic.Statement.Fields qualified as Fields
+import Database.Generic.Statement.Returning (NowReturning, Returnable(..), Returning)
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Values (Values(..))
 import Witch qualified as W
 
--- | Insert one or many values of type 'a'.
-data Insert (o :: OneOrMany) a = Insert
-  { entityName :: !EntityName
+-- | Insert one or many values of type 'a', maybe returning fields 'fs'.
+data Insert (o :: OneOrMany) (r :: Maybe fs) a = Insert
+  { into       :: !EntityName
   , fieldNames :: ![FieldName]
-  , rows       :: ![Values]
+  , returning  :: !(Maybe Fields)
+  , values     :: ![Values]
   }
 
-instance Serialize SqlValue db => Serialize (Insert o a) db where
-  serialize i = unwords
-    [ "INSERT INTO", W.from i.entityName
+type instance Returning (Insert _ (Just fs) _) = fs
+
+type instance NowReturning (Insert o _ a) fs = Insert o (Just fs) a
+
+instance Returnable (Insert o Nothing a) (Insert o (Just a) a) where
+  returning i = Insert
+    { into       = i.into
+    , fieldNames = i.fieldNames
+    , returning  = Just All
+    , values     = i.values
+    }
+
+instance ReturningFields (Insert o r a) where
+  fields i f = Insert
+    { into       = i.into
+    , fieldNames = i.fieldNames
+    , returning = Just $ Some $ Fields.fieldNames f
+    , values     = i.values
+    }
+
+instance Serialize SqlValue db => Serialize (Insert o r a) db where
+  serialize i = unwords $
+    [ "INSERT INTO", W.from i.into
     , "(", intercalate ", " $ from <$> i.fieldNames, ") VALUES"
-    , intercalate ", " $ serialize @_ @db <$> i.rows
-    , ";"
+    , intercalate ", " $ serialize @_ @db <$> i.values
     ]
+    <> maybe [] (\c -> ["RETURNING " <> serialize c]) i.returning
+    <> [ ";" ]
 
-insertOne :: forall a f. Entity f a => a -> Insert One a
+insertOne :: forall a f. Entity f a => a -> Insert One Nothing a
 insertOne a = Insert
-  { entityName = Entity.entityName @_ @a
+  { into       = Entity.entityName @_ @a
   , fieldNames = Entity.fieldNames @a
-  , rows       = [Values $ toSqlValues a]
+  , returning  = Nothing
+  , values     = [Values $ toSqlValues a]
   }
 
-insertMany :: forall a f. Entity f a => [a] -> Insert Many a
+insertMany :: forall a f. Entity f a => [a] -> Insert Many Nothing a
 insertMany as = Insert
-  { entityName = Entity.entityName @_ @a
+  { into       = Entity.entityName @_ @a
   , fieldNames = Entity.fieldNames @a
-  , rows       = Values . toSqlValues <$> as
+  , returning  = Nothing
+  , values     = Values . toSqlValues <$> as
   }

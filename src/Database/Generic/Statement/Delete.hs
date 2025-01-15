@@ -24,6 +24,20 @@ type instance Returning (Delete _ (Just fs) _) = fs
 
 type instance NowReturning (Delete o _ a) fs = Delete o (Just fs) a
 
+instance Returnable (Delete o Nothing a) (Delete o (Just a) a) where
+  returning d = Delete
+    { from      = d.from
+    , returning = Just All
+    , where'    = d.where'
+    }
+
+instance ReturningFields (Delete o r a) where
+  fields d f = Delete
+    { from      = d.from
+    , returning = Just $ Some $ fieldNames f
+    , where'    = d.where'
+    }
+
 instance Serialize SqlValue db => Serialize (Delete o r a) db where
   serialize d = unwords $
     ["DELETE FROM", W.from d.from]
@@ -45,17 +59,3 @@ deleteById b = Delete
   , returning = Nothing
   , where'    = Just $ idEquals @a b
   }
-
-instance Returnable (Delete o Nothing a) (Delete o (Just a) a) where
-  returning d = Delete
-    { from      = d.from
-    , returning = Just All
-    , where'    = d.where'
-    }
-
-instance ReturningFields (Delete o x a) where
-  fields d p = Delete
-    { from      = d.from
-    , returning = Just $ Some $ fieldNames p
-    , where'    = d.where'
-    }

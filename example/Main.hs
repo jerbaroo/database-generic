@@ -13,7 +13,6 @@ import Data.Functor.Identity (Identity(..))
 import Data.Int (Int64)
 import Database.Generic
 import Database.Generic.Database (PostgreSQL)
-import Database.Generic.Field (field)
 import Database.Generic.Prelude (debug)
 import Database.Generic.Serialize (serialize)
 import Database.Generic.Statement.Output (Output(..), OutputType(..), outputType)
@@ -51,7 +50,7 @@ runAppM e (AppM m) = runReaderT m e
 instance MonadDb AppM Identity PSQL.Connection where
   executeStatement conn (Identity (s :: s)) = fmap (Identity . Right) $ liftIO do -- TODO error handling.
     let x = debug $ serialize @_ @PostgreSQL s
-    case outputType @s of
+    case debug $ outputType @s of
       OutputTypeAffected -> OutputAffected . debug <$> HDBC.run conn x []
       OutputTypeNada     -> debug OutputNada <$  HDBC.runRaw conn x
       OutputTypeRows     -> OutputRows . debug <$> HDBC.quickQuery' conn x []
@@ -64,24 +63,21 @@ main :: IO ()
 main = do
   let e    = env "127.0.0.1" 5432 "postgres" "demo" "demo"
   let john = Person "John" 21
-  let p :: forall a. Show a => a -> IO ()
-      p = print
   let br = putStrLn "\n"
   br -- Create table if not exists, twice.
   runAppM e $ tx_ $ execute $ createTable @Person True
   br -- Delete All.
-  p =<< runAppM e (tx $ execute $ returning $ deleteAll @Person)
+  print =<< runAppM e (tx $ execute $ returning $ deleteAll @Person)
   br -- Delete by ID.
-  p =<< runAppM e (tx $ execute $ deleteById @Person "John")
+  print =<< runAppM e (tx $ execute $ deleteById @Person "John")
   br -- Insert one.
-  p =<< runAppM e (executeTx $ insertOne $ john{age=55 })
+  print =<< runAppM e (tx $ execute $ returning $ insertOne $ john{age=55 })
   br -- Insert two.
-  p =<< runAppM e do
-    executeTx $ insertMany [john{name="Foo"}, john {name = "Mary"}]
+  print =<< runAppM e (tx $ execute $ returning (insertMany [john{name="Foo"}, john {name = "Mary"}]) ==> field @"age" @Person)
   br -- Select by ID.
-  p =<< runAppM e (tx_ $ execute $ selectById @Person john.name)
+  print =<< runAppM e (tx_ $ execute $ selectById @Person john.name)
   br -- Select All.
-  p =<< runAppM e (tx_ $ execute $ selectAll @Person)
+  print =<< runAppM e (tx_ $ execute $ selectAll @Person)
   br -- Select specific fields by ID.
-  p =<< runAppM e ( tx_ $ execute $
+  print =<< runAppM e ( tx_ $ execute $
     selectById @Person john.name ==> field @"age" @Person )

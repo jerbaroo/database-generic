@@ -19,6 +19,7 @@ data Output
 --
 -- These constructors correspond to the constructors of 'Output'.
 data OutputType = OutputTypeAffected | OutputTypeNada | OutputTypeRows
+  deriving Show
 
 -- | The type of output expected from executing a statement of type 's'.
 class HasOutputType s where
@@ -39,8 +40,11 @@ instance HasOutputType (Delete o Nothing a) where
 instance HasOutputType (Delete o (Just fs) a) where
   outputType = OutputTypeRows
 
-instance HasOutputType (Insert o a) where
+instance HasOutputType (Insert o Nothing a) where
   outputType = OutputTypeAffected
+
+instance HasOutputType (Insert o (Just fs) a) where
+  outputType = OutputTypeRows
 
 instance HasOutputType (Select o fs a) where
   outputType = OutputTypeRows
@@ -57,16 +61,20 @@ data OutputError
   = ExpectedMaybeOne         !Output
   | ExpectedMaybeOneAffected !Output
   | ExpectedNada             !Output
+  | ExpectedOne              !Output
   | ExpectedOneAffected      !Output
   | ExpectedOutputAffected   !Output
+  | ExpectedOutputRows       !Output
   deriving Show
 
 instance Exception OutputError where
   displayException (ExpectedMaybeOne         o) = "Expected 0 or 1 rows but got " <> show o
-  displayException (ExpectedMaybeOneAffected o) = "Expected 0 or 1 affected but got " <> show o
+  displayException (ExpectedMaybeOneAffected o) = "Expected 0 or 1 rows affected but got " <> show o
   displayException (ExpectedNada             o) = "Expected OutputNada but got " <> show o
-  displayException (ExpectedOneAffected      o) = "Expected one affected but got " <> show o
+  displayException (ExpectedOne              o) = "Expected 1 row but got " <> show o
+  displayException (ExpectedOneAffected      o) = "Expected 1 row affected but got " <> show o
   displayException (ExpectedOutputAffected   o) = "Expected OutputAffected but got " <> show o
+  displayException (ExpectedOutputRows       o) = "Expected OutputRows but got " <> show o
 
 -- | Parse 'Output' into the return value expected from executing a statement.
 class ParseOutput s where
@@ -91,7 +99,7 @@ instance ParseOutput (CreateTable a) where
 instance ParseOutput (Delete One Nothing a) where
   type OutputT (Delete One Nothing a) = ()
   parse (OutputAffected 0)            = Right ()
-  parse (OutputAffected 1)             = Right ()
+  parse (OutputAffected 1)            = Right ()
   parse output                        = Left $ ExpectedMaybeOneAffected output
 
 instance forall fs a. FromSqlValues fs => ParseOutput (Delete One (Just fs) a) where
@@ -110,15 +118,25 @@ instance forall fs a. FromSqlValues fs => ParseOutput (Delete Many (Just fs) a) 
   parse (OutputRows rows)                = Right $ fromSqlValues <$> rows
   parse output                           = Left  $ ExpectedMaybeOne output
 
-instance ParseOutput (Insert One a) where
-  type OutputT (Insert One a) = ()
-  parse (OutputAffected 1)    = Right ()
-  parse output                = Left $ ExpectedOneAffected output
+instance ParseOutput (Insert One Nothing a) where
+  type OutputT (Insert One Nothing a) = ()
+  parse (OutputAffected 1)            = Right ()
+  parse output                        = Left $ ExpectedOneAffected output
 
-instance ParseOutput (Insert Many a) where
-  type OutputT (Insert Many a) = ()
+instance forall fs a. FromSqlValues fs => ParseOutput (Insert One (Just fs) a) where
+  type OutputT (Insert One (Just fs) a) = Maybe fs
+  parse (OutputRows [row])              = Right $ Just $ fromSqlValues row
+  parse output                          = Left  $ ExpectedOne output
+
+instance ParseOutput (Insert Many Nothing a) where
+  type OutputT (Insert Many Nothing a) = ()
   parse (OutputAffected _)     = Right ()
-  parse output                 = Left $ ExpectedOneAffected output
+  parse output                 = Left $ ExpectedOutputAffected output
+
+instance forall fs a. FromSqlValues fs => ParseOutput (Insert Many (Just fs) a) where
+  type OutputT (Insert Many (Just fs) a) = [fs]
+  parse (OutputRows rows)                = Right $ fromSqlValues <$> rows
+  parse output                           = Left  $ ExpectedOutputRows output
 
 instance forall fs a. FromSqlValues fs => ParseOutput (Select One fs a) where
   type OutputT (Select One fs a) = Maybe fs

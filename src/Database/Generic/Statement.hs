@@ -15,9 +15,9 @@ data Statement (s :: [StatementType]) where
   StatementBeginTx     :: !Tx.BeginTx        -> Statement '[BeginTx]
   StatementCommitTx    :: !Tx.CommitTx       -> Statement '[CommitTx]
   StatementCreateTable :: !(C.CreateTable a) -> Statement '[CreateTable a]
-  StatementDelete      :: !(D.Delete o fs a) -> Statement '[Delete o fs a]
-  StatementInsert      :: !(I.Insert o a)    -> Statement '[Insert o a]
-  StatementSelect      :: !(S.Select o fs a) -> Statement '[Select o fs a]
+  StatementDelete      :: !(D.Delete o r a)  -> Statement '[Delete o r a]
+  StatementInsert      :: !(I.Insert o r a)  -> Statement '[Insert o r a]
+  StatementSelect      :: !(S.Select o r a)  -> Statement '[Select o r a]
   Cons                 :: !(Statement '[s1]) -> (Statement s2) -> Statement (Cons s1 s2)
 
 instance HasOutputType r => HasOutputType (Statement r) where
@@ -49,16 +49,16 @@ instance ToStatement (C.CreateTable (a :: Type)) where
   type S (C.CreateTable a) = '[CreateTable a]
   statement = StatementCreateTable
 
-instance ToStatement (D.Delete o (fs :: Maybe x) (a :: Type)) where
-  type S (D.Delete o fs a) = '[Delete o fs a]
+instance ToStatement (D.Delete o (r :: Maybe fs) (a :: Type)) where
+  type S (D.Delete o r a) = '[Delete o r a]
   statement = StatementDelete
 
-instance ToStatement (I.Insert o (a :: Type)) where
-  type S (I.Insert o a) = '[Insert o a]
+instance ToStatement (I.Insert o (r :: Maybe fs) (a :: Type)) where
+  type S (I.Insert o r a) = '[Insert o r a]
   statement = StatementInsert
 
-instance ToStatement (S.Select o (fs :: Type) (a :: Type)) where
-  type S (S.Select o fs a) = '[Select o fs a]
+instance ToStatement (S.Select o (r :: Type) (a :: Type)) where
+  type S (S.Select o r a) = '[Select o r a]
   statement = StatementSelect
 
 -- | Append a commit statement to a 'Statement'.

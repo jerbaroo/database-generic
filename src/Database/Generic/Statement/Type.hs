@@ -8,9 +8,9 @@ data StatementType where
   BeginTx     :: StatementType
   CommitTx    :: StatementType
   CreateTable :: Type -> StatementType
-  Delete      :: OneOrMany -> Maybe x -> Type -> StatementType
-  Insert      :: OneOrMany -> Type    ->         StatementType
-  Select      :: OneOrMany -> Type    -> Type -> StatementType
+  Delete      :: OneOrMany -> Maybe fs -> Type -> StatementType
+  Insert      :: OneOrMany -> Maybe fs -> Type -> StatementType
+  Select      :: OneOrMany -> Type     -> Type -> StatementType
 
 -- | Add a type to the front of a list of types.
 type Cons :: forall a. a -> [a] -> [a]

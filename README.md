@@ -17,33 +17,6 @@ To get [THIS EXAMPLE] running on your machine:
   `docker run -it --rm --env POSTGRES_PASSWORD=demo --env POSTGRES_USER=demo --publish 5432:5432 postgres`
 3. Either `cabal sun` via provided `nix-shell`, or `stack run`.
 
-## Introduction
-
-At the heart of this library is a typeclass called `MonadDb` which provides some
-class methods for interacting with a database. Simplifying the type signatures a
-bit, these functions look like:
-
-``` hs
-upsert :: a -> m ()
-select :: b -> m (Maybe a)
--- etc.
-```
-
-In order to send data types through the `MonadDb` methods we only need to derive
-`Entity` and `Generic`. This is as simple as:
-
-``` hs
-data Person = Person { name :: String, age :: Int }
-  deriving (Entity "name", Generic) -- Choosing "name" as primary key.
-```
-
-Now `MonadDb` will accept the `Person` data type!
-
-``` hs
-upsert $ Person "John" 21
-print =<< select "John"
-```
-
 ## Entity
 
 An instance of `Entity` may be derived via `DeriveAnyClass`: 

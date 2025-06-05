@@ -1,21 +1,52 @@
 # database-generic
 
-Database access (local or over network) with minimal boilerplate.
+Database agnostic typeclass to access generically persisted data.
 
-Summary of functionality:
- - Derive (schemas) instances of `Entity` for your data types.
- - Persist your instances of `Entity` via `MonadDb` operations.
- - Serve your instances of `Entity` via a provided `servant` server.
- - Stream your instances of `Entity` from the database via `Conduit`.
- - Stream your instances of `Entity` over the network via WebSockets.
- 
+## Introduction
+
+Explanation of the above:
+- Database agnostic typeclass: the typeclass is called `MonadDb` and you must
+  specify how it can communicate with your database (e.g. PostgreSQL server)
+- Generically persisted data: you can derive an instance of `Entity` for your
+  data types via `Generics` (or write your own instance). `MonadDb` can then
+  read/write instances of `Entity` to/from your database.
+
+A key intended feature of this library is that the typeclass `MonadDb` can be
+used either server-side or client-side. Allowing your client application (e.g.
+web app) to use the same functions to access data as you use server-side.
+
+Another important intended feature is an optional `servant` server. Merely
+provide an instance of `MonadDb` so the server knows how to communicate with
+your database, then the server can act as a proxy to allow clients to read/write
+to your database without having to write the usual server boilerplate.
+
 ## Quick Start
 
-To get [THIS EXAMPLE] running on your machine:
+A tutorial as code exists [here](example/Main.hs).
+
+To run the tutorial code on your machine:
 1. Clone this repo.
 2. Start a PostgreSQL instance with username and password `"demo"`, e.g.:
   `docker run -it --rm --env POSTGRES_PASSWORD=demo --env POSTGRES_USER=demo --publish 5432:5432 postgres`
-3. Either `cabal sun` via provided `nix-shell`, or `stack run`.
+3. Either `cabal run` via provided `nix-shell`, or `stack run`.
+
+## Roadmap
+
+|----------------------------------------------------------|--------|
+| Feature                                                  | Status |
+|----------------------------------------------------------|--------|
+| Derive Entity for simple data types                      | ✅     |
+| Write single Entity from PostgreSQL                      |        |
+| Read single Entity from PostgreSQL                       |        |
+| Write stream of Entity to PostgreSQL via Conduit         |        |
+| Stream updates of Entity from PostgreSQL via Conduit     |        |
+| Servant server to read single Entity                     |        |
+| Servant server to write single Entity                    |        |
+| Servant server to write stream of Entity via WebSocket   |        |
+| Servant server to stream updates of Entity via WebSocket |        |
+| Servant server permission checks                         |        |
+| Reflex (client-side) MonadDb instance                    |        |
+|----------------------------------------------------------|--------|
 
 ## Entity
 

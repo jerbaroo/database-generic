@@ -21,16 +21,16 @@ import Database.HDBC.PostgreSQL qualified as PSQL
 import Database.PostgreSQL.Simple.Options as PSQL
 import GHC.Generics (Generic)
 
--- | Data type we want to store in our database.
-data Person = Person { name :: String, age :: Int64 }
-  deriving (Entity "name", Generic, Show)
+-- | Data type that we want to persis, so we derive an 'Entity' instance.
+data Person = Person { name :: !String, age :: !Int64 }
+  deriving (Entity "name", Generic, Show) -- Primary key is the 'name' field.
 
--- | Connection string to access DB.
-type Env = String
+-- | Connection string to access our PostgreSQL DB.
+type ConnStr = String
 
 -- | Construct a connection string.
-env :: String -> Int -> String -> String -> String -> Env
-env host port dbname user password =
+connStr :: String -> Int -> String -> String -> String -> ConnStr
+connStr host port dbname user password =
   BS.unpack $ PSQL.toConnectionString $ PSQL.defaultOptions
     { host     = pure host
     , port     = pure port
@@ -39,14 +39,14 @@ env host port dbname user password =
     , password = pure password
     }
 
--- | Our application monad.
-newtype AppM a = AppM (ReaderT Env IO a)
-  deriving newtype (Applicative, Functor, Monad, MonadIO, MonadReader Env)
+-- | Our application monad. Common ReaderT IO pattern.
+newtype AppM a = AppM (ReaderT ConnStr IO a)
+  deriving newtype (Applicative, Functor, Monad, MonadIO, MonadReader ConnStr)
 
-runAppM :: Env -> AppM a -> IO a
+runAppM :: ConnStr -> AppM a -> IO a
 runAppM e (AppM m) = runReaderT m e
 
--- | Enable 'AppM' to communicate with PostgreSQL.
+-- | Enable our application to communicate with PostgreSQL.
 instance MonadDb AppM Identity PSQL.Connection where
   executeStatement conn (Identity (s :: s)) = fmap (Identity . Right) $ liftIO do -- TODO error handling.
     let x = debug $ serialize @_ @PostgreSQL s
@@ -55,29 +55,29 @@ instance MonadDb AppM Identity PSQL.Connection where
       OutputTypeNada     -> debug OutputNada <$  HDBC.runRaw conn x
       OutputTypeRows     -> OutputRows . debug <$> HDBC.quickQuery' conn x []
 
--- | Enable 'AppM' to connect to PostgreSQL.
+-- | Enable our application to create new connections to PostgreSQL.
 instance MonadDbNewConn AppM PSQL.Connection where
   newDbConn = liftIO . PSQL.connectPostgreSQL =<< ask
 
 main :: IO ()
 main = do
-  let e    = env "127.0.0.1" 5432 "postgres" "demo" "demo"
+  let c    = connStr "127.0.0.1" 5432 "postgres" "demo" "demo"
   let john = Person "John" 21
-  let br   = putStrLn "\n"
-  br -- Create table if not exists, twice.
-  runAppM e $ tx_ $ execute $ createTable @Person True
-  br -- Delete All.
-  print =<< runAppM e (tx $ execute $ returning $ deleteAll @Person)
-  br -- Delete by ID.
-  print =<< runAppM e (tx $ execute $ deleteById @Person "John")
-  br -- Insert one.
-  print =<< runAppM e (tx $ execute $ returning $ insertOne $ john{age=55 })
-  br -- Insert two.
-  print =<< runAppM e (tx $ execute $ insertMany [john{name="Foo"}, john {name = "Mary"}] ==> field @"age")
-  br -- Select by ID.
-  print =<< runAppM e (tx_ $ execute $ selectById @Person john.name)
-  br -- Select All.
-  print =<< runAppM e (tx_ $ execute $ selectAll @Person)
-  br -- Select specific fields by ID.
-  print =<< runAppM e ( tx_ $ execute $
+  let info = putStrLn . ("\n" ++)
+  info "Create table if not exists"
+  runAppM c $ tx_ $ execute $ createTable @Person True
+  info "Delete All"
+  print =<< runAppM c (tx $ execute $ returning $ deleteAll @Person)
+  info "Delete by ID"
+  print =<< runAppM c (tx $ execute $ deleteById @Person "John")
+  info "Insert one"
+  print =<< runAppM c (tx $ execute $ returning $ insertOne $ john{age=55 })
+  info "Insert two"
+  print =<< runAppM c (tx $ execute $ insertMany [john{name="Foo"}, john {name = "Mary"}] ==> field @"age")
+  info "Select by ID"
+  print =<< runAppM c (tx_ $ execute $ selectById @Person john.name)
+  info "Select All"
+  print =<< runAppM c (tx_ $ execute $ selectAll @Person)
+  info "Select specific fields by ID"
+  print =<< runAppM c ( tx_ $ execute $
     selectById @Person john.name ==> field @"age")

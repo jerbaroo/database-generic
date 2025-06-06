@@ -6,11 +6,7 @@ project.shellFor {
   exactDeps = true;
   buildInputs = [
     pkgs.ghcid
-    # pkgs.libpq
-    # pkgs.haskellPackages.libpq
-    # pkgs.haskellPackages.postgresql-libpq
     pkgs.postgresql
-    pkgs.stack
   ];
   tools = {
     cabal = "latest";

@@ -57,7 +57,7 @@ data Person = Person { name :: String, age :: Int }
 
 The `Entity ` class has three superclasses:
 - `FromSqlValues`: for parsing from SQL
-- `HasSqlFields`: names and types of SQL columns
+- `HasSqlColumns`: names and types of SQL columns
 - `ToSqlValues`: converting to SQL
 
 In addition, the `Entity` class has two methods with `default` implementations:

@@ -1,10 +1,9 @@
 module Database.Generic.Statement.Select where
 
-import Database.Generic.Entity (Entity)
+import Database.Generic.Entity (Entity, EntityP)
 import Database.Generic.Entity qualified as Entity
 import Database.Generic.Entity.EntityName (EntityName)
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
-import Database.Generic.Entity.ToSql (ToSqlValue)
 import Database.Generic.Statement.Fields (Fields(..), ReturningFields(..), fieldNames)
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Where (Where(..), Whereable(..), idEquals)
@@ -40,17 +39,16 @@ instance Serialize SqlValue db => Serialize (Select o fs a) db where
 instance Whereable (Select o fs a) a where
   where' s w = s { where' = s.where' <&> (`And` w) }
 
-selectAll :: forall a f. Entity f a => Select Many a a
+selectAll :: forall a. Entity a => Select Many a a
 selectAll = Select
-  { entityName = Entity.entityName @_ @a
+  { entityName = Entity.entityName @a
   , fields     = All
   , where'     = Nothing
   }
 
-selectById :: forall a f b.
-  (Entity f a, HasField f a b, ToSqlValue b) => b -> Select One a a
+selectById :: forall a f b. EntityP a f b => b -> Select One a a
 selectById b = Select
-  { entityName = Entity.entityName @_ @a
+  { entityName = Entity.entityName @a
   , fields     = All
   , where'     = Just $ idEquals @a b
   }

@@ -12,7 +12,6 @@ import Database.Generic.Statement.CreateTable (CreateTable(..), CreateTableColum
 import Database.Generic.Entity.SqlTypes
 import GHC.Generics (Generic)
 import Test.Tasty
-import Test.Tasty.HUnit
 import Test.Tasty.SmallCheck qualified as SC
 
 data Person = Person { age :: !Int64, name :: !String }

@@ -1,0 +1,24 @@
+name: 'CI'
+on: [push]
+jobs:
+  test-all:
+    runs-on: ubuntu-latest
+    container:
+      image: haskell:9.8.4-bullseye
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cabal
+            dist-newstyle
+          key: ${{ runner.os }}-cabal-${{ hashFiles('*.cabal') }}-${{ hashFiles('stack.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-cabal-
+            ${{ runner.os }}-
+      - name: Update package list
+        run: cabal update
+      - name: Test all
+        run: cabal test all

@@ -1,7 +1,7 @@
 module Database.Generic.Statement.Where where
 
 import Database.Generic.Entity (Entity, EntityP)
-import Database.Generic.Entity.FieldName (FieldName, HasFieldName(..))
+import Database.Generic.Entity.FieldName (FieldName, HasFieldName, fieldName)
 import Database.Generic.Entity.PrimaryKey (primaryKeyFieldName)
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.ToSql (ToSqlValue(..))

@@ -1,8 +1,7 @@
 module Database.Generic.Statement.Delete where
 
 import Database.Generic.Entity (Entity, EntityP)
-import Database.Generic.Entity qualified as Entity
-import Database.Generic.Entity.EntityName (EntityName)
+import Database.Generic.Entity.EntityName (EntityName, entityName)
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
@@ -47,14 +46,14 @@ instance Serialize SqlValue db => Serialize (Delete o r a) db where
 
 deleteAll :: forall a. Entity a => Delete Many Nothing a
 deleteAll = Delete
-  { from      = Entity.entityName @a
+  { from      = entityName @a
   , returning = Nothing
   , where'    = Nothing
   }
 
 deleteById :: forall a f b. EntityP a f b => b -> Delete One Nothing a
 deleteById b = Delete
-  { from      = Entity.entityName @a
+  { from      = entityName @a
   , returning = Nothing
   , where'    = Just $ idEquals @a b
   }

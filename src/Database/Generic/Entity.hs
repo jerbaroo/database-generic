@@ -1,3 +1,5 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 module Database.Generic.Entity where
 
 import Database.Generic.Entity.EntityName (EntityName(..))
@@ -20,6 +22,8 @@ class (FromSqlValues a, HasPrimaryKey a, HasSqlColumns a, ToSqlValues a) => Enti
   entityName         ::               EntityName
   default entityName :: Typeable a => EntityName
   entityName = EntityName $ toLower <$> showType @a
+
+instance (FromSqlValues a, HasPrimaryKey a, HasSqlColumns a, Typeable a, ToSqlValues a) => Entity a
 
 -- | 'Entity' with additional types of primary key in scope.
 type EntityP a f b = (Entity a, HasPrimaryKeyP a f b, ToSqlValue b)

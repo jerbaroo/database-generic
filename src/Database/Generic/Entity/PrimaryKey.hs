@@ -9,10 +9,12 @@ import GHC.Base (Symbol)
 import GHC.TypeLits (KnownSymbol)
 
 -- | Types with a primary key.
-class HasFieldName (PKField a) => HasPrimaryKey a where
+class HasPKField a => HasPrimaryKey a where
   -- | Return a 'Field' for the primary key.
   primaryKeyField :: forall b. HasField (PKField a) a b => Field (PKField a) a b
   primaryKeyField = field @(PKField a) @a
+
+instance HasPKField a => HasPrimaryKey a
 
 -- | 'HasPrimaryKey' with additional types of primary key in scope.
 type HasPrimaryKeyP a f b = (HasField (PKField a) a b, HasPrimaryKey a)

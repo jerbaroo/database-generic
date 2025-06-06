@@ -24,29 +24,29 @@ to your database without having to write the usual server boilerplate.
 
 A tutorial as code exists [here](example/Main.hs).
 
-To run the tutorial code on your machine:
+To run the tutorial on your machine:
 1. Clone this repo.
-2. Start a PostgreSQL instance with username and password `"demo"`, e.g.:
+2. Start a PostgreSQL instance with username and password `demo`, e.g.:
   `docker run -it --rm --env POSTGRES_PASSWORD=demo --env POSTGRES_USER=demo --publish 5432:5432 postgres`
 3. Either `cabal run` via provided `nix-shell`, or `stack run`.
 
 ## Roadmap
 
-|----------------------------------------------------------|--------|
-| Feature                                                  | Status |
-|----------------------------------------------------------|--------|
-| Derive Entity for simple data types                      | ✅     |
-| Write single Entity from PostgreSQL                      |        |
-| Read single Entity from PostgreSQL                       |        |
-| Write stream of Entity to PostgreSQL via Conduit         |        |
-| Stream updates of Entity from PostgreSQL via Conduit     |        |
-| Servant server to read single Entity                     |        |
-| Servant server to write single Entity                    |        |
-| Servant server to write stream of Entity via WebSocket   |        |
-| Servant server to stream updates of Entity via WebSocket |        |
-| Servant server permission checks                         |        |
-| Reflex (client-side) MonadDb instance                    |        |
-|----------------------------------------------------------|--------|
+|------------------------------------------------------------------|--------|
+| Feature                                                          | Status |
+|------------------------------------------------------------------|--------|
+| Derive Entity for simple data types                              | ✅     |
+| Write Entity to PostgreSQL via MonadDb                           | ✅     |
+| Read Entity from PostgreSQL via MonadDb                          | ✅     |
+| Delete Entity from PostgreSQL via MonadDb                        | ✅     |
+| Execute stream of statements against PostgreSQL via Conduit      |        |
+| Listen for and stream Entity updates from PostgreSQL via Conduit |        |
+| Servant server: endpoint to execute single statement             |        |
+| Servant server: execute stream of statements over WebSocket      |        |
+| Servant server: stream Entity updates from server over WebSocket |        |
+| Servant server permission checks                                 |        |
+| Reflex (client-side) MonadDb instance                            |        |
+|------------------------------------------------------------------|--------|
 
 ## Entity
 

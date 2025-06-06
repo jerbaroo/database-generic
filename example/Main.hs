@@ -21,7 +21,7 @@ import Database.HDBC.PostgreSQL qualified as PSQL
 import Database.PostgreSQL.Simple.Options as PSQL
 import GHC.Generics (Generic)
 
--- | Data type that we want to persis, so we derive an 'Entity' instance.
+-- | Data type we want to persist, so we derive an 'Entity' instance.
 data Person = Person { name :: !String, age :: !Int64 }
   deriving (Entity "name", Generic, Show) -- Primary key is the 'name' field.
 

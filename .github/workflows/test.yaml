@@ -14,7 +14,9 @@ jobs:
         env:
           cache-name: cache-cabal
         with:
-          path: ~/.cabal
+          path: |
+            ~/.cabal
+            dist-newstyle
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('*.cabal') }}-${{ hashFiles('stack.yaml') }}
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-

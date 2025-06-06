@@ -1,8 +1,8 @@
 {-# LANGUAGE BlockArguments        #-}
 {-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE DeriveAnyClass        #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE TypeFamilies          #-}
 
 module Main (main) where
 
@@ -15,7 +15,9 @@ import Test.Tasty
 import Test.Tasty.SmallCheck qualified as SC
 
 data Person = Person { age :: !Int64, name :: !String }
-  deriving (Entity "name", Eq, Generic, Show)
+  deriving (Eq, Generic, Show)
+
+instance Entity Person where type PrimaryKey Person = "name"
 
 main :: IO ()
 main = defaultMain tests
@@ -30,7 +32,7 @@ createTableTests :: TestTree
 createTableTests = testGroup "Create Table tests"
   [ SC.testProperty "createTable @Person" \ifNotExists ->
       createTable @Person ifNotExists == CreateTable
-        { fields =
+        { columns =
             [ CreateTableColumn
                 { name = "age"
                 , primary = False

@@ -1,10 +1,9 @@
 module Database.Generic.Statement.Delete where
 
-import Database.Generic.Entity (Entity)
+import Database.Generic.Entity (Entity, EntityP)
 import Database.Generic.Entity qualified as Entity
 import Database.Generic.Entity.EntityName (EntityName)
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
-import Database.Generic.Entity.ToSql (ToSqlValue(..))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Statement.Fields (Fields(..), ReturningFields(..), fieldNames)
@@ -46,17 +45,16 @@ instance Serialize SqlValue db => Serialize (Delete o r a) db where
     <> maybe [] (\c -> ["RETURNING " <> serialize c]) d.returning
     <> [ ";" ]
 
-deleteAll :: forall a f. Entity f a => Delete Many Nothing a
+deleteAll :: forall a. Entity a => Delete Many Nothing a
 deleteAll = Delete
-  { from      = Entity.entityName @_ @a
+  { from      = Entity.entityName @a
   , returning = Nothing
   , where'    = Nothing
   }
 
-deleteById :: forall a f b.
-  (Entity f a, HasField f a b, ToSqlValue b) => b -> Delete One Nothing a
+deleteById :: forall a f b. EntityP a f b => b -> Delete One Nothing a
 deleteById b = Delete
-  { from      = Entity.entityName @_ @a
+  { from      = Entity.entityName @a
   , returning = Nothing
   , where'    = Just $ idEquals @a b
   }

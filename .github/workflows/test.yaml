@@ -9,13 +9,13 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v4
       # https://raehik.github.io/2021/03/01/caching-stack-and-cabal-haskell-builds-on-github-actions.html
-      #
-      - name: Set all tracked file modification times to the time of their last commit
-        run: |
-          rev=HEAD
-          for f in $(git ls-tree -r -t --full-name --name-only "$rev") ; do
-              touch -d $(git log --pretty=format:%cI -1 "$rev" -- "$f") "$f";
-          done
+      # #
+      # - name: Set all tracked file modification times to the time of their last commit
+      #   run: |
+      #     rev=HEAD
+      #     for f in $(git ls-tree -r -t --full-name --name-only "$rev") ; do
+      #         touch -d $(git log --pretty=format:%cI -1 "$rev" -- "$f") "$f";
+      #     done
       - name: Cache
         uses: actions/cache@v3
         with:

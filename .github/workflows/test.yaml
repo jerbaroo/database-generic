@@ -12,4 +12,3 @@ jobs:
         run: cabal update
       - name: cabal test
         run: cabal test
-      - run: echo "🍏 This job's status is ${{ job.status }}."

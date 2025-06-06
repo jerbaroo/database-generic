@@ -44,6 +44,6 @@ createTableTests = testGroup "Create Table tests"
                 }
             ]
         , ifNotExists
-        , name = "person"
+        , name = "Person"
         }
   ]

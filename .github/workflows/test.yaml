@@ -1,0 +1,9 @@
+name: 'cabal test'
+on: [push]
+jobs:
+  test:
+    runs-on: haskell:9.8.4-bullseye
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - run: echo "🍏 This job's status is ${{ job.status }}."

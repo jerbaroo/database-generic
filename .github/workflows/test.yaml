@@ -1,7 +1,7 @@
 name: 'CI'
 on: [pull_request, push]
 jobs:
-  Test all:
+  test-all:
     runs-on: ubuntu-latest
     container:
       image: haskell:9.8.4-bullseye

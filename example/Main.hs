@@ -24,7 +24,7 @@ import GHC.Generics (Generic)
 -- | Data type we want to persist.
 data Person = Person { name :: !String, age :: !Int64 }
   deriving (Generic, Show)
-  deriving HasPKField via PK "name" Person
+  deriving PrimaryKey via PK "name" Person
 
 -- | Connection string to access our PostgreSQL DB.
 type ConnStr = String
@@ -53,7 +53,7 @@ instance MonadDb AppM Identity PSQL.Connection where
     let x = debug $ serialize @_ @PostgreSQL s
     case debug $ outputType @s of
       OutputTypeAffected -> OutputAffected . debug <$> HDBC.run conn x []
-      OutputTypeNada     -> debug OutputNada <$  HDBC.runRaw conn x
+      OutputTypeNada     -> debug OutputNada <$ HDBC.runRaw conn x
       OutputTypeRows     -> OutputRows . debug <$> HDBC.quickQuery' conn x []
 
 -- | Enable our application to create new connections to PostgreSQL.

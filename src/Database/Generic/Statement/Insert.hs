@@ -1,8 +1,7 @@
 module Database.Generic.Statement.Insert where
 
 import Database.Generic.Entity (Entity)
-import Database.Generic.Entity qualified as Entity
-import Database.Generic.Entity.EntityName (EntityName)
+import Database.Generic.Entity.EntityName (EntityName(..), entityName)
 import Database.Generic.Entity.FieldName (FieldName)
 import Database.Generic.Entity.FieldName qualified as Entity
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
@@ -56,7 +55,7 @@ instance Serialize SqlValue db => Serialize (Insert o r a) db where
 
 insertOne :: forall a. Entity a => a -> Insert One Nothing a
 insertOne a = Insert
-  { into       = Entity.entityName @a
+  { into       = entityName @a
   , fieldNames = Entity.fieldNames @a
   , returning  = Nothing
   , values     = [Values $ toSqlValues a]
@@ -64,7 +63,7 @@ insertOne a = Insert
 
 insertMany :: forall a. Entity a => [a] -> Insert Many Nothing a
 insertMany as = Insert
-  { into       = Entity.entityName @a
+  { into       = entityName @a
   , fieldNames = Entity.fieldNames @a
   , returning  = Nothing
   , values     = Values . toSqlValues <$> as

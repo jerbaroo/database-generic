@@ -1,8 +1,8 @@
 module Database.Generic.Statement.Select where
 
 import Database.Generic.Entity (Entity, EntityP)
-import Database.Generic.Entity qualified as Entity
 import Database.Generic.Entity.EntityName (EntityName)
+import Database.Generic.Entity.EntityName qualified as Entity
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Statement.Fields (Fields(..), ReturningFields(..), fieldNames)
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))

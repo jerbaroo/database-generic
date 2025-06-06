@@ -17,7 +17,7 @@ import Test.Tasty.SmallCheck qualified as SC
 
 data Person = Person { age :: !Int64, name :: !String }
   deriving (Eq, Generic, Show)
-  deriving HasPKField via PK "name" Person
+  deriving PrimaryKey via PK "name" Person
 
 main :: IO ()
 main = defaultMain tests

@@ -1,8 +1,7 @@
 module Database.Generic.Statement.CreateTable where
 
 import Database.Generic.Entity (EntityP)
-import Database.Generic.Entity qualified as Entity
-import Database.Generic.Entity.EntityName (EntityName(..))
+import Database.Generic.Entity.EntityName (EntityName(..), entityName)
 import Database.Generic.Entity.FieldName (FieldName)
 import Database.Generic.Entity.PrimaryKey (primaryKeyFieldName)
 import Database.Generic.Entity.SqlColumns (HasSqlColumns(..))
@@ -42,4 +41,4 @@ createTable ifNotExists = do
   let primaryName = primaryKeyFieldName @a
   let columns = sqlColumns @a <&> \(name, type') ->
         CreateTableColumn { primary = name == primaryName, .. }
-  CreateTable { columns, name = Entity.entityName @a, .. }
+  CreateTable { columns, name = entityName @a, .. }

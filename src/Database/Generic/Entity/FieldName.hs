@@ -11,12 +11,11 @@ instance From FieldName String
 instance IsString FieldName where
   fromString = FieldName
 
--- | Types that represent a named-field.
-class HasFieldName f where
-  fieldName :: FieldName
+-- | Currently we use 'Typeable' to determine a field name, but will we always?
+type HasFieldName = Typeable
 
-instance {-# OVERLAPPABLE #-} Typeable f => HasFieldName f where
-  fieldName = FieldName $ showType' @f
+fieldName :: forall f. HasFieldName f => FieldName
+fieldName = FieldName $ showType' @f
 
 -- TODO it is possible for 'fieldName' and 'fieldNames' to be inconsistent.
 class HasFieldNames a where

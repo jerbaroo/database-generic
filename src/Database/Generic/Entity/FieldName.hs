@@ -18,6 +18,7 @@ class HasFieldName f where
 instance {-# OVERLAPPABLE #-} Typeable f => HasFieldName f where
   fieldName = FieldName $ showType' @f
 
+-- TODO it is possible for 'fieldName' and 'fieldNames' to be inconsistent.
 class HasFieldNames a where
   fieldNames :: [FieldName]
 

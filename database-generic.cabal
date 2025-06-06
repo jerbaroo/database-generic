@@ -91,7 +91,10 @@ test-suite database-generic-test
     import:           warnings
     main-is:          Main.hs
     build-depends:    base,
-                      database-generic
+                      database-generic,
+                      tasty,
+                      tasty-hunit,
+                      tasty-smallcheck,
     hs-source-dirs:   test
     default-language: GHC2021
     type:             exitcode-stdio-1.0

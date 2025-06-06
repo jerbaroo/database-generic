@@ -4,9 +4,12 @@ import Generics.Eot qualified as G
 import Database.Generic.Prelude
 
 -- | Name of a field. For example: "foo" in 'data X = Y { foo :: Int }'.
-newtype FieldName = FieldName String deriving Eq
+newtype FieldName = FieldName String deriving (Eq, Show)
 
 instance From FieldName String
+
+instance IsString FieldName where
+  fromString = FieldName
 
 -- | Types that represent a named-field.
 class HasFieldName f where

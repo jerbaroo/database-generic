@@ -11,16 +11,16 @@ import Database.Generic.Serialize (Serialize(..))
 
 -- | Create a table for values of type 'a'.
 data CreateTable a = CreateTable
-  { ifNotExists :: !Bool
+  { fields      :: ![CreateTableColumn]
+  , ifNotExists :: !Bool
   , name        :: !EntityName
-  , fields      :: ![CreateTableColumn]
-  }
+  } deriving (Eq, Show)
 
 data CreateTableColumn = CreateTableColumn
   { name    :: !FieldName
   , primary :: !Bool
   , type'   :: !SqlTypeId
-  }
+  } deriving (Eq, Show)
 
 instance Serialize SqlTypeId db => Serialize (CreateTable a) db where
   serialize c = unwords
@@ -41,4 +41,4 @@ createTable ifNotExists = do
   let primaryName = Entity.primaryKeyFieldName @a
   let fields = sqlFields @a <&> \(name, type') ->
         CreateTableColumn { primary = name == primaryName, .. }
-  CreateTable { name = Entity.entityName @_ @a, fields, .. }
+  CreateTable { fields, name = Entity.entityName @_ @a, .. }

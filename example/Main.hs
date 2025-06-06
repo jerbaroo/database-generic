@@ -22,13 +22,11 @@ import Database.PostgreSQL.Simple.Options as PSQL
 import GHC.Generics (Generic)
 
 -- | Data type we want to persist.
-data Person = Person { name :: !String, age :: !Int64 }
-  deriving (Generic, Show)
+data Person = Person { name :: !String, age :: !Int64 } deriving (Generic, Show)
 
 -- | Make 'Person' an instance of 'Entity'.
 -- All we need to do is define a primary key.
-instance Entity Person where
-  type PrimaryKey Person = "name"
+instance Entity Person where type PrimaryKey Person = "name"
 
 -- | Connection string to access our PostgreSQL DB.
 type ConnStr = String

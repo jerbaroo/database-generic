@@ -15,9 +15,9 @@ import GHC.TypeLits (KnownSymbol)
 -- | An 'Entity' can be converted to/from SQL and has a primary key.
 --
 -- For simple Haskell records with a single data constructor and named fields
--- you can derive an instance via 'Generic' by specifing the primary key field:
--- > data Person = Person { name :: !String, age :: !Int64 }
--- >   deriving (Entity "name", Generic)
+-- you can derive an instance via 'Generic' and specifing the primary key:
+-- > data Person = Person { name :: String, age :: Int64 } deriving (Generic)
+-- > instance Entity Person where PrimaryKey Person = "name"
 class (FromSqlValues a, HasSqlColumns a, KnownSymbol (PrimaryKey a), ToSqlValues a) => Entity a where
   type PrimaryKey a :: Symbol
 

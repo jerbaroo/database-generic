@@ -17,8 +17,7 @@ import Test.Tasty.SmallCheck qualified as SC
 data Person = Person { age :: !Int64, name :: !String }
   deriving (Eq, Generic, Show)
 
-instance Entity Person where
-  type PrimaryKey Person = "name"
+instance Entity Person where type PrimaryKey Person = "name"
 
 main :: IO ()
 main = defaultMain tests

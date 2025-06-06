@@ -1,12 +1,12 @@
 name: 'CI'
 on: [pull_request, push]
 jobs:
-  test:
+  Test all:
     runs-on: ubuntu-latest
     container:
       image: haskell:9.8.4-bullseye
     steps:
-      - name: Check out repository code
+      - name: Check out repo
         uses: actions/checkout@v4
       - name: Cache
         uses: actions/cache@v3
@@ -18,7 +18,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cabal-
             ${{ runner.os }}-
-      - name: Update index
+      - name: Update package list
         run: cabal update
-      - name: Run tests
+      - name: Test all
         run: cabal test all

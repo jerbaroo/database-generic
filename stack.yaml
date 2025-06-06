@@ -1,4 +1,4 @@
-resolver: lts-23.24
+resolver: lts-23.24 # If changing this make sure to update GHC version in GitHub Action.
 packages:
   - .
 extra-deps:

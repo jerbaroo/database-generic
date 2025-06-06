@@ -1,8 +1,9 @@
 -- | Commonly used functions/classes re-exported for library users.
 module Database.Generic (module X) where
 
-import Database.Generic.Entity as X (Entity(PrimaryKey))
+import Database.Generic.Entity as X (Entity)
 import Database.Generic.Entity.Field as X (field)
+import Database.Generic.Entity.PrimaryKey as X (HasPKField, PK)
 import Database.Generic.Class as X (MonadDb(..), MonadDbNewConn(..))
 import Database.Generic.Operations as X (execute, executeTx, tx, tx_)
 import Database.Generic.Statement.CreateTable as X (createTable)

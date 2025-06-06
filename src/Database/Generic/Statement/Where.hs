@@ -1,10 +1,10 @@
 module Database.Generic.Statement.Where where
 
 import Database.Generic.Entity (Entity, EntityP)
-import Database.Generic.Entity qualified as Entity
+import Database.Generic.Entity.FieldName (FieldName, HasFieldName(..))
+import Database.Generic.Entity.PrimaryKey (primaryKeyFieldName)
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.ToSql (ToSqlValue(..))
-import Database.Generic.Entity.FieldName (FieldName, HasFieldName(..))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 
@@ -22,7 +22,7 @@ instance Serialize SqlValue db => Serialize (Where a) db where
     from fName <> " IS " <> if is then "" else "NOT " <> "NULL"
 
 idEquals :: forall a f b. EntityP a f b => b -> Where a
-idEquals b = Equals (Entity.primaryKeyFieldName @a) (toSqlValue b)
+idEquals b = Equals (primaryKeyFieldName @a) (toSqlValue b)
 
 isNull :: forall f a b.
   (Entity a, HasField f a b, HasFieldName f) => Where a

@@ -1,8 +1,8 @@
-{-# LANGUAGE BlockArguments      #-}
-{-# LANGUAGE DataKinds           #-}
-{-# LANGUAGE DerivingStrategies  #-}
-{-# LANGUAGE OverloadedRecordDot #-}
-{-# LANGUAGE TypeFamilies        #-}
+{-# LANGUAGE BlockArguments       #-}
+{-# LANGUAGE DataKinds            #-}
+{-# LANGUAGE DerivingVia          #-}
+{-# LANGUAGE OverloadedRecordDot  #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Main where
 
@@ -22,11 +22,9 @@ import Database.PostgreSQL.Simple.Options as PSQL
 import GHC.Generics (Generic)
 
 -- | Data type we want to persist.
-data Person = Person { name :: !String, age :: !Int64 } deriving (Generic, Show)
-
--- | Make 'Person' an instance of 'Entity'.
--- All we need to do is define a primary key.
-instance Entity Person where type PrimaryKey Person = "name"
+data Person = Person { name :: !String, age :: !Int64 }
+  deriving (Generic, Show)
+  deriving HasPKField via PK "name" Person
 
 -- | Connection string to access our PostgreSQL DB.
 type ConnStr = String

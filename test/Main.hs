@@ -1,8 +1,9 @@
 {-# LANGUAGE BlockArguments        #-}
 {-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE DerivingVia           #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 module Main (main) where
 
@@ -16,8 +17,7 @@ import Test.Tasty.SmallCheck qualified as SC
 
 data Person = Person { age :: !Int64, name :: !String }
   deriving (Eq, Generic, Show)
-
-instance Entity Person where type PrimaryKey Person = "name"
+  deriving HasPKField via PK "name" Person
 
 main :: IO ()
 main = defaultMain tests

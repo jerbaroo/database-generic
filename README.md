@@ -45,33 +45,3 @@ To run the tutorial on your machine:
 2. Start a PostgreSQL instance with username and password `demo`, e.g.:
   `docker run -it --rm --env POSTGRES_PASSWORD=demo --env POSTGRES_USER=demo --publish 5432:5432 postgres`
 3. Either `cabal run` via provided `nix-shell`, or `stack run`.
-
-## Entity
-
-An instance of `Entity` may be derived via `DeriveAnyClass`: 
-
-``` hs
-data Person = Person { name :: String, age :: Int }
-  deriving (Entity "name", Generic)
-```
-
-The `Entity ` class has three superclasses:
-- `FromSqlValues`: for parsing from SQL
-- `HasSqlColumns`: names and types of SQL columns
-- `ToSqlValues`: converting to SQL
-
-In addition, the `Entity` class has two methods with `default` implementations:
-- `entityName`: name of the SQL table
-- `primaryKeyField`: field used as primary key
-
-When `deriving` an instance of `Entity` you can decide the primary key by
-passing the field `f` to use as primary key as first type parameter to `Entity`.
-
-IMPORTANT NOTE: the implementations of the three superclasses and the two
-methods are consistent with each other. If you override any of these instances
-or implementations then you need to ensure they are still consistent.
-
-## MonadDb
-
-`upsert` and `select` have more complicated type signatures than shown above.
-For example here is the full type signature of `upsertT`

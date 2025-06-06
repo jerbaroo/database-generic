@@ -8,8 +8,8 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
-      # - name: Cabal install
-      #   run: cabal install
+      - name: Cabal install
+        run: cabal install
       - name: cabal test
         run: cabal test
       - run: echo "🍏 This job's status is ${{ job.status }}."

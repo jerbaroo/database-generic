@@ -1,5 +1,7 @@
 name: 'cabal test'
-on: [push]
+on:
+  push:
+    branches: ["docker-action"]
 jobs:
   test:
     runs-on: haskell:9.8.4-bullseye

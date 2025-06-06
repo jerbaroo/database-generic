@@ -15,9 +15,9 @@ import Database.Generic.Entity.ToSql (ToSqlValue, ToSqlValues)
 -- > data Person = Person { name :: String, age :: Int64 }
 -- > deriving Generic
 -- > deriving PrimaryKey via PK "name" Person
-class (FromSqlValues a, HasPrimaryKey a, HasSqlColumns a, HasEntityName a, ToSqlValues a) => Entity a where
+class (FromSqlValues a, HasEntityName a, HasPrimaryKey a, HasSqlColumns a, ToSqlValues a) => Entity a where
 
-instance (FromSqlValues a, HasPrimaryKey a, HasSqlColumns a, HasEntityName a, ToSqlValues a) => Entity a
+instance (FromSqlValues a, HasEntityName a, HasPrimaryKey a, HasSqlColumns a, ToSqlValues a) => Entity a
 
 -- | 'Entity' with additional types of primary key in scope.
 type EntityP a f b = (Entity a, HasPrimaryKeyP a f b, ToSqlValue b)

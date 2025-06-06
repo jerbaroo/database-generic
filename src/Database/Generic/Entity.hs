@@ -27,7 +27,7 @@ class (FromSqlValues a, HasSqlFields a, ToSqlValues a)
     forall b. (HasField f a b, HasFieldName f, ToSqlValue b) => Field f a b
   primaryKeyField = field @f @a
 
--- | 'Entity' but with additional type parameter 'b' in scope.
+-- | 'Entity' with additional type parameter 'b' (of 'HasField f a b') 'in scope.
 type EntityP f a b = (Entity f a, HasField f a b, ToSqlValue b)
 
 primaryKey :: forall a f b. (EntityP f a b) => a -> b

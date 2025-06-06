@@ -1,10 +1,10 @@
-name: 'cabal test'
-on:
-  push:
-    branches: ["docker-action"]
+name: 'CI'
+on: [pull_request, push]
 jobs:
   test:
-    runs-on: haskell:9.8.4-bullseye
+    runs-on: ubuntu-latest
+    container:
+      image: haskell:9.8.4-bullseye
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4

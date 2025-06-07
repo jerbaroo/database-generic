@@ -1,9 +1,8 @@
 {-# LANGUAGE BlockArguments        #-}
 {-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE DerivingVia           #-}
+{-# LANGUAGE DeriveAnyClass        #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE UndecidableInstances  #-}
 
 module Database.Generic.Test.Statement where
 
@@ -14,15 +13,12 @@ import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(serialize))
 import Database.Generic.Statement.CreateTable (CreateTable(..), CreateTableColumn(..))
 import Database.Generic.Statement.Delete (Delete(..))
+import Database.Generic.Statement.Returning qualified as R
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import GHC.Generics (Generic)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase, assertEqual)
 import Test.Tasty.SmallCheck qualified as SC
-
-data Person = Person { age :: !Int64, name :: !String }
-  deriving (Eq, Generic, Show)
-  deriving PrimaryKey via PK "name" Person
 
 statementTests :: TestTree
 statementTests = testGroup "Statement tests"
@@ -30,7 +26,12 @@ statementTests = testGroup "Statement tests"
   , deleteTests
   ]
 
--- * Create table
+-- * Helpers.
+
+data Person = Person { age :: !Int64, name :: !String }
+  deriving (Eq, Generic, PrimaryKey "name", Show)
+
+-- * Create table tests.
 
 createTablePerson :: Bool -> CreateTable a
 createTablePerson ifNotExists =
@@ -66,7 +67,7 @@ createTableTests = testGroup "Create table statement tests"
       serialize @_ @PostgreSQL (createTablePerson b) == createTablePersonPG b
   ]
 
--- * Delete
+-- * Delete tests.
 
 deleteAllPerson :: Delete Many Nothing Person
 deleteAllPerson = Delete
@@ -74,6 +75,14 @@ deleteAllPerson = Delete
   , returning = Nothing
   , where' = Nothing
   }
+
+-- | This is a test that returning modifies the type correctly.
+deleteAllPersonReturning :: Delete Many (Just Person) Person
+deleteAllPersonReturning = R.returning $ deleteAll @Person
+
+-- | This is a test that returning modifies the type correctly.
+deleteByIdReturning :: Delete One (Just Person) Person
+deleteByIdReturning = R.returning $ deleteById "john"
 
 deleteTests :: TestTree
 deleteTests = testGroup "Delete statement tests"

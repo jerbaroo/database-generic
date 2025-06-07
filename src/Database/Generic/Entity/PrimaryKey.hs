@@ -1,37 +1,14 @@
-{-# LANGUAGE UndecidableInstances #-}
-
 module Database.Generic.Entity.PrimaryKey where
 
-import Database.Generic.Entity.Field (Field(..), field)
-import Database.Generic.Entity.FieldName (FieldName, HasFieldName)
+import Database.Generic.Entity.FieldName (FieldName, HasFieldName, fieldName)
 import Database.Generic.Prelude
-import GHC.Base (Symbol)
 
--- | Types with a primary key.
-class PrimaryKey a => HasPrimaryKey a where
-  -- | Return a 'Field' for the primary key.
-  primaryKeyField :: forall b. HasField (PKField a) a b => Field (PKField a) a b
-  primaryKeyField = field @(PKField a) @a
+class HasFieldName f => PrimaryKey f a | a -> f where
+  primaryKey :: forall b. HasField f a b => a -> b
+  primaryKey = getField @f
 
--- | 'HasPrimaryKey' with additional types of primary key in scope.
-type HasPrimaryKey' a f b = (HasField (PKField a) a b, HasPrimaryKey a)
+-- | 'PrimaryKey' with type 'b' of primary key in scope.
+type PrimaryKey' a f b = (HasField f a b, PrimaryKey f a)
 
-primaryKey :: forall a f b. HasPrimaryKey' a f b => a -> b
-primaryKey = let (Field _ f) = primaryKeyField @a in f
-
-primaryKeyFieldName :: forall a f b. (HasPrimaryKey' a f b) => FieldName
-primaryKeyFieldName = (primaryKeyField @a).name
-
--- TODO: can we merge this with 'HasPrimaryKey'?
--- | Exists for convenience for library users. Example usage:
--- > data Person = Person { age :: Int, name :: String }
--- > deriving PrimaryKey via PK "name" Person
-class HasFieldName (PKField a) => PrimaryKey a where
-  type PKField a :: Symbol
-
-newtype PK (f :: Symbol) a = PK a
-
-instance HasFieldName f => PrimaryKey (PK f a) where
-  type PKField (PK f a) = f
-
-instance PrimaryKey a => HasPrimaryKey a
+primaryKeyFieldName :: forall a f. PrimaryKey f a => FieldName
+primaryKeyFieldName = fieldName @f

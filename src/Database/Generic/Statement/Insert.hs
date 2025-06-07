@@ -54,7 +54,7 @@ instance Serialize SqlValue db => Serialize (Insert o r a) db where
     <> maybe [] (\c -> ["RETURNING " <> serialize c]) i.returning
     <> [ ";" ]
 
-insertOne :: forall a. Entity a => a -> Insert One Nothing a
+insertOne :: forall a f. Entity a f => a -> Insert One Nothing a
 insertOne a = Insert
   { into       = entityName @a
   , fieldNames = Entity.fieldNames @a
@@ -62,7 +62,7 @@ insertOne a = Insert
   , values     = [Values $ toSqlValues a]
   }
 
-insertMany :: forall a. Entity a => [a] -> Insert Many Nothing a
+insertMany :: forall a f. Entity a f => [a] -> Insert Many Nothing a
 insertMany as = Insert
   { into       = entityName @a
   , fieldNames = Entity.fieldNames @a

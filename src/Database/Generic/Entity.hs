@@ -11,8 +11,7 @@ import Database.Generic.Entity.ToSql (ToSqlValue, ToSqlValues)
 -- For simple Haskell records with a single data constructor and named fields
 -- you only need to derive 'Generic' and 'PrimaryKey' to get an 'Entity' instance:
 -- > data Person = Person { name :: String, age :: Int64 }
--- > deriving Generic
--- > deriving PrimaryKey via PK "name" Person
+-- > deriving (Generic, PrimaryKey "name")
 class (FromSqlValues a, HasEntityName a, HasSqlColumns a, PrimaryKey f a, ToSqlValues a) => Entity a f
 
 instance (FromSqlValues a, HasEntityName a, HasSqlColumns a, PrimaryKey f a, ToSqlValues a) => Entity a f

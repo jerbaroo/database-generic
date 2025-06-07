@@ -30,20 +30,11 @@ type instance ModifyReturnType (Insert o _ a) r = Insert o (Just r) a
 type instance Row (Insert _ _ a) = a
 
 instance Returning (Insert o Nothing a) (Insert o (Just a) a) where
-  returning i = Insert
-    { into       = i.into
-    , fieldNames = i.fieldNames
-    , returning  = Just All
-    , values     = i.values
-    }
+  returning Insert{..} = Insert { returning = Just All, .. }
 
 instance ReturningFields (Insert o r a) where
-  returningFields i f = Insert
-    { into       = i.into
-    , fieldNames = i.fieldNames
-    , returning = Just $ Some $ Fields.fieldNames f
-    , values     = i.values
-    }
+  returningFields Insert{..} f = Insert
+    { returning = Just $ Some $ Fields.fieldNames f, .. }
 
 instance Serialize SqlValue db => Serialize (Insert o r a) db where
   serialize i = unwords $

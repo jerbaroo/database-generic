@@ -25,18 +25,11 @@ type instance ModifyReturnType (Delete o _ a) r = Delete o (Just r) a
 type instance Row (Delete _ _ a) = a
 
 instance Returning (Delete o Nothing a) (Delete o (Just a) a) where
-  returning d = Delete
-    { fields = Just All
-    , from   = d.from
-    , where' = d.where'
-    }
+  returning Delete{..} = Delete { fields = Just All, .. }
 
 instance ReturningFields (Delete o Nothing a) where
-  returningFields d f = Delete
-    { fields = Just $ Some $ fieldNames f
-    , from   = d.from
-    , where' = d.where'
-    }
+  returningFields Delete{..} f = Delete
+    { fields = Just $ Some $ fieldNames f, .. }
 
 instance Serialize SqlValue db => Serialize (Delete o r a) db where
   serialize d = unwords $

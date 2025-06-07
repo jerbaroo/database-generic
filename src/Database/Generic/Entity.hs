@@ -20,4 +20,4 @@ class (FromSqlValues a, HasEntityName a, HasPrimaryKey a, HasSqlColumns a, ToSql
 instance (FromSqlValues a, HasEntityName a, HasPrimaryKey a, HasSqlColumns a, ToSqlValues a) => Entity a
 
 -- | 'Entity' with additional types of primary key in scope.
-type EntityP a f b = (Entity a, HasPrimaryKey' a f b, ToSqlValue b)
+type Entity' a f b = (Entity a, HasPrimaryKey' a f b, ToSqlValue b)

@@ -1,6 +1,6 @@
 module Database.Generic.Statement.Delete where
 
-import Database.Generic.Entity (Entity, EntityP)
+import Database.Generic.Entity (Entity, Entity')
 import Database.Generic.Entity.EntityName (EntityName, entityName)
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Prelude
@@ -50,7 +50,7 @@ deleteAll = Delete
   , where'    = Nothing
   }
 
-deleteById :: forall a f b. EntityP a f b => b -> Delete One Nothing a
+deleteById :: forall a f b. Entity' a f b => b -> Delete One Nothing a
 deleteById b = Delete
   { from      = entityName @a
   , returning = Nothing

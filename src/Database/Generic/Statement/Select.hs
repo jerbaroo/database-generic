@@ -1,6 +1,6 @@
 module Database.Generic.Statement.Select where
 
-import Database.Generic.Entity (Entity, EntityP)
+import Database.Generic.Entity (Entity, Entity')
 import Database.Generic.Entity.EntityName (EntityName)
 import Database.Generic.Entity.EntityName qualified as Entity
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
@@ -48,7 +48,7 @@ selectAll = Select
   , where'     = Nothing
   }
 
-selectById :: forall a f b. EntityP a f b => b -> Select One a a
+selectById :: forall a f b. Entity' a f b => b -> Select One a a
 selectById b = Select
   { entityName = Entity.entityName @a
   , fields     = All

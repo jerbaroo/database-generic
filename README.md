@@ -22,19 +22,29 @@ to your database without having to write the usual server boilerplate.
 
 ## Roadmap
 
-| Feature                                                          | Status |
-|------------------------------------------------------------------|--------|
-| Derive Entity for simple data types                              | ✅     |
-| Write Entity to PostgreSQL via MonadDb                           | ✅     |
-| Read Entity from PostgreSQL via MonadDb                          | ✅     |
-| Delete Entity from PostgreSQL via MonadDb                        | ✅     |
-| Execute stream of statements against PostgreSQL via Conduit      |        |
-| Listen for and stream Entity updates from PostgreSQL via Conduit |        |
-| Servant server: endpoint to execute single statement             |        |
-| Servant server: execute stream of statements over WebSocket      |        |
-| Servant server: stream Entity updates from server over WebSocket |        |
-| Servant server permission checks                                 |        |
-| Reflex (client-side) MonadDb instance                            |        |
+| Feature                                      | Status | Tested |
+|----------------------------------------------|--------|--------|
+| Create table                                 | ✅     | ✅     |
+| Insert one                                   | ✅     |        |
+| Insert many                                  | ✅     |        |
+| Select all                                   | ✅     |        |
+| Select by ID                                 | ✅     |        |
+| Where column is not null                     |        |        |
+| Where column is null                         |        |        |
+| Where column equals                          |        |        |
+| Limit clause                                 | ✅     |        |
+| Order by clause                              |        |        |
+| Return subset of fields                      | ✅     | ✅     |
+| Delete all                                   | ✅     |        |
+| Delete by ID                                 | ✅     |        |
+| Delete returning                             | ✅     | ✅     |
+| Stream statements over Conduit               |        |        |
+| Stream Entity updates over Conduit           |        |        |
+| Server: endpoint to execute statement        |        |        |
+| Server: stream statements over WebSocket     |        |        |
+| Server: stream Entity updates over WebSocket |        |        |
+| Server: permission checks                    |        |        |
+| Reflex (client-side) MonadDb instance        |        |        |
 
 ## Quick Start
 

@@ -1,6 +1,6 @@
 module Database.Generic.Statement.Fields where
 
-import Database.Generic.Entity.Field (Field(..))
+import Database.Generic.Entity.Field (Field(..), field)
 import Database.Generic.Entity.FieldName (FieldName)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))

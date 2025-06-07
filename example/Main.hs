@@ -72,7 +72,7 @@ main = do
   info "Delete by ID"
   print =<< runAppM c (tx $ execute $ deleteById @Person "John")
   info "Insert one"
-  print =<< runAppM c (tx $ execute $ returning $ insertOne $ john{age=55 })
+  print =<< runAppM c (tx $ execute $ returning $ insertOne $ john{age=55})
   info "Insert two"
   print =<< runAppM c (tx $ execute $ insertMany [john{name="Foo"}, john {name = "Mary"}] ==> field @"age")
   info "Select by ID"
@@ -80,5 +80,5 @@ main = do
   info "Select All"
   print =<< runAppM c (tx_ $ execute $ selectAll @Person)
   info "Select specific fields by ID"
-  print =<< runAppM c ( tx_ $ execute $
+  print =<< runAppM c (tx_ $ execute $
     selectById @Person john.name ==> field @"age")

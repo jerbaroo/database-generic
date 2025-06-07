@@ -91,6 +91,7 @@ executable database-generic-example
 test-suite database-generic-test
     import:           warnings
     main-is:          Main.hs
+    other-modules:    Database.Generic.Test.Statement
     build-depends:    base,
                       database-generic,
                       tasty,

@@ -1,6 +1,6 @@
 module Database.Generic.Entity.Field where
 
-import Database.Generic.Entity.FieldName (FieldName, fieldName)
+import Database.Generic.Entity.FieldName (FieldName, HasFieldName, fieldName)
 import Database.Generic.Prelude
 import GHC.Generics (Generic)
 
@@ -12,5 +12,5 @@ data Field f a b = Field
   deriving Generic
 
 -- | Construct a 'Field'.
-field :: forall f a b. (HasField f a b, Typeable f) => Field f a b
+field :: forall f a b. (HasField f a b, HasFieldName f) => Field f a b
 field = Field (fieldName @f) (getField @f)

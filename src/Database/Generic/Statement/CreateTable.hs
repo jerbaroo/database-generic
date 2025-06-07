@@ -8,6 +8,7 @@ import Database.Generic.Entity.SqlColumns (HasSqlColumns(..))
 import Database.Generic.Entity.SqlTypes (SqlTypeId)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
+import Database.Generic.Serialize qualified as Serialize
 
 -- | Create a table for values of type 'a'.
 data CreateTable a = CreateTable
@@ -23,17 +24,15 @@ data CreateTableColumn = CreateTableColumn
   } deriving (Eq, Show)
 
 instance Serialize SqlTypeId db => Serialize (CreateTable a) db where
-  serialize c = unwords
-    [ "CREATE TABLE"
-    , if c.ifNotExists then "IF NOT EXISTS" else ""
-    , from c.name
-    , "("
-    , intercalate ", " $ c.columns <&> \c' -> unwords
-          [ from c'.name
-          , serialize @_ @db c'.type'
-          , if c'.primary then "PRIMARY KEY" else ""
+  serialize c = Serialize.statement $ unwords $ catMaybes
+    [ Just "CREATE TABLE"
+    , if c.ifNotExists then Just "IF NOT EXISTS" else Nothing
+    , Just $ from c.name
+    , Just $ Serialize.parens $ c.columns <&> \c' -> unwords $ catMaybes
+          [ Just $ from c'.name
+          , Just $ serialize @_ @db c'.type'
+          , if c'.primary then Just "PRIMARY KEY" else Nothing
           ]
-    , ");"
     ]
 
 createTable :: forall a f b. EntityP a f b => Bool -> CreateTable a

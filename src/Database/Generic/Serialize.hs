@@ -22,3 +22,9 @@ instance Serialize SqlValue PostgreSQL where
 
 instance Serialize SqlValue SQLite where
   serialize = serialize @_ @PostgreSQL
+
+parens :: [String] -> String
+parens xs = "(" <> intercalate ", " xs <> ")"
+
+statement :: String -> String
+statement = (<> ";")

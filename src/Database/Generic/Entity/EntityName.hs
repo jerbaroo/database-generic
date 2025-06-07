@@ -14,4 +14,4 @@ class HasEntityName a where
   entityName :: EntityName
 
 instance Typeable a => HasEntityName a where
-  entityName = EntityName $ toLower <$> showType @a
+  entityName = EntityName $ showType' @a

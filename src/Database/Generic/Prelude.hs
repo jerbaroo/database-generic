@@ -1,5 +1,6 @@
-module Database.Generic.Prelude (debug, showType, showType', module X) where
+module Database.Generic.Prelude (debug, showType, showType', showTypeT, module X) where
 
+import Control.Arrow as X ((&&&), (***))
 import Control.Comonad as X (Comonad(extract))
 import Control.Exception as X (Exception(displayException), SomeException, throw, toException)
 import Control.FromSum as X (fromEither, fromEitherM)
@@ -33,6 +34,10 @@ debug a = trace (show a) a
 showType :: forall a. Typeable a => String
 showType = show $ typeRep $ Proxy @a
 
--- | Like 'showType' but with quotes removed.
+-- | Like 'showType' but with quotes removed and lowercase.
 showType' :: forall a. Typeable a => String
-showType' = replace "\"" "" $ showType @a
+showType' = showTypeT $ showType @a
+
+-- | Transformation used in 'showType''.
+showTypeT :: String -> String
+showTypeT = replace "\"" "" . fmap toLower

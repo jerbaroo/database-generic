@@ -5,8 +5,8 @@ import Database.Generic.Entity.EntityName (EntityName, entityName)
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
-import Database.Generic.Statement.Fields (Fields(..), ReturnFields(..), fieldNames)
-import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType, Returning(..), Row)
+import Database.Generic.Statement.Fields (Fields(..), fieldNames)
+import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType, Returning(..), ReturningFields(..))
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Where (Where, idEquals)
 import Witch qualified as W
@@ -16,22 +16,12 @@ data Delete (o :: OneOrMany) (r :: Maybe fs) a = Delete
   { from      :: !EntityName
   , returning :: !(Maybe Fields)
   , where'    :: !(Maybe (Where a))
-  }
+  } deriving (Eq, Show)
 
--- | 'fs' represents the type of Haskell values returned.
 type instance IsReturning (Delete _ (Just fs) _) = fs
--- type instance Returning (Delete _ Nothing   _) = Nothing
 
--- | Modify the type of a delete statement to reflect a subset of fields returned.
---
--- Note the 'Nothing', which means the statement return type may only be
--- modified if it has not already been modified to return something. Will
--- consider relaxing this constraint once the library is stable.
-type instance ModifyReturnType (Delete o Nothing a) fs = Delete o (Just fs) a
+type instance ModifyReturnType (Delete o _ a) r = Delete o (Just r) a
 
-type instance Row (Delete _ _ a) = a
-
--- | An insert statement not returning anything can be modified to return 'a's.
 instance Returning (Delete o Nothing a) (Delete o (Just a) a) where
   returning d = Delete
     { from      = d.from
@@ -39,8 +29,8 @@ instance Returning (Delete o Nothing a) (Delete o (Just a) a) where
     , where'    = d.where'
     }
 
-instance ReturnFields (Delete o Nothing a) where
-  fields d f = Delete
+instance ReturningFields (Delete o Nothing a) where
+  returningFields d f = Delete
     { from      = d.from
     , returning = Just $ Some $ fieldNames f
     , where'    = d.where'

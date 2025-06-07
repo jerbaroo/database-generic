@@ -8,9 +8,9 @@ import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.ToSql (toSqlValues)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
-import Database.Generic.Statement.Fields (Fields(..), ReturnFields(..))
+import Database.Generic.Statement.Fields (Fields(..))
 import Database.Generic.Statement.Fields qualified as Fields
-import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType, Returning(..))
+import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType, Returning(..), ReturningFields(..), Row)
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Values (Values(..))
 import Witch qualified as W
@@ -23,11 +23,11 @@ data Insert (o :: OneOrMany) (r :: Maybe fs) a = Insert
   , values     :: ![Values]
   }
 
--- | 'fs' represents the type of Haskell values returned.
 type instance IsReturning (Insert _ (Just fs) _) = fs
--- type instance Returning (Insert _ Nothing   a) = ()
 
-type instance ModifyReturnType (Insert o _ a) fs = Insert o (Just fs) a
+type instance ModifyReturnType (Insert o _ a) r = Insert o (Just r) a
+
+type instance Row (Insert _ _ a) = a
 
 instance Returning (Insert o Nothing a) (Insert o (Just a) a) where
   returning i = Insert
@@ -37,8 +37,8 @@ instance Returning (Insert o Nothing a) (Insert o (Just a) a) where
     , values     = i.values
     }
 
-instance ReturnFields (Insert o r a) where
-  fields i f = Insert
+instance ReturningFields (Insert o r a) where
+  returningFields i f = Insert
     { into       = i.into
     , fieldNames = i.fieldNames
     , returning = Just $ Some $ Fields.fieldNames f

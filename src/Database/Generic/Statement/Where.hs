@@ -13,6 +13,7 @@ data Where a where
   And    :: !(Where a) -> !(Where a) -> Where a
   Equals :: !FieldName -> !SqlValue  -> Where a
   IsNull :: !FieldName -> !Bool      -> Where a
+  deriving (Eq, Show)
 
 instance Serialize SqlValue db => Serialize (Where a) db where
   serialize (And a b) =

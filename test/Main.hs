@@ -1,4 +1,5 @@
 {-# LANGUAGE BlockArguments        #-}
+
 module Main (main) where
 
 import Database.Generic.Test.Statement (statementTests)

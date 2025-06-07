@@ -4,10 +4,10 @@ import Database.Generic.Entity (Entity, EntityP)
 import Database.Generic.Entity.EntityName (EntityName)
 import Database.Generic.Entity.EntityName qualified as Entity
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
-import Database.Generic.Statement.Fields (Fields(..), ReturnFields(..), fieldNames)
+import Database.Generic.Statement.Fields (Fields(..), fieldNames)
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Where (Where(..), Whereable(..), idEquals)
-import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType)
+import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType, ReturningFields(..), Row)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Witch qualified as W
@@ -19,19 +19,14 @@ data Select (o :: OneOrMany) fs a = Select
   , where'     :: !(Maybe (Where a))
   }
 
--- | 'fs' represents the type of Haskell values returned.
 type instance IsReturning (Select _ fs _) = fs
 
--- | Modify the type of a select statement to reflect a subset of fields returned.
---
--- Note the repeated 'a', which means the statement return type may only be
--- modified if it has not already been modified to return fields. Will consider
--- relaxing this constraint once the library is stable.
-type instance ModifyReturnType (Select o a a) fs = Select o fs a
+type instance ModifyReturnType (Select o _ a) r = Select o r a
 
--- | Modify a select statement to return a subset of fields.
-instance ReturnFields (Select o a a) where
-  fields s p = Select
+type instance Row (Select _ _ a) = a
+
+instance ReturningFields (Select o a a) where
+  returningFields s p = Select
     { entityName = s.entityName
     , fields     = Some $ fieldNames p
     , where'     = s.where'

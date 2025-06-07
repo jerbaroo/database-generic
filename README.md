@@ -38,7 +38,7 @@ to your database without having to write the usual server boilerplate.
 
 ## Quick Start
 
-A tutorial as code exists [here](example/Main.hs).
+A tutorial as code exists [here](tutorial/Main.hs).
 
 To run the tutorial on your machine:
 1. Clone this repo.

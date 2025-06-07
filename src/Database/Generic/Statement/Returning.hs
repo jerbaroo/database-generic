@@ -19,17 +19,17 @@ class Returning s1 s2 | s1 -> s2 where
 
 class ReturningFields s where
   -- | Update a statement so it will return a subset of fields on execution.
-  returningFields :: forall f a. (FieldsOf f (Row s) a)
+  returningFields :: forall f b. (FieldsOf f (Row s) b)
     => s                    -- ^ The original statement.
     -> f                    -- ^ Fields to select, which can be parsed into a 'a'.
-    -> ModifyReturnType s a -- ^ A statement now returning values of type 'a'.
+    -> ModifyReturnType s b -- ^ A statement now returning values of type 'a'.
 
 infixl 4 ==>
 
 -- | Infix version of 'returningFields'.
-(==>) :: forall s f a.
-  (FieldsOf f (Row s) a, ReturningFields s)
-  => s -> f -> ModifyReturnType s a
+(==>) :: forall s f b.
+  (FieldsOf f (Row s) b, ReturningFields s)
+  => s -> f -> ModifyReturnType s b
 (==>) = returningFields
 
 -- | Type of 'Entity' in the table affected by the statement.

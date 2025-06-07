@@ -22,7 +22,7 @@ import Database.PostgreSQL.Simple.Options as PSQL
 import GHC.Generics (Generic)
 
 -- | Data type we want to persist.
-data Person = Person { name :: !String, age :: !Int64 }
+data Person = Person { age :: !Int64, name :: !String }
   deriving (Generic, PrimaryKey "name", Show)
 
 -- | Connection string to access our PostgreSQL DB.
@@ -62,7 +62,7 @@ instance MonadDbNewConn AppM PSQL.Connection where
 main :: IO ()
 main = do
   let c    = connStr "127.0.0.1" 5432 "postgres" "demo" "demo"
-  let john = Person "John" 21
+  let john = Person 21 "John"
   let info = putStrLn . ("\n" ++)
   info "Create table if not exists"
   runAppM c $ tx_ $ execute $ createTable @Person True
@@ -78,6 +78,8 @@ main = do
   print =<< runAppM c (tx_ $ execute $ selectById @Person john.name)
   info "Select All"
   print =<< runAppM c (tx_ $ execute $ selectAll @Person)
+  info "Select All, select 2 fields"
+  print =<< runAppM c (tx_ $ execute $ selectAll @Person ==> field2 @"age" @"name")
   info "Select specific fields by ID"
   print =<< runAppM c (tx_ $ execute $
     selectById @Person john.name ==> field @"age")

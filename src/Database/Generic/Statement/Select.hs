@@ -4,31 +4,34 @@ import Database.Generic.Entity (Entity, EntityP)
 import Database.Generic.Entity.EntityName (EntityName)
 import Database.Generic.Entity.EntityName qualified as Entity
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
-import Database.Generic.Statement.Fields (Fields(..), ReturningFields(..), fieldNames)
+import Database.Generic.Statement.Fields (Fields(..), ReturnFields(..), fieldNames)
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Where (Where(..), Whereable(..), idEquals)
-import Database.Generic.Statement.Returning (NowReturning, Returning)
+import Database.Generic.Statement.Returning (ModifyReturning, Returning)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Witch qualified as W
 
--- | Select one or many values of type 'a', but only fields 'fs'.
+-- | Select from one or many values of type 'a', the fields 'fs'.
 data Select (o :: OneOrMany) fs a = Select
   { entityName :: !EntityName
   , fields     :: !Fields
   , where'     :: !(Maybe (Where a))
   }
 
-type instance Returning (Select _ fs _) = fs
+-- | Modification of the type of a select statement to return a subset of fields.
+type instance ModifyReturning (Select o a a) fs = Select o fs a
 
-type instance NowReturning (Select o a a) fs = Select o fs a
-
-instance ReturningFields (Select o a a) where
+-- | Modification of a select statement to return a subset of fields.
+instance ReturnFields (Select o a a) where
   fields s p = Select
     { entityName = s.entityName
     , fields     = Some $ fieldNames p
     , where'     = s.where'
     }
+
+-- | For a select statement 'fs' represents the return type.
+type instance Returning (Select _ fs _) = fs
 
 instance Serialize SqlValue db => Serialize (Select o fs a) db where
   serialize s = unwords $

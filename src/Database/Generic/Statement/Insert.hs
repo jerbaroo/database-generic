@@ -8,9 +8,9 @@ import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.ToSql (toSqlValues)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
-import Database.Generic.Statement.Fields (Fields(..), ReturningFields(..))
+import Database.Generic.Statement.Fields (Fields(..), ReturnFields(..))
 import Database.Generic.Statement.Fields qualified as Fields
-import Database.Generic.Statement.Returning (NowReturning, Returnable(..), Returning)
+import Database.Generic.Statement.Returning (ModifyReturning, Returnable(..), Returning)
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Values (Values(..))
 import Witch qualified as W
@@ -26,7 +26,7 @@ data Insert (o :: OneOrMany) (r :: Maybe fs) a = Insert
 type instance Returning (Insert _ Nothing   a) = a
 type instance Returning (Insert _ (Just fs) _) = fs
 
-type instance NowReturning (Insert o _ a) fs = Insert o (Just fs) a
+type instance ModifyReturning (Insert o _ a) fs = Insert o (Just fs) a
 
 instance Returnable (Insert o Nothing a) (Insert o (Just a) a) where
   returning i = Insert
@@ -36,7 +36,7 @@ instance Returnable (Insert o Nothing a) (Insert o (Just a) a) where
     , values     = i.values
     }
 
-instance ReturningFields (Insert o r a) where
+instance ReturnFields (Insert o r a) where
   fields i f = Insert
     { into       = i.into
     , fieldNames = i.fieldNames

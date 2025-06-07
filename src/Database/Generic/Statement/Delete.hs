@@ -5,8 +5,8 @@ import Database.Generic.Entity.EntityName (EntityName, entityName)
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
-import Database.Generic.Statement.Fields (Fields(..), ReturningFields(..), fieldNames)
-import Database.Generic.Statement.Returning (NowReturning, Returnable(..), Returning)
+import Database.Generic.Statement.Fields (Fields(..), ReturnFields(..), fieldNames)
+import Database.Generic.Statement.Returning (ModifyReturning, Returnable(..), Returning)
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Where (Where, idEquals)
 import Witch qualified as W
@@ -19,9 +19,10 @@ data Delete (o :: OneOrMany) (r :: Maybe fs) a = Delete
   }
 
 type instance Returning (Delete _ Nothing   a) = a
+
 type instance Returning (Delete _ (Just fs) _) = fs
 
-type instance NowReturning (Delete o _ a) fs = Delete o (Just fs) a
+type instance ModifyReturning (Delete o _ a) fs = Delete o (Just fs) a
 
 instance Returnable (Delete o Nothing a) (Delete o (Just a) a) where
   returning d = Delete
@@ -30,7 +31,7 @@ instance Returnable (Delete o Nothing a) (Delete o (Just a) a) where
     , where'    = d.where'
     }
 
-instance ReturningFields (Delete o r a) where
+instance ReturnFields (Delete o r a) where
   fields d f = Delete
     { from      = d.from
     , returning = Just $ Some $ fieldNames f

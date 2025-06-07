@@ -41,7 +41,7 @@ instance Serialize SqlValue db => Serialize (Select o fs a) db where
 instance Whereable (Select o fs a) a where
   where' s w = s { where' = s.where' <&> (`And` w) }
 
-selectAll :: forall a. Entity a => Select Many a a
+selectAll :: forall a f. Entity a f => Select Many a a
 selectAll = Select
   { entityName = Entity.entityName @a
   , fields     = All

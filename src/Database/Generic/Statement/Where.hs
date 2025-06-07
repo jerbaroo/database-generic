@@ -1,7 +1,7 @@
 module Database.Generic.Statement.Where where
 
 import Database.Generic.Entity (Entity, Entity')
-import Database.Generic.Entity.FieldName (FieldName, HasFieldName, fieldName)
+import Database.Generic.Entity.FieldName (FieldName, fieldName)
 import Database.Generic.Entity.PrimaryKey (primaryKeyFieldName)
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.ToSql (ToSqlValue(..))
@@ -25,12 +25,10 @@ instance Serialize SqlValue db => Serialize (Where a) db where
 idEquals :: forall a f b. Entity' a f b => b -> Where a
 idEquals b = Equals (primaryKeyFieldName @a) (toSqlValue b)
 
-isNull :: forall f a b.
-  (Entity a, HasField f a b, HasFieldName f) => Where a
+isNull :: forall a f. Entity a f => Where a
 isNull = IsNull (fieldName @f) True
 
-isNotNull :: forall f a b.
-  (Entity a, HasField f a b, HasFieldName f) => Where a
+isNotNull :: forall a f. Entity a f => Where a
 isNotNull = IsNull (fieldName @f) False
 
 class Whereable s a where

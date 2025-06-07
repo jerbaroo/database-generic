@@ -1,8 +1,8 @@
 {-# LANGUAGE BlockArguments       #-}
 {-# LANGUAGE DataKinds            #-}
-{-# LANGUAGE DerivingVia          #-}
+{-# LANGUAGE DeriveAnyClass       #-}
+{-# LANGUAGE DerivingStrategies   #-}
 {-# LANGUAGE OverloadedRecordDot  #-}
-{-# LANGUAGE UndecidableInstances #-}
 
 module Main where
 
@@ -23,8 +23,7 @@ import GHC.Generics (Generic)
 
 -- | Data type we want to persist.
 data Person = Person { name :: !String, age :: !Int64 }
-  deriving (Generic, Show)
-  deriving PrimaryKey via PK "name" Person
+  deriving (Generic, PrimaryKey "name", Show)
 
 -- | Connection string to access our PostgreSQL DB.
 type ConnStr = String

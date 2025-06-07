@@ -43,7 +43,7 @@ instance Serialize SqlValue db => Serialize (Delete o r a) db where
     <> maybe [] (\c -> ["RETURNING " <> serialize c]) d.returning
     <> [ ";" ]
 
-deleteAll :: forall a. Entity a => Delete Many Nothing a
+deleteAll :: forall a f. Entity a f => Delete Many Nothing a
 deleteAll = Delete
   { from      = entityName @a
   , returning = Nothing

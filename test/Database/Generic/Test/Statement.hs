@@ -1,9 +1,8 @@
 {-# LANGUAGE BlockArguments        #-}
 {-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE DerivingVia           #-}
+{-# LANGUAGE DeriveAnyClass        #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE UndecidableInstances  #-}
 
 module Database.Generic.Test.Statement where
 
@@ -30,8 +29,7 @@ statementTests = testGroup "Statement tests"
 -- * Helpers.
 
 data Person = Person { age :: !Int64, name :: !String }
-  deriving (Eq, Generic, Show)
-  deriving PrimaryKey via PK "name" Person
+  deriving (Eq, Generic, PrimaryKey "name", Show)
 
 -- * Create table tests.
 

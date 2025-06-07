@@ -4,7 +4,7 @@ import Database.Generic.Entity.Field (Field(..))
 import Database.Generic.Entity.FieldName (FieldName)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
-import Database.Generic.Statement.Returning (ModifyReturning, Returning)
+import Database.Generic.Statement.Returning (ModifyReturnType, Row)
 import Witch qualified as W
 
 data Fields = All | Some ![FieldName]
@@ -26,14 +26,15 @@ instance FieldsOf (Field fa a b, Field fc a c) a (b, c) where
 
 -- | Statements which can be modified to return a subset of fields.
 class ReturnFields s where
-  fields :: forall f b. (FieldsOf f (Returning s) b)
-    => s                   -- ^ The original statement.
-    -> f                   -- ^ Fields to select, which can be parsed into a 'b'.
-    -> ModifyReturning s b -- ^ A statement now returning values of type 'b'.
+  -- | Modify a statement to return a subset of fields.
+  fields :: forall f b. (FieldsOf f (Row s) b)
+    => s                    -- ^ The original statement.
+    -> f                    -- ^ Fields to select, which can be parsed into a 'b'.
+    -> ModifyReturnType s b -- ^ A statement now returning values of type 'b'.
 
 infixl 4 ==>
 
 (==>) :: forall s p b.
-  (FieldsOf p (Returning s) b, ReturnFields s)
-  => s -> p -> ModifyReturning s b
+  (FieldsOf p (Row s) b, ReturnFields s)
+  => s -> p -> ModifyReturnType s b
 (==>) = fields

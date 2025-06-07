@@ -7,7 +7,7 @@ import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Statement.Fields (Fields(..), ReturnFields(..), fieldNames)
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Where (Where(..), Whereable(..), idEquals)
-import Database.Generic.Statement.Returning (ModifyReturning, Returning)
+import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Witch qualified as W
@@ -19,19 +19,23 @@ data Select (o :: OneOrMany) fs a = Select
   , where'     :: !(Maybe (Where a))
   }
 
--- | Modification of the type of a select statement to return a subset of fields.
-type instance ModifyReturning (Select o a a) fs = Select o fs a
+-- | 'fs' represents the type of Haskell values returned.
+type instance IsReturning (Select _ fs _) = fs
 
--- | Modification of a select statement to return a subset of fields.
+-- | Modify the type of a select statement to reflect a subset of fields returned.
+--
+-- Note the repeated 'a', which means the statement return type may only be
+-- modified if it has not already been modified to return fields. Will consider
+-- relaxing this constraint once the library is stable.
+type instance ModifyReturnType (Select o a a) fs = Select o fs a
+
+-- | Modify a select statement to return a subset of fields.
 instance ReturnFields (Select o a a) where
   fields s p = Select
     { entityName = s.entityName
     , fields     = Some $ fieldNames p
     , where'     = s.where'
     }
-
--- | For a select statement 'fs' represents the return type.
-type instance Returning (Select _ fs _) = fs
 
 instance Serialize SqlValue db => Serialize (Select o fs a) db where
   serialize s = unwords $

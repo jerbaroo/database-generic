@@ -62,7 +62,7 @@ instance MonadDbNewConn AppM PSQL.Connection where
 main :: IO ()
 main = do
   let c    = connStr "127.0.0.1" 5432 "postgres" "demo" "demo"
-  let john = Person "John" 21
+  let john = Person 21 "John"
   let info = putStrLn . ("\n" ++)
   info "Create table if not exists"
   runAppM c $ tx_ $ execute $ createTable @Person True

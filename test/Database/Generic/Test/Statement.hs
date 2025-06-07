@@ -13,7 +13,6 @@ import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(serialize))
 import Database.Generic.Statement.CreateTable (CreateTable(..), CreateTableColumn(..))
 import Database.Generic.Statement.Delete (Delete(..))
-import Database.Generic.Statement.Returning qualified as R
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import GHC.Generics (Generic)
 import Test.Tasty (TestTree, testGroup)
@@ -71,21 +70,28 @@ createTableTests = testGroup "Create table statement tests"
 
 deleteAllPerson :: Delete Many Nothing Person
 deleteAllPerson = Delete
-  { from = "person"
-  , returning = Nothing
+  { fields = Nothing
+  , from   = "person"
   , where' = Nothing
   }
-
--- | This is a test that returning modifies the type correctly.
-deleteAllPersonReturning :: Delete Many (Just Person) Person
-deleteAllPersonReturning = R.returning $ deleteAll @Person
-
--- | This is a test that returning modifies the type correctly.
-deleteByIdReturning :: Delete One (Just Person) Person
-deleteByIdReturning = R.returning $ deleteById "john"
 
 deleteTests :: TestTree
 deleteTests = testGroup "Delete statement tests"
   [ testCase "deleteAll @Person" $ assertEqual ""
       (deleteAll @Person) deleteAllPerson
   ]
+
+-- * Returning.
+
+-- | This is a test that returning modifies the type correctly.
+deleteAllPersonReturning :: Delete Many (Just Person) Person
+deleteAllPersonReturning = returning $ deleteAll @Person
+
+-- | This is a test that returning modifies the type correctly.
+deleteByIdReturning :: Delete One (Just Person) Person
+deleteByIdReturning = returning $ deleteById "john"
+
+-- | This is a test that returningFields modifies the type correctly.
+deleteByIdReturningTwoFields :: Delete One (Just (Int64, String)) Person
+deleteByIdReturningTwoFields =
+  returningFields (deleteById "john") $ field2 @"age" @"name"

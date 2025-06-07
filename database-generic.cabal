@@ -73,7 +73,7 @@ library
                       RecordWildCards,
                       TypeFamilies,
 
-executable database-generic-example
+executable database-generic-tutorial
     import:           warnings
     main-is:          Main.hs
     build-depends:    base,
@@ -84,7 +84,7 @@ executable database-generic-example
                       mtl,
                       postgres-options,
                       witch,
-    hs-source-dirs:   example
+    hs-source-dirs:   tutorial
     default-language: GHC2021
 
 test-suite database-generic-test

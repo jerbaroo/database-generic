@@ -78,6 +78,8 @@ main = do
   print =<< runAppM c (tx_ $ execute $ selectById @Person john.name)
   info "Select All"
   print =<< runAppM c (tx_ $ execute $ selectAll @Person)
+  info "Select All, specific fields"
+  print =<< runAppM c (tx_ $ execute $ selectAll @Person ==> field2 @"age" @"name")
   info "Select specific fields by ID"
   print =<< runAppM c (tx_ $ execute $
     selectById @Person john.name ==> field @"age")

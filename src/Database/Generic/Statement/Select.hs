@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveAnyClass #-}
-
 module Database.Generic.Statement.Select where
 
 import Database.Generic.Entity (Entity, Entity')
@@ -12,10 +10,7 @@ import Database.Generic.Statement.Where (Where(..), Whereable(..), idEquals)
 import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType, ReturningFields(..), Row)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
-import GHC.Generics (Generic)
 import Witch qualified as W
-import Database.Generic.Entity.PrimaryKey (PrimaryKey)
-import Database.Generic.Entity.Field (field, Field)
 
 -- | Select from one or many values of type 'a', the fields 'fs'.
 data Select (o :: OneOrMany) fs a = Select
@@ -59,15 +54,3 @@ selectById b = Select
   , fields     = All
   , where'     = Just $ idEquals @a b
   }
-
-data Person = Person { name :: !String, age :: !Int64 }
-  deriving (Generic, PrimaryKey "name", Show)
-
-s :: Select Many Person Person
-s = selectAll @Person
-
--- f :: (Field "name" Person String, Field "age" Person Int64)
-f = (field @"name", field @"age" @Person)
-
-r :: Select Many (String, Int64) Person
-r = returningFields s f

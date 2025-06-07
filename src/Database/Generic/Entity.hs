@@ -3,7 +3,7 @@
 module Database.Generic.Entity where
 
 import Database.Generic.Entity.EntityName (HasEntityName)
-import Database.Generic.Entity.PrimaryKey (HasPrimaryKey, HasPrimaryKeyP)
+import Database.Generic.Entity.PrimaryKey (HasPrimaryKey, HasPrimaryKey')
 import Database.Generic.Entity.FromSql (FromSqlValues)
 import Database.Generic.Entity.SqlColumns (HasSqlColumns)
 import Database.Generic.Entity.ToSql (ToSqlValue, ToSqlValues)
@@ -20,4 +20,4 @@ class (FromSqlValues a, HasEntityName a, HasPrimaryKey a, HasSqlColumns a, ToSql
 instance (FromSqlValues a, HasEntityName a, HasPrimaryKey a, HasSqlColumns a, ToSqlValues a) => Entity a
 
 -- | 'Entity' with additional types of primary key in scope.
-type EntityP a f b = (Entity a, HasPrimaryKeyP a f b, ToSqlValue b)
+type Entity' a f b = (Entity a, HasPrimaryKey' a f b, ToSqlValue b)

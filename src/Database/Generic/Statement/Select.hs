@@ -1,30 +1,32 @@
 module Database.Generic.Statement.Select where
 
-import Database.Generic.Entity (Entity, EntityP)
+import Database.Generic.Entity (Entity, Entity')
 import Database.Generic.Entity.EntityName (EntityName)
 import Database.Generic.Entity.EntityName qualified as Entity
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
-import Database.Generic.Statement.Fields (Fields(..), ReturningFields(..), fieldNames)
+import Database.Generic.Statement.Fields (Fields(..), fieldNames)
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Where (Where(..), Whereable(..), idEquals)
-import Database.Generic.Statement.Returning (NowReturning, Returning)
+import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType, ReturningFields(..), Row)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Witch qualified as W
 
--- | Select one or many values of type 'a', but only fields 'fs'.
+-- | Select from one or many values of type 'a', the fields 'fs'.
 data Select (o :: OneOrMany) fs a = Select
   { entityName :: !EntityName
   , fields     :: !Fields
   , where'     :: !(Maybe (Where a))
   }
 
-type instance Returning (Select _ fs _) = fs
+type instance IsReturning (Select _ fs _) = fs
 
-type instance NowReturning (Select o a a) fs = Select o fs a
+type instance ModifyReturnType (Select o _ a) r = Select o r a
+
+type instance Row (Select _ _ a) = a
 
 instance ReturningFields (Select o a a) where
-  fields s p = Select
+  returningFields s p = Select
     { entityName = s.entityName
     , fields     = Some $ fieldNames p
     , where'     = s.where'
@@ -46,7 +48,7 @@ selectAll = Select
   , where'     = Nothing
   }
 
-selectById :: forall a f b. EntityP a f b => b -> Select One a a
+selectById :: forall a f b. Entity' a f b => b -> Select One a a
 selectById b = Select
   { entityName = Entity.entityName @a
   , fields     = All

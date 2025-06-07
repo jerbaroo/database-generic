@@ -1,12 +1,12 @@
 module Database.Generic.Statement.Delete where
 
-import Database.Generic.Entity (Entity, EntityP)
+import Database.Generic.Entity (Entity, Entity')
 import Database.Generic.Entity.EntityName (EntityName, entityName)
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
-import Database.Generic.Statement.Fields (Fields(..), ReturningFields(..), fieldNames)
-import Database.Generic.Statement.Returning (NowReturning, Returnable(..), Returning)
+import Database.Generic.Statement.Fields (Fields(..), fieldNames)
+import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType, Returning(..), ReturningFields(..))
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Where (Where, idEquals)
 import Witch qualified as W
@@ -16,22 +16,21 @@ data Delete (o :: OneOrMany) (r :: Maybe fs) a = Delete
   { from      :: !EntityName
   , returning :: !(Maybe Fields)
   , where'    :: !(Maybe (Where a))
-  }
+  } deriving (Eq, Show)
 
-type instance Returning (Delete _ Nothing   a) = a
-type instance Returning (Delete _ (Just fs) _) = fs
+type instance IsReturning (Delete _ (Just fs) _) = fs
 
-type instance NowReturning (Delete o _ a) fs = Delete o (Just fs) a
+type instance ModifyReturnType (Delete o _ a) r = Delete o (Just r) a
 
-instance Returnable (Delete o Nothing a) (Delete o (Just a) a) where
+instance Returning (Delete o Nothing a) (Delete o (Just a) a) where
   returning d = Delete
     { from      = d.from
     , returning = Just All
     , where'    = d.where'
     }
 
-instance ReturningFields (Delete o r a) where
-  fields d f = Delete
+instance ReturningFields (Delete o Nothing a) where
+  returningFields d f = Delete
     { from      = d.from
     , returning = Just $ Some $ fieldNames f
     , where'    = d.where'
@@ -51,7 +50,7 @@ deleteAll = Delete
   , where'    = Nothing
   }
 
-deleteById :: forall a f b. EntityP a f b => b -> Delete One Nothing a
+deleteById :: forall a f b. Entity' a f b => b -> Delete One Nothing a
 deleteById b = Delete
   { from      = entityName @a
   , returning = Nothing

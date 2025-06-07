@@ -14,14 +14,7 @@ data FromSqlError
 
 instance Exception FromSqlError
 
--- | Values that can be converted from a single 'SqlValue'.
-class FromSqlValue a where
-  fromSqlValue :: SqlValue -> a
-
-instance Convertible SqlValue a => FromSqlValue a where
-  fromSqlValue = convert
-
--- | Values that can be converted from a list of 'SqlValue'.
+-- | Values that can be parsed from 'SqlValue's.
 class FromSqlValues a where
   fromSqlValues :: [SqlValue] -> a
 
@@ -46,9 +39,9 @@ instance (GFromSqlValues a, Typeable a, Typeable b) => GFromSqlValues (Either a 
   gFromSqlValues [] = throw $ NoSqlValues $ showType @(Either a b)
   gFromSqlValues xs = Left $ gFromSqlValues xs
 
-instance (FromSqlValue a, GFromSqlValues as, Typeable a, Typeable as) => GFromSqlValues (a, as) where
+instance (FromSqlValues a, GFromSqlValues as, Typeable a, Typeable as) => GFromSqlValues (a, as) where
   gFromSqlValues []     = throw $ NoSqlValues $ showType @(a, as)
-  gFromSqlValues (x:xs) = (fromSqlValue x, gFromSqlValues xs)
+  gFromSqlValues (x:xs) = (fromSqlValues [x], gFromSqlValues xs)
 
 -- | The end of the right-nested tuples.
 instance GFromSqlValues () where

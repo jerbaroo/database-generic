@@ -20,7 +20,17 @@ provide an instance of `MonadDb` so the server knows how to communicate with
 your database, then the server can act as a proxy to allow clients to read/write
 to your database without having to write the usual server boilerplate.
 
-## Roadmap
+## Quick Start
+
+A tutorial as code exists [here](tutorial/Main.hs).
+
+To run the tutorial on your machine:
+1. Clone this repo.
+2. Start a PostgreSQL instance with username and password `demo`, e.g.:
+  `docker run -it --rm --env POSTGRES_PASSWORD=demo --env POSTGRES_USER=demo --publish 5432:5432 postgres`
+3. Either `cabal run` via provided `nix-shell`, or `stack run`.
+
+## Features
 
 | Feature                                      | Status | Tested |
 |----------------------------------------------|--------|--------|
@@ -45,13 +55,4 @@ to your database without having to write the usual server boilerplate.
 | Server: stream Entity updates over WebSocket |        |        |
 | Server: permission checks                    |        |        |
 | Reflex (client-side) MonadDb instance        |        |        |
-
-## Quick Start
-
-A tutorial as code exists [here](tutorial/Main.hs).
-
-To run the tutorial on your machine:
-1. Clone this repo.
-2. Start a PostgreSQL instance with username and password `demo`, e.g.:
-  `docker run -it --rm --env POSTGRES_PASSWORD=demo --env POSTGRES_USER=demo --publish 5432:5432 postgres`
-3. Either `cabal run` via provided `nix-shell`, or `stack run`.
+| Joins                                        |        |        |

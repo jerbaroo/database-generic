@@ -18,7 +18,7 @@ data Where a where
 instance Serialize SqlValue db => Serialize (Where a) db where
   serialize (And a b) =
     "(" <> serialize @_ @db a <> " AND " <> serialize @_ @db b <> ")"
-  serialize (Equals fName value) = from fName <> " = " <> serialize @_ @db value
+  serialize (Equals fName value) = from fName <> "=" <> serialize @_ @db value
   serialize (IsNull fName is) =
     from fName <> " IS " <> if is then "" else "NOT " <> "NULL"
 

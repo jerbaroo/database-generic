@@ -98,6 +98,11 @@ deleteByIdReturningTwoFields =
 deleteTests :: TestTree
 deleteTests = testGroup "Delete statement tests"
   [ testCase "deleteAll @Person" $ assertEqual "" deleteAll deleteAllPerson
+  , testCase "serialize deleteAll @Person" $ assertEqual ""
+      "DELETE FROM person;" $ serialize @_ @PostgreSQL $ deleteAll @Person
+  , testCase "serialize deleteById @Person" $ assertEqual ""
+      "DELETE FROM person WHERE name='Mary';" $
+          serialize @_ @PostgreSQL $ deleteById @Person "Mary"
   ]
 
 -- * Select tests.

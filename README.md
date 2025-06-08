@@ -37,14 +37,16 @@ To run the tutorial on your machine:
 | Create table                                 | ✅     | ✅     |
 | Insert one                                   | ✅     |        |
 | Insert many                                  | ✅     |        |
-| Select all                                   | ✅     |        |
-| Select by ID                                 | ✅     |        |
-| Where column is not null                     |        |        |
-| Where column is null                         |        |        |
-| Where column equals                          |        |        |
-| Limit clause                                 | ✅     |        |
-| Order by clause                              |        |        |
+| Select all                                   | ✅     | ✅     |
+| Select by ID                                 | ✅     | ✅     |
 | Return subset of fields                      | ✅     | ✅     |
+| Where column equals                          |        |        |
+| Where column is null                         |        |        |
+| Where column is not null                     |        |        |
+| Limit clause                                 | ✅     |        |
+| Limit page offset                            |        |        |
+| Order by clause                              | ✅     | ✅     |
+| Order by asc/desc                            |        |        |
 | Delete all                                   | ✅     |        |
 | Delete by ID                                 | ✅     |        |
 | Delete returning                             | ✅     | ✅     |

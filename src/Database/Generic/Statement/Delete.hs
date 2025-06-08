@@ -18,11 +18,11 @@ data Delete (o :: OneOrMany) (r :: Maybe fs) a = Delete
   , where' :: !(Maybe (Where a))
   } deriving (Eq, Show)
 
-type instance IsReturning (Delete _ (Just fs) _) = fs
-
 type instance ModifyReturnType (Delete o _ a) r = Delete o (Just r) a
 
 type instance Row (Delete _ _ a) = a
+
+instance IsReturning (Delete o (Just fs) a)
 
 instance Returning (Delete o Nothing a) (Delete o (Just a) a) where
   returning Delete{..} = Delete { fields = Just All, .. }

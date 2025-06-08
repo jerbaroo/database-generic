@@ -38,6 +38,7 @@ library
                       Database.Generic.Statement.Fields,
                       Database.Generic.Statement.Insert,
                       Database.Generic.Statement.Limit,
+                      Database.Generic.Statement.OrderBy,
                       Database.Generic.Statement.Output,
                       Database.Generic.Statement.Returning,
                       Database.Generic.Statement.Select,
@@ -97,6 +98,7 @@ test-suite database-generic-test
                       tasty,
                       tasty-hunit,
                       tasty-smallcheck,
+                      witch
     hs-source-dirs:   test
     default-language: GHC2021
     type:             exitcode-stdio-1.0

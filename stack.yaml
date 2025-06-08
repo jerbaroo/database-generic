@@ -1,4 +1,4 @@
-resolver: lts-23.24 # If changing this make sure to update GHC version in GitHub Action.
+resolver: nightly-2025-05-28 # If changing this make sure to update GHC version in GitHub Action.
 packages:
   - .
 extra-deps:

@@ -4,7 +4,7 @@ jobs:
   test-all:
     runs-on: ubuntu-latest
     container:
-      image: haskell:9.8.4-bullseye
+      image: haskell:9.10-bullseye
     steps:
       - name: Check out repo
         uses: actions/checkout@v4

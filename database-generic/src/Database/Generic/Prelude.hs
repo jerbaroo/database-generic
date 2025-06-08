@@ -24,7 +24,7 @@ import Data.String as X (IsString(fromString))
 import Data.Typeable as X (Typeable, typeRep)
 import Debug.Trace as X (trace)
 import GHC.Records as X (HasField(getField))
-import Prelude as X (Applicative(pure), Bool(True, False), Eq, Functor(fmap), Int, Integer, Monad((>>=)), Monoid, Show(show), String, (.), ($), (==), (/=), (>>=), (<$>), const, error, flip, fst, undefined, unwords, zip)
+import Prelude as X (Applicative(pure), Bool(True, False), Eq, Functor(fmap), Int, Integer, Monad((>>=)), Monoid, Read, Show(show), String, (.), ($), (==), (/=), (>>=), (<$>), const, error, flip, fst, undefined, unwords, zip)
 import Witch as X (Utf8S, From(from), into, unsafeFrom, via)
 
 debug :: Show a => a -> a

@@ -6,7 +6,7 @@ import Database.Generic.Prelude
 -- | Name of a field as a string.
 --
 -- For example: "foo" in 'data X = Y { foo :: Int }'.
-newtype FieldName = FieldName String deriving (Eq, Show)
+newtype FieldName = FieldName String deriving (Eq, Read, Show)
 
 instance From FieldName String
 

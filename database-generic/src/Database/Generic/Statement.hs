@@ -11,6 +11,8 @@ import Database.Generic.Statement.Tx qualified as Tx
 import Database.Generic.Statement.Type (Cons, StatementType(..))
 import Database.Generic.Serialize (Serialize(..))
 
+-- | One or more statements. We track a type-level list 's' of the statements,
+-- because the order of the statements can affect what is returned.
 data Statement (s :: [StatementType]) where
   StatementBeginTx     :: !Tx.BeginTx          -> Statement '[BeginTx]
   StatementCommitTx    :: !Tx.CommitTx         -> Statement '[CommitTx]

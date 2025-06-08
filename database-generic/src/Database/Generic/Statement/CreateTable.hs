@@ -11,20 +11,23 @@ import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
 
 -- | Create a table for values of type 'a'.
-data CreateTable a = CreateTable
+newtype CreateTable a = CreateTable CreateTable'
+
+-- | Create table statement without type info.
+data CreateTable' = CreateTable'
   { columns     :: ![CreateTableColumn]
   , ifNotExists :: !Bool
   , name        :: !EntityName
-  } deriving (Eq, Show)
+  } deriving (Eq, Read, Show)
 
 data CreateTableColumn = CreateTableColumn
   { name    :: !FieldName
   , primary :: !Bool
   , type'   :: !SqlTypeId
-  } deriving (Eq, Show)
+  } deriving (Eq, Read, Show)
 
 instance Serialize SqlTypeId db => Serialize (CreateTable a) db where
-  serialize c = Serialize.statement $ unwords $ catMaybes
+  serialize (CreateTable c) = Serialize.statement $ unwords $ catMaybes
     [ Just "CREATE TABLE"
     , if c.ifNotExists then Just "IF NOT EXISTS" else Nothing
     , Just $ from c.name
@@ -40,4 +43,4 @@ createTable ifNotExists = do
   let primaryName = primaryKeyFieldName @a
   let columns = sqlColumns @a <&> \(name, type') ->
         CreateTableColumn { primary = name == primaryName, .. }
-  CreateTable { columns, name = entityName @a, .. }
+  CreateTable $ CreateTable' { columns, name = entityName @a, .. }

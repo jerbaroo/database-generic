@@ -2,7 +2,7 @@ module Database.Generic.Entity.EntityName where
 
 import Database.Generic.Prelude
 
-newtype EntityName = EntityName String deriving (Eq, Show)
+newtype EntityName = EntityName String deriving (Eq, Read, Show)
 
 instance From EntityName String
 

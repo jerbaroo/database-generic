@@ -5,7 +5,7 @@ version:            0.1.0.0
 -- description:
 license:            BSD-3-Clause
 license-file:       LICENSE
-author:             jerbaroo
+author:             Jeremy Barisch-Rooney
 maintainer:         jerbaroo.work@pm.me
 -- copyright:
 build-type:         Simple
@@ -38,6 +38,7 @@ library
                       Database.Generic.Statement.Fields,
                       Database.Generic.Statement.Insert,
                       Database.Generic.Statement.Limit,
+                      Database.Generic.Statement.NoTypeInfo,
                       Database.Generic.Statement.OrderBy,
                       Database.Generic.Statement.Output,
                       Database.Generic.Statement.Returning,

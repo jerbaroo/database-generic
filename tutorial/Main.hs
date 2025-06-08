@@ -63,38 +63,31 @@ main :: IO ()
 main = do
   let c    = connStr "127.0.0.1" 5432 "postgres" "demo" "demo"
   let john = Person 21 "John"
-  let info = putStrLn . ("\n" ++)
+  let info m s = do
+        putStrLn $ "\n" <> m
+        print =<< runAppM c (tx $ execute s)
 
-  info "Create table if not exists"
-  runAppM c $ tx_ $ execute $ createTable @Person True
+  info "Create table if not exists" $ createTable @Person True
 
-  info "Delete All"
-  print =<< runAppM c (tx $ execute $ returning $ deleteAll @Person)
+  info "Delete All" $ returning $ deleteAll @Person
 
-  info "Delete by ID"
-  print =<< runAppM c (tx $ execute $ deleteById @Person "John")
+  info "Delete by ID" $ deleteById @Person "John"
 
-  info "Insert one"
-  print =<< runAppM c (tx $ execute $ returning $ insertOne $ john{age=55})
+  info "Insert one" $ returning $ insertOne $ john{age=55}
 
-  info "Insert two"
-  print =<< runAppM c (tx $ execute $ insertMany [john{age=25, name="Bob"}, john {name = "Mary"}] ==> field @"age")
+  info "Insert two" $
+    insertMany [john{age=25, name="Bob"}, john {name = "Mary"}] ==> field @"age"
 
-  info "Select by ID"
-  print =<< runAppM c (tx_ $ execute $ selectById @Person john.name)
+  info "Select by ID" $ selectById @Person john.name
 
-  info "Select All"
-  print =<< runAppM c (tx_ $ execute $ selectAll @Person)
+  info "Select All" $ selectAll @Person
 
-  info "Select All, select 2 fields"
-  print =<< runAppM c (tx_ $ execute $ selectAll @Person ==> field2 @"age" @"name")
+  info "Select All, select 2 fields" $
+    selectAll @Person ==> field2 @"age" @"name"
 
-  info "Select All, limit to 1 row"
-  print =<< runAppM c (tx_ $ execute $ limit 1 $ selectAll @Person)
+  info "Select All, limit to 1 row" $ limit 1 $ selectAll @Person
 
-  info "Select All, order by age"
-  print =<< runAppM c (tx_ $ execute $ orderBy (field @"age") $ selectAll @Person)
+  info "Select All, order by age" $ orderBy (field @"age") $ selectAll @Person
 
-  info "Select specific fields by ID"
-  print =<< runAppM c (tx_ $ execute $
-    selectById @Person john.name ==> field @"age")
+  info "Select specific fields by ID" $
+    selectById @Person john.name ==> field @"age"

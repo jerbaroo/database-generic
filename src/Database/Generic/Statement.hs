@@ -12,13 +12,13 @@ import Database.Generic.Statement.Type (Cons, StatementType(..))
 import Database.Generic.Serialize (Serialize(..))
 
 data Statement (s :: [StatementType]) where
-  StatementBeginTx     :: !Tx.BeginTx        -> Statement '[BeginTx]
-  StatementCommitTx    :: !Tx.CommitTx       -> Statement '[CommitTx]
-  StatementCreateTable :: !(C.CreateTable a) -> Statement '[CreateTable a]
-  StatementDelete      :: !(D.Delete o r a)  -> Statement '[Delete o r a]
-  StatementInsert      :: !(I.Insert o r a)  -> Statement '[Insert o r a]
-  StatementSelect      :: !(S.Select o r a)  -> Statement '[Select o r a]
-  Cons                 :: !(Statement '[s1]) -> (Statement s2) -> Statement (Cons s1 s2)
+  StatementBeginTx     :: !Tx.BeginTx          -> Statement '[BeginTx]
+  StatementCommitTx    :: !Tx.CommitTx         -> Statement '[CommitTx]
+  StatementCreateTable :: !(C.CreateTable a)   -> Statement '[CreateTable a]
+  StatementDelete      :: !(D.Delete o r a)    -> Statement '[Delete o r a]
+  StatementInsert      :: !(I.Insert o r a)    -> Statement '[Insert o r a]
+  StatementSelect      :: !(S.Select o r a ob) -> Statement '[Select o r a ob]
+  Cons                 :: !(Statement '[s1])   -> (Statement s2) -> Statement (Cons s1 s2)
 
 instance HasOutputType r => HasOutputType (Statement r) where
   outputType = outputType @r
@@ -57,8 +57,8 @@ instance ToStatement (I.Insert o (r :: Maybe fs) (a :: Type)) where
   type S (I.Insert o r a) = '[Insert o r a]
   statement = StatementInsert
 
-instance ToStatement (S.Select o (r :: Type) (a :: Type)) where
-  type S (S.Select o r a) = '[Select o r a]
+instance ToStatement (S.Select o (r :: Type) (a :: Type) (ob :: Bool)) where
+  type S (S.Select o r a ob) = '[Select o r a ob]
   statement = StatementSelect
 
 -- | Append a commit statement to a 'Statement'.

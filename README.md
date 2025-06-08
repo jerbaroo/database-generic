@@ -35,20 +35,21 @@ To run the tutorial on your machine:
 | Feature                                      | Status | Tested |
 |----------------------------------------------|--------|--------|
 | Create table                                 | ✅     | ✅     |
-| Insert one                                   | ✅     |        |
-| Insert many                                  | ✅     |        |
 | Select all                                   | ✅     | ✅     |
 | Select by ID                                 | ✅     | ✅     |
 | Return subset of fields                      | ✅     | ✅     |
 | Where column equals                          |        |        |
 | Where column is null                         |        |        |
 | Where column is not null                     |        |        |
-| Limit clause                                 | ✅     |        |
-| Limit page offset                            |        |        |
 | Order by clause                              | ✅     | ✅     |
 | Order by asc/desc                            |        |        |
-| Delete all                                   | ✅     |        |
-| Delete by ID                                 | ✅     |        |
+| Limit clause                                 | ✅     | ✅     |
+| Offset clause                                | ✅     | ✅     |
+| Insert one                                   | ✅     |        |
+| Insert many                                  | ✅     |        |
+| Insert returning                             | ✅     |        |
+| Delete all                                   | ✅     | ✅     |
+| Delete by ID                                 | ✅     | ✅     |
 | Delete returning                             | ✅     | ✅     |
 | Stream statements over Conduit               |        |        |
 | Stream Entity updates over Conduit           |        |        |

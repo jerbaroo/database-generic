@@ -10,6 +10,7 @@ import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType, Retu
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Where (Where, idEquals)
 import Witch qualified as W
+import qualified Database.Generic.Serialize as Serialize
 
 -- | Delete one or many values of type 'a', maybe returning fields 'fs'.
 data Delete (o :: OneOrMany) (r :: Maybe fs) a = Delete
@@ -32,11 +33,11 @@ instance ReturningFields (Delete o Nothing a) where
     { fields = Just $ Some $ fieldNames f, .. }
 
 instance Serialize SqlValue db => Serialize (Delete o r a) db where
-  serialize d = unwords $
-    ["DELETE FROM", W.from d.from]
-    <> maybe [] (\w -> ["WHERE", serialize @_ @db w]) d.where'
-    <> maybe [] (\c -> ["RETURNING " <> serialize c]) d.fields
-    <> [ ";" ]
+  serialize d = Serialize.statement $ unwords $ catMaybes
+    [ Just $ "DELETE FROM " <> W.from d.from
+    , d.where' <&> \w -> "WHERE " <> serialize @_ @db w
+    , d.fields <&> \r -> "RETURNING " <> serialize r
+    ]
 
 deleteAll :: forall a f. Entity a f => Delete Many Nothing a
 deleteAll = Delete

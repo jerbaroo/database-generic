@@ -5,12 +5,12 @@ import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 
 -- | All the type information we have about a statement.
 data StatementType where
-  BeginTx     :: StatementType
-  CommitTx    :: StatementType
-  CreateTable :: Type -> StatementType
-  Delete      :: OneOrMany -> Maybe fs -> Type -> StatementType
-  Insert      :: OneOrMany -> Maybe fs -> Type -> StatementType
-  Select      :: OneOrMany -> Type     -> Type -> StatementType
+  BeginTx     ::                                          StatementType
+  CommitTx    ::                                          StatementType
+  CreateTable ::                          Type         -> StatementType
+  Delete      :: OneOrMany -> Maybe fs -> Type         -> StatementType
+  Insert      :: OneOrMany -> Maybe fs -> Type         -> StatementType
+  Select      :: OneOrMany -> Type     -> Type -> Bool -> StatementType
 
 -- | Add a type to the front of a list of types.
 type Cons :: forall a. a -> [a] -> [a]

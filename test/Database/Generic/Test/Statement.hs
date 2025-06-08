@@ -10,10 +10,12 @@ import Database.Generic
 import Database.Generic.Database (PostgreSQL)
 import Database.Generic.Entity.SqlTypes (SqlTypeId(..), SqlValue (..))
 import Database.Generic.Prelude
-import Database.Generic.Serialize (Serialize(serialize))
+import Database.Generic.Serialize (Serialize(..))
+import Database.Generic.Serialize qualified as Serialize
 import Database.Generic.Statement.CreateTable (CreateTable(..), CreateTableColumn(..))
 import Database.Generic.Statement.Delete (Delete(..))
 import Database.Generic.Statement.Fields (Fields(..))
+import Database.Generic.Statement.Limit (Limit, Offset, Limitable (limitOffsetMay))
 import Database.Generic.Statement.OrderBy qualified as O
 import Database.Generic.Statement.Select (Select(..))
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
@@ -68,7 +70,7 @@ createTableTests = testGroup "Create table statement tests"
   [ SC.testProperty "createTable @Person" \b ->
       createTable @Person b == createTablePerson b
   , SC.testProperty "serialize CreateTable Person" \b ->
-      serialize @_ @PostgreSQL (createTablePerson b) == createTablePersonPG b
+      serialize @_ @PostgreSQL (createTable @Person b) == createTablePersonPG b
   ]
 
 -- * Delete tests.
@@ -82,7 +84,7 @@ deleteAllPerson = Delete
 
 -- | This is a test that 'returning' modifies the type correctly.
 deleteAllPersonReturning :: Delete Many (Just Person) Person
-deleteAllPersonReturning = returning $ deleteAll @Person
+deleteAllPersonReturning = returning deleteAll
 
 -- | This is a test that 'returning' modifies the type correctly.
 deleteByIdReturning :: Delete One (Just Person) Person
@@ -96,34 +98,50 @@ deleteByIdReturningTwoFields =
 deleteTests :: TestTree
 deleteTests = testGroup "Delete statement tests"
   [ testCase "deleteAll @Person" $ assertEqual "" deleteAll deleteAllPerson
+  , testCase "serialize deleteAll @Person" $ assertEqual ""
+      "DELETE FROM person;" $ serialize @_ @PostgreSQL $ deleteAll @Person
+  , testCase "serialize deleteById @Person" $ assertEqual ""
+      "DELETE FROM person WHERE name='Mary';" $
+          serialize @_ @PostgreSQL $ deleteById @Person "Mary"
   ]
 
 -- * Select tests.
 
-selectAllPerson :: Select Many Person Person
+selectAllPerson :: Select Many Person Person False
 selectAllPerson = Select
   { fields  = All
   , from    = "person"
   , limit   = Nothing
+  , offset  = Nothing
   , orderBy = []
   , where'  = Nothing
   }
 
 -- | This is a test that 'O.orderBy' modifies the type correctly.
-selectAllPersonOrderByName :: Select Many Person Person
-selectAllPersonOrderByName = O.orderBy (field @"name") selectAllPerson
+selectAllPersonOrderByName :: Select Many Person Person True
+selectAllPersonOrderByName = O.orderBy (field @"name") selectAll
 
-selectByIdPerson :: Select One Person Person
+selectByIdPerson :: Select One Person Person False
 selectByIdPerson = Select
   { fields  = All
   , from    = "person"
   , limit   = Nothing
+  , offset  = Nothing
   , orderBy = []
   , where'  = Just $ Equals @Person "name" $ SqlString "John"
   }
 
+selectAllPersonPG :: Limit -> Maybe Offset -> String
+selectAllPersonPG limit offset = Serialize.statement $ unwords $ catMaybes
+  [ Just $ "SELECT * FROM person ORDER BY age LIMIT " <> show limit
+  , offset <&> \l -> "OFFSET " <> show l
+  ]
+
 selectTests :: TestTree
 selectTests = testGroup "Select statement tests"
-  [ testCase "selectAll @Person" $ assertEqual "" selectAll selectAllPerson
-  , testCase "selectById @Person" $ assertEqual "" (selectById "John") selectByIdPerson
+  [ testCase "selectAll @Person" $ assertEqual "" selectAllPerson selectAll
+  , testCase "selectById @Person" $ assertEqual "" selectByIdPerson $ selectById "John"
+  , SC.testProperty "serialize limit offset" \(l, o) ->
+      selectAllPersonPG l o == serialize @_ @PostgreSQL
+        (limitOffsetMay l o $ O.orderBy (field @"age") $ selectAll @Person)
   ]

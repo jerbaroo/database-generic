@@ -13,7 +13,9 @@ import Database.Generic.Serialize qualified as Serialize
 -- | Create a table for values of type 'a'.
 newtype CreateTable a = CreateTable CreateTable'
 
--- | Create table statement without type info.
+instance From (CreateTable a) CreateTable'
+
+-- | 'CreateTable' without type info.
 data CreateTable' = CreateTable'
   { columns     :: ![CreateTableColumn]
   , ifNotExists :: !Bool

@@ -2,7 +2,7 @@ module Database.Generic.Statement.Returning where
 
 import Database.Generic.Statement.Fields (FieldsOf)
 
--- | Statements that return something.
+-- | Statements that return something on execution.
 class IsReturning s
 
 -- | Modify the type of the statement to reflect it returns values of type 'r'.

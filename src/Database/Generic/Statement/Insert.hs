@@ -23,11 +23,11 @@ data Insert (o :: OneOrMany) (r :: Maybe fs) a = Insert
   , values     :: ![Values]
   }
 
-type instance IsReturning (Insert _ (Just fs) _) = fs
-
 type instance ModifyReturnType (Insert o _ a) r = Insert o (Just r) a
 
 type instance Row (Insert _ _ a) = a
+
+instance IsReturning (Insert o (Just fs) a)
 
 instance Returning (Insert o Nothing a) (Insert o (Just a) a) where
   returning Insert{..} = Insert { returning = Just All, .. }

@@ -2,9 +2,8 @@ module Database.Generic.Statement.Returning where
 
 import Database.Generic.Statement.Fields (FieldsOf)
 
--- | Type of value returned from executing a statement.
-type        IsReturning :: forall s a. s -> a
-type family IsReturning s
+-- | Statements that return something.
+class IsReturning s
 
 -- | Modify the type of the statement to reflect it returns values of type 'r'.
 --
@@ -18,11 +17,11 @@ class Returning s1 s2 | s1 -> s2 where
   returning :: s1 -> s2
 
 class ReturningFields s where
-  -- | Update a statement so it will return a subset of fields on execution.
-  returningFields :: forall f b. (FieldsOf f (Row s) b)
+  -- | Update a statement 's' to return fields 'fs' (parsed into 'a's).
+  returningFields :: forall fs a. (FieldsOf fs (Row s) a)
     => s                    -- ^ The original statement.
-    -> f                    -- ^ Fields to select, which can be parsed into a 'a'.
-    -> ModifyReturnType s b -- ^ A statement now returning values of type 'a'.
+    -> fs                   -- ^ Fields to select, parsed into 'a's.
+    -> ModifyReturnType s a -- ^ Statement now returning 'a's.
 
 infixl 4 ==>
 

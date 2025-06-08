@@ -43,13 +43,13 @@ To run the tutorial on your machine:
 | Where column is not null                     |        |        |
 | Order by clause                              | ✅     | ✅     |
 | Order by asc/desc                            |        |        |
-| Limit clause                                 | ✅     |        |
+| Limit clause                                 | ✅     | ✅     |
 | Offset clause                                | ✅     | ✅     |
 | Insert one                                   | ✅     |        |
 | Insert many                                  | ✅     |        |
 | Insert returning                             | ✅     |        |
-| Delete all                                   | ✅     |        |
-| Delete by ID                                 | ✅     |        |
+| Delete all                                   | ✅     | ✅     |
+| Delete by ID                                 | ✅     | ✅     |
 | Delete returning                             | ✅     | ✅     |
 | Stream statements over Conduit               |        |        |
 | Stream Entity updates over Conduit           |        |        |

@@ -1,4 +1,4 @@
-# Revision history for advent
+# Revision history for database-generic
 
 ## 0.1.0.0 -- YYYY-mm-dd
 

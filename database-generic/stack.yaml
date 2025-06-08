@@ -1,0 +1,6 @@
+resolver: lts-23.24 # If changing this make sure to update GHC version in GitHub Action.
+packages:
+  - .
+extra-deps:
+  - HDBC-postgresql-2.5.0.1
+#   - HDBC-sqlite3-2.3.3.1@sha256:5025fd94d02b9b3f0b8b8233796dd9a85a0b3dda6503c6e671e3eddbc51cb4d4,2424

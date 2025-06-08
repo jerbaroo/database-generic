@@ -1,4 +1,4 @@
--- | Commonly used functions/classes re-exported for library users.
+-- | Convenience re-exports for library users.
 module Database.Generic (module X) where
 
 import Database.Generic.Entity as X (Entity)

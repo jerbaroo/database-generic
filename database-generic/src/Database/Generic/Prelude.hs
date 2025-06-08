@@ -1,4 +1,4 @@
-module Database.Generic.Prelude (debug, showType, showType', showTypeT, module X) where
+module Database.Generic.Prelude (debug, debug', showType, showType', showTypeT, module X) where
 
 import Control.Arrow as X ((&&&), (***))
 import Control.Comonad as X (Comonad(extract))
@@ -29,6 +29,9 @@ import Witch as X (Utf8S, From(from), into, unsafeFrom, via)
 
 debug :: Show a => a -> a
 debug a = trace (show a) a
+
+debug' :: Show a => String -> a -> a
+debug' s a = trace (s <> ": " <> show a) a
 
 -- | Type of 'a' as a 'String'.
 showType :: forall a. Typeable a => String

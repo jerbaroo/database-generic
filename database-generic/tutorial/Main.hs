@@ -6,14 +6,12 @@
 
 module Main where
 
-import Control.Monad.Reader (MonadReader(..), ReaderT(..))
 import Control.Monad.IO.Class (MonadIO(..))
+import Control.Monad.Reader (MonadReader(..), ReaderT(..))
 import Data.ByteString.Char8 qualified as BS
-import Data.Functor.Identity (Identity(..))
-import Data.Int (Int64)
 import Database.Generic
 import Database.Generic.Database (PostgreSQL)
-import Database.Generic.Prelude (debug)
+import Database.Generic.Prelude
 import Database.Generic.Serialize (serialize)
 import Database.Generic.Statement.Output (Output(..), OutputType(..), outputType)
 import Database.HDBC qualified as HDBC
@@ -48,12 +46,12 @@ runAppM e (AppM m) = runReaderT m e
 
 -- | Enable our application to communicate with PostgreSQL.
 instance MonadDb AppM Identity PSQL.Connection where
-  executeStatement conn (Identity (s :: s)) = fmap (Identity . Right) $ liftIO do -- TODO error handling.
-    let x = debug $ serialize @_ @PostgreSQL s
-    case debug $ outputType @s of
-      OutputTypeAffected -> OutputAffected . debug <$> HDBC.run conn x []
-      OutputTypeNada     -> debug OutputNada <$ HDBC.runRaw conn x
-      OutputTypeRows     -> OutputRows . debug <$> HDBC.quickQuery' conn x []
+  executeStatement conn (Identity (s :: s)) = Identity . Right <$> liftIO do
+    let serialized = debug' "Serialized statement" $ serialize @_ @PostgreSQL s
+    case debug' "Expected output type" $ outputType @s of
+      OutputTypeAffected -> OutputAffected . debug' "OutputAffected" <$> HDBC.run conn serialized []
+      OutputTypeNada     -> debug' "OutputNada" OutputNada <$ HDBC.runRaw conn serialized
+      OutputTypeRows     -> OutputRows . debug' "OutputRows" <$> HDBC.quickQuery' conn serialized []
 
 -- | Enable our application to create new connections to PostgreSQL.
 instance MonadDbNewConn AppM PSQL.Connection where

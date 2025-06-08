@@ -5,15 +5,13 @@ import Database.Generic.Statement.Fields (FieldsOf)
 -- | Statements that return something on execution.
 class IsReturning s
 
--- | Modify the type of the statement to reflect it returns values of type 'r'.
---
--- NOTE: don't use this directly, you likely want 'returning' or 'returningFields'.
+-- | Modify the statement type to reflect the statment returns values of type 'r'.
 type        ModifyReturnType :: forall s1 s2 r. s1 -> r -> s2
 type family ModifyReturnType s1 r
 
 class Returning s1 s2 | s1 -> s2 where
   -- | Update a statement so it will return values on execution.
-  -- This is akin to applying an SQL RETURNING clause.
+  -- This is equivalent to use of an SQL RETURNING clause.
   returning :: s1 -> s2
 
 class ReturningFields s where

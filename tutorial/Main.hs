@@ -75,19 +75,23 @@ main = do
 
   info "Insert one" $ returning $ insertOne $ john{age=55}
 
-  info "Insert two" $
+  info "Insert two, returning age" $
     insertMany [john{age=25, name="Bob"}, john {name = "Mary"}] ==> field @"age"
 
   info "Select by ID" $ selectById @Person john.name
 
-  info "Select All" $ selectAll @Person
+  info "Select all" $ selectAll @Person
 
-  info "Select All, select 2 fields" $
+  info "Select all, select 1 fields" $
     selectAll @Person ==> field2 @"age" @"name"
 
-  info "Select All, limit to 1 row" $ limit 1 $ selectAll @Person
+  info "Select all, order by age" $ orderBy (field @"age") $ selectAll @Person
 
-  info "Select All, order by age" $ orderBy (field @"age") $ selectAll @Person
+  info "Select all, limit 1" $
+    limit 1 $ orderBy (field @"name") $ selectAll @Person
+
+  info "Select all, limit 1, offset 2" $
+    limitOffset 1 2 $ orderBy (field @"name") $ selectAll @Person
 
   info "Select specific fields by ID" $
     selectById @Person john.name ==> field @"age"

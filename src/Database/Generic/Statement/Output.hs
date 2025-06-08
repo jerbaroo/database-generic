@@ -46,7 +46,7 @@ instance HasOutputType (Insert o Nothing a) where
 instance HasOutputType (Insert o (Just fs) a) where
   outputType = OutputTypeRows
 
-instance HasOutputType (Select o fs a) where
+instance HasOutputType (Select o fs a ob) where
   outputType = OutputTypeRows
 
 type Head :: forall a. [a] -> a
@@ -138,16 +138,16 @@ instance forall fs a. FromSqlValues fs => ParseOutput (Insert Many (Just fs) a) 
   parse (OutputRows rows)                = Right $ fromSqlValues <$> rows
   parse output                           = Left  $ ExpectedOutputRows output
 
-instance forall fs a. FromSqlValues fs => ParseOutput (Select One fs a) where
-  type OutputT (Select One fs a) = Maybe fs
-  parse (OutputRows [])          = Right Nothing
-  parse (OutputRows [row])       = Right $ Just $ fromSqlValues row
-  parse output                   = Left  $ ExpectedMaybeOne output
+instance forall fs a ob. FromSqlValues fs => ParseOutput (Select One fs a ob) where
+  type OutputT (Select One fs a ob) = Maybe fs
+  parse (OutputRows [])             = Right Nothing
+  parse (OutputRows [row])          = Right $ Just $ fromSqlValues row
+  parse output                      = Left  $ ExpectedMaybeOne output
 
-instance forall fs a. FromSqlValues fs => ParseOutput (Select Many fs a) where
-  type OutputT (Select Many fs a) = [fs]
-  parse (OutputRows rows)         = Right $ fromSqlValues <$> rows
-  parse output                    = Left  $ ExpectedMaybeOne output
+instance forall fs a ob. FromSqlValues fs => ParseOutput (Select Many fs a ob) where
+  type OutputT (Select Many fs a ob) = [fs]
+  parse (OutputRows rows)            = Right $ fromSqlValues <$> rows
+  parse output                       = Left  $ ExpectedMaybeOne output
 
 -- TODO this needs to be made smarter. Requires knowledge of SQL behaviour.
 instance ParseOutput (Head s) => ParseOutput (s :: [StatementType]) where

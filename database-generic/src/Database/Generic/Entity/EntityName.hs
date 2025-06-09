@@ -1,8 +1,12 @@
 module Database.Generic.Entity.EntityName where
 
+import Data.Aeson qualified as Aeson
 import Database.Generic.Prelude
 
-newtype EntityName = EntityName String deriving (Eq, Read, Show)
+newtype EntityName = EntityName String
+  deriving (Eq, Generic, Read, Show)
+
+instance Aeson.FromJSON EntityName
 
 instance From EntityName String
 

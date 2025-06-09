@@ -1,3 +1,5 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 module Database.Generic.Class where
 
 import Database.Generic.Prelude
@@ -6,22 +8,32 @@ import Database.Generic.Statement.NoType qualified as NT
 import Database.Generic.Statement.Output (HasOutputType, Output, OutputError, OutputType, outputType)
 
 -- | Monads that can communicate with a database over a given connection.
-class (Exception (Error m t), Functor t, Monad m) => MonadDb m t c | m -> c where
+class (Exception (Error m t), Functor t, Monad m, Show (Error m t))
+  => MonadDb m t c | m -> c where
+
   type Error m t :: Type
   type Error m t = SomeException -- Default for convenience.
 
-  -- | Execute a statement and parse the output with expected 'OutputType'.
-  executeStatement ::
-    c -> t (NT.Statement, OutputType) -> m (t (Either (Error m t) Output))
+  -- | Execute a statement and parse the output based on expected 'OutputType'.
+  executeStatement
+    :: c
+    -> t (NT.Statement, OutputType)
+    -> m (t (Either (ExecuteError (Error m t)) Output))
 
-  -- | Lift an 'OutputError' into the error type for this instance.
-  outputError :: OutputError -> Error m t
-  default outputError :: (SomeException ~ Error m t) => OutputError -> Error m t
-  outputError = toException
+-- | Error on execution of a statement.
+data ExecuteError a
+  = ExeCustomError !a
+  | ExeOutputError !OutputError
+  deriving Show
+
+instance Exception a => Exception (ExecuteError a)
+
+instance From OutputError (ExecuteError a) where
+  from = ExeOutputError
 
 -- | Like 'executeStatement' but takes a 'Statement' that still has type info 'r'.
 executeStatement' :: forall m t c r. (HasOutputType r, MonadDb m t c) =>
-    c -> t (Statement r) -> m (t (Either (Error m t) Output))
+  c -> t (Statement r) -> m (t (Either (ExecuteError (Error m t)) Output))
 executeStatement' c = executeStatement c . fmap \s -> (from s, outputType @r)
 
 -- | Monads that can provide a dedicated NEW connection.
@@ -32,7 +44,12 @@ class MonadDbNewConn m c where
 class MonadDbWithConn m c where
   withDbConn :: (c -> m a) -> m a
 
-instance {-# OVERLAPPABLE #-} (Monad m, MonadDbNewConn m c) => MonadDbWithConn m c where
+-- | By default a new connection is created everytime 'withDbConn' is called.
+--
+-- You might decide to override this implementation to use a connection pool.
+instance {-# OVERLAPPABLE #-} (Monad m, MonadDbNewConn m c)
+  => MonadDbWithConn m c where
+
   withDbConn = (newDbConn >>=)
 
 -- * Internal

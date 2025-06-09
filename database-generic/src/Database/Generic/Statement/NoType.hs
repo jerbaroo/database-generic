@@ -1,5 +1,8 @@
+{-# LANGUAGE DeriveAnyClass #-} -- TODO generically/newtype
+
 module Database.Generic.Statement.NoType where
 
+import Data.Aeson qualified as Aeson
 import Database.Generic.Entity.SqlTypes (SqlTypeId, SqlValue(..))
 import Database.Generic.Prelude
 import Database.Generic.Statement qualified as S
@@ -23,6 +26,7 @@ data Statement where
   StatementInsert      :: !C.Insert'      -> Statement
   StatementSelect      :: !C.Select'      -> Statement
   Cons                 :: !Statement      -> Statement -> Statement
+  deriving (Aeson.FromJSON, Generic)
 
 instance From (S.Statement s) Statement where
   from (S.StatementBeginTx s) = StatementBeginTx s

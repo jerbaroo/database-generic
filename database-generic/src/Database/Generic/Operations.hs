@@ -1,6 +1,7 @@
+-- TODO docs
 module Database.Generic.Operations where
 
-import Database.Generic.Class (MonadDb(..), MonadDbHasConn(..), MonadDbNewConn(..), MonadDbWithConn(..))
+import Database.Generic.Class (Error, ExecuteError, MonadDb, MonadDbHasConn(..), MonadDbNewConn(..), MonadDbWithConn(..))
 import Database.Generic.Class qualified as Db
 import Database.Generic.Prelude
 import Database.Generic.Statement (Statement(..), ToStatement(..))
@@ -20,7 +21,7 @@ execute :: forall m c r s.
   , s ~ S r
   )
   => r
-  -> m (Either (Error m Identity) (OutputT s))
+  -> m (Either (ExecuteError (Error m Identity)) (OutputT s))
 execute =
   fmap extract . (askDbConn >>=)
   . flip (executeAndParse @_ @Identity) . pure . statement
@@ -35,7 +36,7 @@ executeTx :: forall m c r s.
   , s ~ S r
   )
   => r
-  -> m (Either (Error m Identity) (OutputT (Cons CommitTx s)))
+  -> m (Either (ExecuteError (Error m Identity)) (OutputT (Cons CommitTx s)))
 executeTx = fmap extract . withDbConn .
   flip (executeAndParse @_ @Identity) . pure . Statement.commitTx . statement
 
@@ -49,15 +50,15 @@ executeTxs :: forall m t c r s.
   , s ~ S r
   )
   => t r
-  -> m (t (Either (Error m t) (OutputT (Cons CommitTx s))))
+  -> m (t (Either (ExecuteError (Error m t)) (OutputT (Cons CommitTx s))))
 executeTxs =
   (newDbConn >>=) . flip executeAndParse . fmap (Statement.commitTx . statement)
 
 -- | Run the provided actions, then run a commit statement.
 tx :: forall m c a.
   (MonadDb m Identity c, MonadDbWithConn m c)
-  => Tx m c (Either (Error m Identity) a)
-  -> m (Either (Error m Identity) a)
+  => Tx m c (Either (ExecuteError (Error (Tx m c) Identity)) a)
+  -> m (Either (ExecuteError (Error (Tx m c) Identity)) a)
 tx m = withDbConn \c -> runTx c $ m >>= \case
   Left  e1 -> pure $ Left e1
   Right a  -> Database.Generic.Operations.execute Tx.CommitTx >>= \case
@@ -66,10 +67,12 @@ tx m = withDbConn \c -> runTx c $ m >>= \case
 
 tx_ :: forall m c a.
   (MonadDb m Identity c, MonadDbWithConn m c)
-  => Tx m c (Either (Error m Identity) a)
+  => Tx m c (Either (ExecuteError (Error (Tx m c) Identity)) a)
   -> m a
-tx_ =
-  fmap (fromEither \e -> error $ "Error in tx_: " <> displayException e) . tx
+tx_ = do
+  let err e = error $
+        "Error in Database.Generic.Operations.tx_: " <> displayException e
+  fmap (fromEither err) . tx
 
 -- * Internal.
 
@@ -78,8 +81,9 @@ executeAndParse :: forall m t c s.
   (HasOutputType s, MonadDb m t c, ParseOutput s)
   => c
   -> t (Statement s)
-  -> m (t (Either (Db.Error m t) (OutputT s)))
+  -> m (t (Either (ExecuteError (Error m t)) (OutputT s)))
 executeAndParse c ts = fmap f <$> Db.executeStatement' @_ @t c ts
  where
   f (Left  l) = Left l
-  f (Right o) = mapLeft (Db.outputError @m @t) $ parse @s o
+  -- The 'mapLeft' lifts the 'OutputError' into 'ExecuteError'.
+  f (Right o) = mapLeft from $ parse @s o

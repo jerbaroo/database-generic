@@ -1,14 +1,16 @@
 module Database.Generic.Statement.Fields where
 
+import Data.Aeson qualified as Aeson
 import Database.Generic.Entity.FieldName (FieldName, HasFieldName, fieldName)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
-import GHC.Generics (Generic)
 import Witch qualified as W
 
 -- | Named fields in a statement.
 data Fields = All | Some ![FieldName]
-  deriving (Eq, Show)
+  deriving (Eq, Generic, Show)
+
+instance Aeson.FromJSON Fields
 
 instance Serialize Fields db where
   serialize All       = "*"

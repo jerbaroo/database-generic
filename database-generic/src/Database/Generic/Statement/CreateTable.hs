@@ -1,5 +1,6 @@
 module Database.Generic.Statement.CreateTable where
 
+import Data.Aeson qualified as Aeson
 import Database.Generic.Entity (Entity')
 import Database.Generic.Entity.EntityName (EntityName(..), entityName)
 import Database.Generic.Entity.FieldName (FieldName)
@@ -21,13 +22,17 @@ data CreateTable' = CreateTable'
   { columns     :: ![CreateTableColumn]
   , ifNotExists :: !Bool
   , name        :: !EntityName
-  } deriving (Eq, Read, Show)
+  } deriving (Eq, Generic, Show)
+
+instance Aeson.FromJSON CreateTable'
 
 data CreateTableColumn = CreateTableColumn
   { name    :: !FieldName
   , primary :: !Bool
   , type'   :: !SqlTypeId
-  } deriving (Eq, Read, Show)
+  } deriving (Eq, Generic, Show)
+
+instance Aeson.FromJSON CreateTableColumn
 
 instance Serialize SqlTypeId db => Serialize CreateTable' db where
   serialize c = Serialize.statement $ unwords $ catMaybes

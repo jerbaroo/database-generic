@@ -1,12 +1,16 @@
 module Database.Generic.Entity.FieldName where
 
+import Data.Aeson qualified as Aeson
 import Generics.Eot qualified as G
 import Database.Generic.Prelude
 
 -- | Name of a field as a string.
 --
 -- For example: "foo" in 'data X = Y { foo :: Int }'.
-newtype FieldName = FieldName String deriving (Eq, Read, Show)
+newtype FieldName = FieldName String
+  deriving (Eq, Generic, Read, Show)
+
+instance Aeson.FromJSON FieldName
 
 instance From FieldName String
 

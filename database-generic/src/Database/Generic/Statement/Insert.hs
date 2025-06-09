@@ -1,5 +1,6 @@
 module Database.Generic.Statement.Insert where
 
+import Data.Aeson qualified as Aeson
 import Database.Generic.Entity (Entity)
 import Database.Generic.Entity.EntityName (EntityName(..), entityName)
 import Database.Generic.Entity.FieldName (FieldName)
@@ -26,7 +27,9 @@ data Insert' = Insert'
   , fieldNames :: ![FieldName]
   , returning  :: !(Maybe Fields)
   , values     :: ![Values]
-  } deriving (Eq, Show)
+  } deriving (Eq, Generic, Show)
+
+instance Aeson.FromJSON Insert'
 
 type instance ModifyReturnType (Insert o _ a) r = Insert o (Just r) a
 

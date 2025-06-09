@@ -18,7 +18,7 @@ import Witch qualified as W
 
 -- | Select one or many values from a collection of 'a'.
 newtype Select (o :: OneOrMany) fs a (ob :: Bool) = Select Select'
-  deriving (Eq, Show)
+  deriving (Eq, From Select', Show)
 
 instance From (Select o fs a ob) Select'
 

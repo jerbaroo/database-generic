@@ -12,18 +12,19 @@ import Database.Generic.Entity.SqlTypes (SqlTypeId(..), SqlValue (..))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
-import Database.Generic.Statement.CreateTable (CreateTable(..), CreateTableColumn(..))
-import Database.Generic.Statement.Delete (Delete(..))
+import Database.Generic.Statement.CreateTable (CreateTable, CreateTable'(..), CreateTableColumn(..))
+import Database.Generic.Statement.Delete (Delete, Delete'(..))
 import Database.Generic.Statement.Fields (Fields(..))
 import Database.Generic.Statement.Limit (Limit, Offset, Limitable (limitOffsetMay))
 import Database.Generic.Statement.OrderBy qualified as O
-import Database.Generic.Statement.Select (Select(..))
+import Database.Generic.Statement.Select (Select, Select'(..))
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
-import Database.Generic.Statement.Where (Where(Equals))
+import Database.Generic.Statement.Where (Where'(Equals))
 import GHC.Generics (Generic)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase, assertEqual)
 import Test.Tasty.SmallCheck qualified as SC
+import Witch qualified as W
 
 statementTests :: TestTree
 statementTests = testGroup "Statement tests"
@@ -41,7 +42,7 @@ data Person = Person { age :: !Int64, name :: !String }
 
 createTablePerson :: Bool -> CreateTable a
 createTablePerson ifNotExists =
-  CreateTable
+  W.from $ CreateTable'
     { columns =
         [ CreateTableColumn
             { name = "age"
@@ -70,13 +71,14 @@ createTableTests = testGroup "Create table statement tests"
   [ SC.testProperty "createTable @Person" \b ->
       createTable @Person b == createTablePerson b
   , SC.testProperty "serialize CreateTable Person" \b ->
-      serialize @_ @PostgreSQL (createTable @Person b) == createTablePersonPG b
+      serialize @_ @PostgreSQL (into @CreateTable' $ createTable @Person b)
+      == createTablePersonPG b
   ]
 
 -- * Delete tests.
 
 deleteAllPerson :: Delete Many Nothing Person
-deleteAllPerson = Delete
+deleteAllPerson = W.from Delete'
   { fields = Nothing
   , from   = "person"
   , where' = Nothing
@@ -99,16 +101,17 @@ deleteTests :: TestTree
 deleteTests = testGroup "Delete statement tests"
   [ testCase "deleteAll @Person" $ assertEqual "" deleteAll deleteAllPerson
   , testCase "serialize deleteAll @Person" $ assertEqual ""
-      "DELETE FROM person;" $ serialize @_ @PostgreSQL $ deleteAll @Person
+      "DELETE FROM person;" $
+      serialize @_ @PostgreSQL $ into @Delete' $ deleteAll @Person
   , testCase "serialize deleteById @Person" $ assertEqual ""
       "DELETE FROM person WHERE name='Mary';" $
-          serialize @_ @PostgreSQL $ deleteById @Person "Mary"
+      serialize @_ @PostgreSQL $ into @Delete' $ deleteById @Person "Mary"
   ]
 
 -- * Select tests.
 
 selectAllPerson :: Select Many Person Person False
-selectAllPerson = Select
+selectAllPerson = W.from Select'
   { fields  = All
   , from    = "person"
   , limit   = Nothing
@@ -122,13 +125,13 @@ selectAllPersonOrderByName :: Select Many Person Person True
 selectAllPersonOrderByName = O.orderBy (field @"name") selectAll
 
 selectByIdPerson :: Select One Person Person False
-selectByIdPerson = Select
+selectByIdPerson = W.from Select'
   { fields  = All
   , from    = "person"
   , limit   = Nothing
   , offset  = Nothing
   , orderBy = []
-  , where'  = Just $ Equals @Person "name" $ SqlString "John"
+  , where'  = Just $ Equals "name" $ SqlString "John"
   }
 
 selectAllPersonPG :: Limit -> Maybe Offset -> String
@@ -143,5 +146,6 @@ selectTests = testGroup "Select statement tests"
   , testCase "selectById @Person" $ assertEqual "" selectByIdPerson $ selectById "John"
   , SC.testProperty "serialize limit offset" \(l, o) ->
       selectAllPersonPG l o == serialize @_ @PostgreSQL
-        (limitOffsetMay l o $ O.orderBy (field @"age") $ selectAll @Person)
+        (into @Select' $
+           limitOffsetMay l o $ O.orderBy (field @"age") $ selectAll @Person)
   ]

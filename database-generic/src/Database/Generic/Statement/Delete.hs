@@ -14,7 +14,7 @@ import Witch qualified as W
 
 -- | Delete one or many values of type 'a', maybe returning fields 'fs'.
 newtype Delete (o :: OneOrMany) (r :: Maybe fs) a = Delete Delete'
-  deriving (Eq, Show)
+  deriving (Eq, From Delete', Show)
 
 instance From (Delete o r a) Delete'
 

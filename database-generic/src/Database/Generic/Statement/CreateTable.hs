@@ -12,6 +12,7 @@ import Database.Generic.Serialize qualified as Serialize
 
 -- | Create a table for values of type 'a'.
 newtype CreateTable a = CreateTable CreateTable'
+  deriving (Eq, From CreateTable', Show)
 
 instance From (CreateTable a) CreateTable'
 

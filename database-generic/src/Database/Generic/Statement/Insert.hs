@@ -17,6 +17,7 @@ import Witch qualified as W
 
 -- | Insert one or many values of type 'a', maybe returning fields 'fs'.
 newtype Insert (o :: OneOrMany) (r :: Maybe fs) a = Insert Insert'
+  deriving (Eq, From Insert', Show)
 
 instance From (Insert o r a) Insert'
 
@@ -25,7 +26,7 @@ data Insert' = Insert'
   , fieldNames :: ![FieldName]
   , returning  :: !(Maybe Fields)
   , values     :: ![Values]
-  }
+  } deriving (Eq, Show)
 
 type instance ModifyReturnType (Insert o _ a) r = Insert o (Just r) a
 

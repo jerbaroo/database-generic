@@ -28,7 +28,7 @@ To run the tutorial on your machine:
 1. Clone this repo.
 2. Start a PostgreSQL instance with username and password `demo`, e.g.:
   `docker run -it --rm --env POSTGRES_PASSWORD=demo --env POSTGRES_USER=demo --publish 5432:5432 postgres`
-3. Either `cabal run` via provided `nix-shell`, or `stack run`.
+3. Then `cabal run tutorial` via provided `nix-shell`.
 
 ## Features
 

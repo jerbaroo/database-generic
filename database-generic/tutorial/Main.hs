@@ -13,7 +13,7 @@ import Database.Generic
 import Database.Generic.Database (PostgreSQL)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (serialize)
-import Database.Generic.Statement.Output (Output(..), OutputType(..), outputType)
+import Database.Generic.Statement.Output (Output(..), OutputType(..))
 import Database.HDBC qualified as HDBC
 import Database.HDBC.PostgreSQL qualified as PSQL
 import Database.PostgreSQL.Simple.Options as PSQL
@@ -46,9 +46,9 @@ runAppM e (AppM m) = runReaderT m e
 
 -- | Enable our application to communicate with PostgreSQL.
 instance MonadDb AppM Identity PSQL.Connection where
-  executeStatement conn (Identity (s :: s)) = Identity . Right <$> liftIO do
+  executeStatement conn (Identity (s, o)) = Identity . Right <$> liftIO do
     let serialized = debug' "Serialized statement" $ serialize @_ @PostgreSQL s
-    case debug' "Expected output type" $ outputType @s of
+    case debug' "Expected output type" o of
       OutputTypeAffected -> OutputAffected . debug' "OutputAffected" <$> HDBC.run conn serialized []
       OutputTypeNada     -> debug' "OutputNada" OutputNada <$ HDBC.runRaw conn serialized
       OutputTypeRows     -> OutputRows . debug' "OutputRows" <$> HDBC.quickQuery' conn serialized []

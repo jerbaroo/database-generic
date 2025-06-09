@@ -1,6 +1,5 @@
 module Database.Generic.Statement where
 
-import Database.Generic.Entity.SqlTypes (SqlTypeId, SqlValue(..))
 import Database.Generic.Prelude
 import Database.Generic.Statement.CreateTable qualified as C
 import Database.Generic.Statement.Delete qualified as D
@@ -9,7 +8,6 @@ import Database.Generic.Statement.Output (HasOutputType(..))
 import Database.Generic.Statement.Select qualified as S
 import Database.Generic.Statement.Tx qualified as Tx
 import Database.Generic.Statement.Type (Cons, StatementType(..))
-import Database.Generic.Serialize (Serialize(..))
 
 -- | One or more statements. We track a type-level list 's' of the statements,
 -- because the order of the statements can affect what is returned.
@@ -24,19 +22,6 @@ data Statement (s :: [StatementType]) where
 
 instance HasOutputType r => HasOutputType (Statement r) where
   outputType = outputType @r
-
-instance
-  ( Serialize SqlTypeId db
-  , Serialize SqlValue db
-  ) => Serialize (Statement r) db where
-  serialize (StatementBeginTx     s) = serialize @_ @db s
-  serialize (StatementCommitTx    s) = serialize @_ @db s
-  serialize (StatementCreateTable s) = serialize @_ @db s
-  serialize (StatementDelete      s) = serialize @_ @db s
-  serialize (StatementInsert      s) = serialize @_ @db s
-  serialize (StatementSelect      s) = serialize @_ @db s
-  serialize (Cons             s2 s1) =
-    serialize @_ @db s1 <> serialize @_ @db s2
 
 -- | Typeclass to lift individual statements into 'Statement'.
 class ToStatement s where

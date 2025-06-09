@@ -4,6 +4,7 @@ import Database.Generic.Database (PostgreSQL, SQLite)
 import Database.Generic.Entity.SqlTypes (SqlTypeId(..), SqlValue(..))
 import Database.Generic.Prelude
 
+-- TODO alter param order
 class Serialize a db where
   serialize :: a -> String
 

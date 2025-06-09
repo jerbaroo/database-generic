@@ -28,8 +28,8 @@ data CreateTableColumn = CreateTableColumn
   , type'   :: !SqlTypeId
   } deriving (Eq, Read, Show)
 
-instance Serialize SqlTypeId db => Serialize (CreateTable a) db where
-  serialize (CreateTable c) = Serialize.statement $ unwords $ catMaybes
+instance Serialize SqlTypeId db => Serialize CreateTable' db where
+  serialize c = Serialize.statement $ unwords $ catMaybes
     [ Just "CREATE TABLE"
     , if c.ifNotExists then Just "IF NOT EXISTS" else Nothing
     , Just $ from c.name

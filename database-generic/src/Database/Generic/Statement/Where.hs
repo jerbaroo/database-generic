@@ -9,27 +9,27 @@ import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 
 -- | Condition to filter values of type 'a'.
-data Where a where
-  And    :: !(Where a) -> !(Where a) -> Where a
-  Equals :: !FieldName -> !SqlValue  -> Where a
-  IsNull :: !FieldName -> !Bool      -> Where a
+data Where' where
+  And    :: !Where'    -> !Where'   -> Where'
+  Equals :: !FieldName -> !SqlValue -> Where'
+  IsNull :: !FieldName -> !Bool     -> Where'
   deriving (Eq, Show)
 
-instance Serialize SqlValue db => Serialize (Where a) db where
+instance Serialize SqlValue db => Serialize Where' db where
   serialize (And a b) =
     "(" <> serialize @_ @db a <> " AND " <> serialize @_ @db b <> ")"
   serialize (Equals fName value) = from fName <> "=" <> serialize @_ @db value
   serialize (IsNull fName is) =
     from fName <> " IS " <> if is then "" else "NOT " <> "NULL"
 
-idEquals :: forall a f b. Entity' a f b => b -> Where a
+idEquals :: forall a f b. Entity' a f b => b -> Where'
 idEquals b = Equals (primaryKeyFieldName @a) (toSqlValue b)
 
-isNull :: forall a f. Entity a f => Where a
+isNull :: forall a f. Entity a f => Where'
 isNull = IsNull (fieldName @f) True
 
-isNotNull :: forall a f. Entity a f => Where a
+isNotNull :: forall a f. Entity a f => Where'
 isNotNull = IsNull (fieldName @f) False
 
 class Whereable s a where
-  where' :: s -> Where a -> s
+  where' :: s -> Where' -> s

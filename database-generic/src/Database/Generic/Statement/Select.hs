@@ -9,7 +9,7 @@ import Database.Generic.Statement.Fields (Fields(..), fieldNames)
 import Database.Generic.Statement.Limit (Limit, Limitable(..), Offset)
 import Database.Generic.Statement.OrderBy (IsOrderedBy, OrderBy(..), ModifyOrderedBy)
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
-import Database.Generic.Statement.Where (Where(..), Whereable(..), idEquals)
+import Database.Generic.Statement.Where (Where'(..), Whereable(..), idEquals)
 import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType, ReturningFields(..), Row)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
@@ -17,13 +17,18 @@ import Database.Generic.Serialize qualified as Serialize
 import Witch qualified as W
 
 -- | Select one or many values from a collection of 'a'.
-data Select (o :: OneOrMany) fs a (ob :: Bool) = Select
+newtype Select (o :: OneOrMany) fs a (ob :: Bool) = Select Select'
+  deriving (Eq, Show)
+
+instance From (Select o fs a ob) Select'
+
+data Select' = Select'
   { fields  :: !Fields
   , from    :: !EntityName
   , limit   :: !(Maybe Limit)
   , offset  :: !(Maybe Offset)
   , orderBy :: ![FieldName]
-  , where'  :: !(Maybe (Where a))
+  , where'  :: !(Maybe Where')
   } deriving (Eq, Show)
 
 type instance ModifyOrderedBy (Select o fs a _) = Select o fs a True
@@ -37,15 +42,16 @@ instance IsOrderedBy (Select o fs a True)
 instance IsReturning (Select o fs a ob)
 
 instance Limitable (Select Many fs a True) where
-  limitOffsetMay l offset s = s { limit = Just l, offset }
+  limitOffsetMay l offset (Select s) = Select s { limit = Just l, offset }
 
 instance OrderBy (Select o fs a ob) where
-  orderBy fs s = s { orderBy = fieldNames fs }
+  orderBy fs (Select s) = Select s { orderBy = fieldNames fs }
 
 instance ReturningFields (Select o a a ob) where
-  returningFields Select{..} fs = Select { fields = Some $ fieldNames fs, .. }
+  returningFields (Select Select' {..}) fs = Select Select'
+    { fields = Some $ fieldNames fs, .. }
 
-instance Serialize SqlValue db => Serialize (Select o fs a ob) db where
+instance Serialize SqlValue db => Serialize Select' db where
   serialize s = Serialize.statement $ unwords $ catMaybes
     [ Just "SELECT"
     , Just $ serialize s.fields
@@ -60,10 +66,10 @@ instance Serialize SqlValue db => Serialize (Select o fs a ob) db where
     ]
 
 instance Whereable (Select o fs a ob) a where
-  where' s w = s { where' = s.where' <&> (`And` w) }
+  where' (Select s) w = Select s { where' = s.where' <&> (`And` w) }
 
 selectAll :: forall a f. Entity a f => Select Many a a False
-selectAll = Select
+selectAll = Select Select'
   { fields  = All
   , from    = Entity.entityName @a
   , limit   = Nothing
@@ -73,7 +79,7 @@ selectAll = Select
   }
 
 selectById :: forall a f b. Entity' a f b => b -> Select One a a False
-selectById b = Select
+selectById b = Select Select'
   { fields  = All
   , from    = Entity.entityName @a
   , limit   = Nothing

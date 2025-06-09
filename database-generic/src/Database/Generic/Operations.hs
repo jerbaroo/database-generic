@@ -79,7 +79,7 @@ executeAndParse :: forall m t c s.
   => c
   -> t (Statement s)
   -> m (t (Either (Db.Error m t) (OutputT s)))
-executeAndParse c ts = fmap f <$> Db.executeStatement @_ @t c ts
+executeAndParse c ts = fmap f <$> Db.executeStatement' @_ @t c ts
  where
   f (Left  l) = Left l
   f (Right o) = mapLeft (Db.outputError @m @t) $ parse @s o

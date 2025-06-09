@@ -1,5 +1,6 @@
 module Database.Generic.Statement.Where where
 
+import Data.Aeson qualified as Aeson
 import Database.Generic.Entity (Entity, Entity')
 import Database.Generic.Entity.FieldName (FieldName, fieldName)
 import Database.Generic.Entity.PrimaryKey (primaryKeyFieldName)
@@ -13,7 +14,9 @@ data Where' where
   And    :: !Where'    -> !Where'   -> Where'
   Equals :: !FieldName -> !SqlValue -> Where'
   IsNull :: !FieldName -> !Bool     -> Where'
-  deriving (Eq, Show)
+  deriving (Eq, Generic, Show)
+
+instance Aeson.FromJSON Where'
 
 instance Serialize SqlValue db => Serialize Where' db where
   serialize (And a b) =

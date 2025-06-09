@@ -4,7 +4,7 @@ import Data.Aeson qualified as Aeson
 import Database.Generic.Prelude
 
 newtype EntityName = EntityName String
-  deriving (Eq, Generic, Read, Show)
+  deriving (Eq, Generic, Show)
 
 instance Aeson.FromJSON EntityName
 

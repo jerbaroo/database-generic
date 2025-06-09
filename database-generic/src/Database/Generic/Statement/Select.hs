@@ -1,5 +1,6 @@
 module Database.Generic.Statement.Select where
 
+import Data.Aeson qualified as Aeson
 import Database.Generic.Entity (Entity, Entity')
 import Database.Generic.Entity.EntityName (EntityName)
 import Database.Generic.Entity.EntityName qualified as Entity
@@ -29,7 +30,9 @@ data Select' = Select'
   , offset  :: !(Maybe Offset)
   , orderBy :: ![FieldName]
   , where'  :: !(Maybe Where')
-  } deriving (Eq, Show)
+  } deriving (Eq, Generic, Show)
+
+instance Aeson.FromJSON Select'
 
 type instance ModifyOrderedBy (Select o fs a _) = Select o fs a True
 

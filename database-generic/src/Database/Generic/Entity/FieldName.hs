@@ -8,7 +8,7 @@ import Database.Generic.Prelude
 --
 -- For example: "foo" in 'data X = Y { foo :: Int }'.
 newtype FieldName = FieldName String
-  deriving (Eq, Generic, Read, Show)
+  deriving (Eq, Generic, Show)
 
 instance Aeson.FromJSON FieldName
 

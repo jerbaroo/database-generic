@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Database.Generic.Statement.Output where
@@ -9,7 +8,6 @@ import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.FromSql (FromSqlValues(..))
 import Database.Generic.Statement.Type (StatementType(..))
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
-import GHC.Generics (Generic)
 
 -- | Output from executing an SQL statement.
 data Output
@@ -25,7 +23,9 @@ instance Aeson.ToJSON   Output
 --
 -- These constructors correspond to the constructors of 'Output'.
 data OutputType = OutputTypeAffected | OutputTypeNada | OutputTypeRows
-  deriving (Aeson.FromJSON, Generic, Show)
+  deriving (Generic, Show)
+
+instance Aeson.FromJSON OutputType
 
 -- | The type of output expected from executing a statement of type 's'.
 class HasOutputType s where

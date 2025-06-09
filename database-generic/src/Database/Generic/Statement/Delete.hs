@@ -1,5 +1,6 @@
 module Database.Generic.Statement.Delete where
 
+import Data.Aeson qualified as Aeson
 import Database.Generic.Entity (Entity, Entity')
 import Database.Generic.Entity.EntityName (EntityName, entityName)
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
@@ -22,7 +23,9 @@ data Delete' = Delete'
   { fields :: !(Maybe Fields)
   , from   :: !EntityName
   , where' :: !(Maybe Where')
-  } deriving (Eq, Show)
+  } deriving (Eq, Generic, Show)
+
+instance Aeson.FromJSON Delete'
 
 type instance ModifyReturnType (Delete o _ a) r = Delete o (Just r) a
 

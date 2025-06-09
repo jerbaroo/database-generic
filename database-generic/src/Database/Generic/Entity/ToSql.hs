@@ -14,8 +14,8 @@ instance Exception ToSqlValuesError
 class ToSqlValue a where
   toSqlValue :: a -> SqlValue
 
-instance {-# OVERLAPPABLE #-} Convertible a SqlValue => ToSqlValue a where
-  toSqlValue = convert
+instance {-# OVERLAPPABLE #-} From a SqlValue => ToSqlValue a where
+  toSqlValue = from
 
 -- | Values that can be converted into a list of 'SqlValue'.
 class ToSqlValues a where

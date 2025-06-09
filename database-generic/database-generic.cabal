@@ -77,20 +77,6 @@ library
                       RecordWildCards,
                       TypeFamilies,
 
-executable database-generic-tutorial
-    import:           warnings
-    main-is:          Main.hs
-    build-depends:    base,
-                      bytestring,
-                      database-generic,
-                      HDBC,
-                      HDBC-postgresql,
-                      mtl,
-                      postgres-options,
-                      witch,
-    hs-source-dirs:   tutorial
-    default-language: GHC2021
-
 test-suite database-generic-test
     import:           warnings
     main-is:          Main.hs

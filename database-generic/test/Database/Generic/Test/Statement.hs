@@ -20,7 +20,6 @@ import Database.Generic.Statement.OrderBy qualified as O
 import Database.Generic.Statement.Select (Select, Select'(..))
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Where (Where'(Equals))
-import GHC.Generics (Generic)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase, assertEqual)
 import Test.Tasty.SmallCheck qualified as SC

@@ -13,11 +13,11 @@ import Database.Generic
 import Database.Generic.Database (PostgreSQL)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (serialize)
+import Database.Generic.Server qualified as Server
 import Database.Generic.Statement.Output (Output(..), OutputType(..))
 import Database.HDBC qualified as HDBC
 import Database.HDBC.PostgreSQL qualified as PSQL
 import Database.PostgreSQL.Simple.Options as PSQL
-import GHC.Generics (Generic)
 
 -- | Data type we want to persist.
 data Person = Person { age :: !Int64, name :: !String }
@@ -51,7 +51,7 @@ instance MonadDb AppM Identity PSQL.Connection where
     case debug' "Expected output type" o of
       OutputTypeAffected -> OutputAffected . debug' "OutputAffected" <$> HDBC.run conn serialized []
       OutputTypeNada     -> debug' "OutputNada" OutputNada <$ HDBC.runRaw conn serialized
-      OutputTypeRows     -> OutputRows . debug' "OutputRows" <$> HDBC.quickQuery' conn serialized []
+      OutputTypeRows     -> OutputRows . debug' "OutputRows" . fmap (fmap from) <$> HDBC.quickQuery' conn serialized []
 
 -- | Enable our application to create new connections to PostgreSQL.
 instance MonadDbNewConn AppM PSQL.Connection where
@@ -93,3 +93,6 @@ main = do
 
   info "Select specific fields by ID" $
     selectById @Person john.name ==> field @"age"
+
+  putStrLn "Starting a server which will proxy any statements"
+  Server.run (runAppM c) 1234 Server.developmentCors

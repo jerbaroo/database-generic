@@ -1,19 +1,18 @@
 module Database.Generic.Serialize where
 
 import Database.Generic.Database (PostgreSQL, SQLite)
-import Database.Generic.Entity.SqlTypes (SqlTypeId(..), SqlValue(..))
+import Database.Generic.Entity.SqlTypes (SqlType(..), SqlValue(..))
 import Database.Generic.Prelude
 
 -- TODO alter param order
 class Serialize a db where
   serialize :: a -> String
 
-instance Serialize SqlTypeId PostgreSQL where
-  serialize SqlLongVarCharT = "VARCHAR"
-  serialize SqlBigIntT      = "BIGINT"
-  serialize _               = "undefined"
+instance Serialize SqlType PostgreSQL where
+  serialize SqlVarChar = "VARCHAR"
+  serialize SqlBigInt  = "BIGINT"
 
-instance Serialize SqlTypeId SQLite where
+instance Serialize SqlType SQLite where
   serialize = serialize @_ @PostgreSQL
 
 instance Serialize SqlValue PostgreSQL where

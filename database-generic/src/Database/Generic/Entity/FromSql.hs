@@ -2,7 +2,7 @@
 
 module Database.Generic.Entity.FromSql where
 
-import Database.Generic.Entity.SqlTypes (SqlValue(..))
+import Database.Generic.Entity.SqlTypes (SqlBS(..), SqlValue(..))
 import Database.Generic.Prelude
 import Generics.Eot qualified as G
 
@@ -20,7 +20,7 @@ class FromSqlValues a where
 
 instance FromSqlValues String where
   fromSqlValues [SqlString s] = s
-  fromSqlValues [SqlByteString b] = unsafeFrom $ into @Utf8S b
+  fromSqlValues [SqlByteString (SqlBS b)] = unsafeFrom $ into @Utf8S b -- TODO why?
   fromSqlValues xs = error $ "fromSqlValues @String got: " <> show xs
 
 instance FromSqlValues Int64 where

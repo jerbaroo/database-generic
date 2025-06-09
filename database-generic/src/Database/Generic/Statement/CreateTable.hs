@@ -6,7 +6,7 @@ import Database.Generic.Entity.EntityName (EntityName(..), entityName)
 import Database.Generic.Entity.FieldName (FieldName)
 import Database.Generic.Entity.PrimaryKey (primaryKeyFieldName)
 import Database.Generic.Entity.SqlColumns (HasSqlColumns(..))
-import Database.Generic.Entity.SqlTypes (SqlTypeId)
+import Database.Generic.Entity.SqlTypes (SqlType)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
@@ -29,12 +29,12 @@ instance Aeson.FromJSON CreateTable'
 data CreateTableColumn = CreateTableColumn
   { name    :: !FieldName
   , primary :: !Bool
-  , type'   :: !SqlTypeId
+  , type'   :: !SqlType
   } deriving (Eq, Generic, Show)
 
 instance Aeson.FromJSON CreateTableColumn
 
-instance Serialize SqlTypeId db => Serialize CreateTable' db where
+instance Serialize SqlType db => Serialize CreateTable' db where
   serialize c = Serialize.statement $ unwords $ catMaybes
     [ Just "CREATE TABLE"
     , if c.ifNotExists then Just "IF NOT EXISTS" else Nothing

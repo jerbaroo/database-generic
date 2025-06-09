@@ -8,7 +8,7 @@ module Database.Generic.Test.Statement where
 
 import Database.Generic
 import Database.Generic.Database (PostgreSQL)
-import Database.Generic.Entity.SqlTypes (SqlTypeId(..), SqlValue (..))
+import Database.Generic.Entity.SqlTypes (SqlType(..), SqlValue (..))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
@@ -46,12 +46,12 @@ createTablePerson ifNotExists =
         [ CreateTableColumn
             { name = "age"
             , primary = False
-            , type' = SqlBigIntT
+            , type' = SqlBigInt
             }
         , CreateTableColumn
             { name = "name"
             , primary = True
-            , type' = SqlLongVarCharT
+            , type' = SqlVarChar
             }
         ]
     , ifNotExists

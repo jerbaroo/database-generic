@@ -1,4 +1,4 @@
-# Revision history for database-generic
+# Revision history for tutorial
 
 ## 0.1.0.0 -- YYYY-mm-dd
 

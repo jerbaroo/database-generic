@@ -38,7 +38,7 @@ debug' s a = trace (s <> ": " <> show a) a
 showType :: forall a. Typeable a => String
 showType = show $ typeRep $ Proxy @a
 
--- | Like 'showType' but with quotes removed and lowercase.
+-- | Like 'showType' but with 'showTypeT' transformation applied.
 showType' :: forall a. Typeable a => String
 showType' = showTypeT $ showType @a
 

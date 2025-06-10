@@ -3,6 +3,7 @@ module Database.Generic.Entity.EntityName where
 import Data.Aeson qualified as Aeson
 import Database.Generic.Prelude
 
+-- | Identifier for a collection in a database (e.g. "Person" table).
 newtype EntityName = EntityName String
   deriving (Eq, Generic, Show)
 
@@ -13,7 +14,6 @@ instance From EntityName String
 instance IsString EntityName where
   fromString = EntityName
 
--- | Identifier for a collection in a database (i.e. SQL table name)
 class HasEntityName a where
   entityName :: EntityName
 

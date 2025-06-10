@@ -9,15 +9,19 @@ module Main where
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Reader (MonadReader(..), ReaderT(..))
 import Data.ByteString.Char8 qualified as BS
+import Data.Functor.Identity (Identity(..))
+import Data.Int (Int64)
 import Database.Generic
 import Database.Generic.Database (PostgreSQL)
-import Database.Generic.Prelude
+import Database.Generic.Prelude (debug')
 import Database.Generic.Serialize (serialize)
 import Database.Generic.Server qualified as Server
 import Database.Generic.Statement.Output (Output(..), OutputType(..))
 import Database.HDBC qualified as HDBC
 import Database.HDBC.PostgreSQL qualified as PSQL
 import Database.PostgreSQL.Simple.Options as PSQL
+import GHC.Generics (Generic)
+import Witch (from)
 
 -- | Data type we want to persist.
 data Person = Person { age :: !Int64, name :: !String }
@@ -51,7 +55,8 @@ instance MonadDb AppM Identity PSQL.Connection where
     case debug' "Expected output type" o of
       OutputTypeAffected -> OutputAffected . debug' "OutputAffected" <$> HDBC.run conn serialized []
       OutputTypeNada     -> debug' "OutputNada" OutputNada <$ HDBC.runRaw conn serialized
-      OutputTypeRows     -> OutputRows . debug' "OutputRows" . fmap (fmap from) <$> HDBC.quickQuery' conn serialized []
+      OutputTypeRows     -> OutputRows . debug' "OutputRows" .
+        fmap (fmap from) <$> HDBC.quickQuery' conn serialized []
 
 -- | Enable our application to create new connections to PostgreSQL.
 instance MonadDbNewConn AppM PSQL.Connection where

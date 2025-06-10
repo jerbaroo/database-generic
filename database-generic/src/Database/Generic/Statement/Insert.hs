@@ -4,7 +4,7 @@ import Data.Aeson qualified as Aeson
 import Database.Generic.Entity (Entity)
 import Database.Generic.Entity.EntityName (EntityName(..), entityName)
 import Database.Generic.Entity.FieldName (FieldName)
-import Database.Generic.Entity.FieldName qualified as Entity
+import Database.Generic.Entity.SqlColumns qualified as Sql
 import Database.Generic.Entity.SqlTypes (SqlValue(..))
 import Database.Generic.Entity.ToSql (toSqlValues)
 import Database.Generic.Prelude
@@ -56,7 +56,7 @@ instance Serialize SqlValue db => Serialize Insert' db where
 insertOne :: forall a f. Entity a f => a -> Insert One Nothing a
 insertOne a = Insert Insert'
   { into       = entityName @a
-  , fieldNames = Entity.fieldNames @a
+  , fieldNames = Sql.fieldNames @a
   , returning  = Nothing
   , values     = [Values $ toSqlValues a]
   }
@@ -64,7 +64,7 @@ insertOne a = Insert Insert'
 insertMany :: forall a f. Entity a f => [a] -> Insert Many Nothing a
 insertMany as = Insert Insert'
   { into       = entityName @a
-  , fieldNames = Entity.fieldNames @a
+  , fieldNames = Sql.fieldNames @a
   , returning  = Nothing
   , values     = Values . toSqlValues <$> as
   }

@@ -59,7 +59,7 @@ instance From String SqlValue where
 
 newtype SqlBS = SqlBS ByteString deriving (Eq, Show)
 
--- TODO: look at this.
+-- TODO: look at this. convert into SqlString?
 instance Aeson.FromJSON SqlBS where
   parseJSON = fmap (SqlBS . read) <$> Aeson.parseJSON
 

@@ -6,7 +6,6 @@
 
 module Main where
 
-import Data.Aeson qualified as Aeson
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Reader (MonadReader(..), ReaderT(..))
 import Data.ByteString.Char8 qualified as BS
@@ -14,7 +13,7 @@ import Data.Functor.Identity (Identity(..))
 import Data.Int (Int64)
 import Database.Generic
 import Database.Generic.Database (PostgreSQL)
-import Database.Generic.Entity.FromSql (FromDbValues (fromDbValues))
+import Database.Generic.Entity.SqlTypes (DbValue)
 import Database.Generic.Prelude (debug')
 import Database.Generic.Serialize (serialize)
 import Database.Generic.Server qualified as Server
@@ -23,6 +22,7 @@ import Database.HDBC qualified as HDBC
 import Database.HDBC.PostgreSQL qualified as PSQL
 import Database.PostgreSQL.Simple.Options as PSQL
 import GHC.Generics (Generic)
+import Witch (from)
 
 -- | Data type we want to persist.
 data Person = Person { age :: !Int64, name :: !String }
@@ -49,27 +49,15 @@ newtype AppM a = AppM (ReaderT ConnStr IO a)
 runAppM :: ConnStr -> AppM a -> IO a
 runAppM e (AppM m) = runReaderT m e
 
-deriving instance Aeson.ToJSON HDBC.SqlValue
-deriving instance Generic      HDBC.SqlValue
-
-instance FromDbValues HDBC.SqlValue Int64 where
-  fromDbValues [x] = HDBC.fromSql x
-  fromDbValues x = error $ "Error constructing String from: " <> show x
-
-instance FromDbValues HDBC.SqlValue String where
-  fromDbValues [HDBC.SqlString s] = s
-  fromDbValues [HDBC.SqlByteString b] = BS.unpack b
-  fromDbValues x = error $ "Error constructing String from: " <> show x
-
 -- | Enable our application to communicate with PostgreSQL.
-instance MonadDb AppM Identity PSQL.Connection HDBC.SqlValue where
+instance MonadDb AppM Identity PSQL.Connection DbValue where
   executeStatement conn (Identity (s, o)) = Identity . Right <$> liftIO do
     let serialized = debug' "Serialized statement" $ serialize @_ @PostgreSQL s
     case debug' "Expected output type" o of
       OutputTypeAffected -> OutputAffected . debug' "OutputAffected" <$> HDBC.run conn serialized []
       OutputTypeNada     -> debug' "OutputNada" OutputNada <$ HDBC.runRaw conn serialized
-      OutputTypeRows     -> OutputRows . debug' "OutputRows"
-        <$> HDBC.quickQuery' conn serialized []
+      OutputTypeRows     -> OutputRows . debug' "OutputRows" .
+        fmap (fmap from) <$> HDBC.quickQuery' conn serialized []
 
 -- | Enable our application to create new connections to PostgreSQL.
 instance MonadDbNewConn AppM PSQL.Connection where

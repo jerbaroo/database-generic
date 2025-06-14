@@ -4,8 +4,10 @@ module Database.Generic.Statement.Delete where
 
 import Data.Aeson qualified as Aeson
 import Database.Generic.Entity.EntityName (EntityName, HasEntityName, entityName)
-import Database.Generic.Entity.SqlTypes (DbValue)
 import Database.Generic.Prelude
+import Database.Generic.Entity.PrimaryKey (PrimaryKey')
+import Database.Generic.Entity.SqlTypes (DbValue)
+import Database.Generic.Entity.ToSql (ToDbValue)
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
 import Database.Generic.Statement.Fields (Fields(..), fieldNames)
@@ -13,8 +15,6 @@ import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType, Retu
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Where (Where', idEquals)
 import Witch qualified as W
-import Database.Generic.Entity.PrimaryKey (PrimaryKey)
-import Database.Generic.Entity.ToSql (ToDbValue)
 
 -- | Delete one or many values of type 'a', maybe returning fields 'fs'.
 newtype Delete (o :: OneOrMany) (r :: Maybe fs) a = Delete Delete'
@@ -57,7 +57,8 @@ deleteAll = Delete Delete'
   , where' = Nothing
   }
 
-deleteById :: forall a f b. (HasEntityName a, PrimaryKey f a, ToDbValue b) => b -> Delete One Nothing a
+deleteById :: forall a f b.
+  (HasEntityName a, PrimaryKey' a f b, ToDbValue b) => b -> Delete One Nothing a
 deleteById b = Delete Delete'
   { fields = Nothing
   , from   = entityName @a

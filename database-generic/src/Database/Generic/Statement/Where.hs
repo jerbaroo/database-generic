@@ -4,7 +4,7 @@ module Database.Generic.Statement.Where where
 
 import Data.Aeson qualified as Aeson
 import Database.Generic.Entity.FieldName (FieldName, fieldName, HasFieldName)
-import Database.Generic.Entity.PrimaryKey (PrimaryKey, primaryKeyFieldName)
+import Database.Generic.Entity.PrimaryKey (PrimaryKey', primaryKeyFieldName)
 import Database.Generic.Entity.SqlTypes (DbValue)
 import Database.Generic.Entity.ToSql (ToDbValue(..))
 import Database.Generic.Prelude
@@ -26,7 +26,7 @@ instance Serialize DbValue db => Serialize Where' db where
   serialize (IsNull fName is) =
     from fName <> " IS " <> if is then "" else "NOT " <> "NULL"
 
-idEquals :: forall a f b. (PrimaryKey f a, ToDbValue b) => b -> Where'
+idEquals :: forall a f b. (PrimaryKey' a f b, ToDbValue b) => b -> Where'
 idEquals b = Equals (primaryKeyFieldName @a) (toDbValue b)
 
 isNull :: forall f a b. (HasField f a (Maybe b), HasFieldName f) => Where'

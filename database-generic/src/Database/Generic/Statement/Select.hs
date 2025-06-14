@@ -7,7 +7,7 @@ import Database.Generic.Entity.EntityName (EntityName, HasEntityName)
 import Database.Generic.Entity.EntityName qualified as Entity
 import Database.Generic.Entity.FieldName (FieldName)
 import Database.Generic.Entity.SqlTypes (DbValue)
-import Database.Generic.Entity.PrimaryKey as X (PrimaryKey)
+import Database.Generic.Entity.PrimaryKey as X (PrimaryKey')
 import Database.Generic.Statement.Fields (Fields(..), fieldNames)
 import Database.Generic.Statement.Limit (Limit, Limitable(..), Offset)
 import Database.Generic.Statement.OrderBy (IsOrderedBy, OrderBy(..), ModifyOrderedBy)
@@ -84,7 +84,7 @@ selectAll = Select Select'
   , where'  = Nothing
   }
 
-selectById :: forall a f b. (HasEntityName a, PrimaryKey f a, ToDbValue b)
+selectById :: forall a f b. (HasEntityName a, PrimaryKey' a f b, ToDbValue b)
   => b -> Select One a a False
 selectById b = Select Select'
   { fields  = All

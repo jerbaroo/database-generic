@@ -1,3 +1,5 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 module Database.Generic.Statement.Select where
 
 import Data.Aeson qualified as Aeson
@@ -5,7 +7,7 @@ import Database.Generic.Entity (Entity, Entity')
 import Database.Generic.Entity.EntityName (EntityName)
 import Database.Generic.Entity.EntityName qualified as Entity
 import Database.Generic.Entity.FieldName (FieldName)
-import Database.Generic.Entity.SqlTypes (SqlValue(..))
+import Database.Generic.Entity.SqlTypes (DbValue)
 import Database.Generic.Statement.Fields (Fields(..), fieldNames)
 import Database.Generic.Statement.Limit (Limit, Limitable(..), Offset)
 import Database.Generic.Statement.OrderBy (IsOrderedBy, OrderBy(..), ModifyOrderedBy)
@@ -54,7 +56,7 @@ instance ReturningFields (Select o a a ob) where
   returningFields (Select Select' {..}) fs = Select Select'
     { fields = Some $ fieldNames fs, .. }
 
-instance Serialize SqlValue db => Serialize Select' db where
+instance Serialize DbValue db => Serialize Select' db where
   serialize s = Serialize.statement $ unwords $ catMaybes
     [ Just "SELECT"
     , Just $ serialize s.fields

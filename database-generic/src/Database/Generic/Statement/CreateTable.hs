@@ -1,3 +1,5 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 module Database.Generic.Statement.CreateTable where
 
 import Data.Aeson qualified as Aeson
@@ -5,8 +7,8 @@ import Database.Generic.Entity (Entity')
 import Database.Generic.Entity.EntityName (EntityName(..), entityName)
 import Database.Generic.Entity.FieldName (FieldName)
 import Database.Generic.Entity.PrimaryKey (primaryKeyFieldName)
-import Database.Generic.Entity.SqlColumns (HasSqlColumns(..))
-import Database.Generic.Entity.SqlTypes (SqlType)
+import Database.Generic.Entity.SqlColumns (HasDbColumns(..))
+import Database.Generic.Entity.SqlTypes (DbType)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
@@ -29,12 +31,12 @@ instance Aeson.FromJSON CreateTable'
 data CreateTableColumn = CreateTableColumn
   { name    :: !FieldName
   , primary :: !Bool
-  , type'   :: !SqlType
+  , type'   :: !DbType
   } deriving (Eq, Generic, Show)
 
 instance Aeson.FromJSON CreateTableColumn
 
-instance Serialize SqlType db => Serialize CreateTable' db where
+instance Serialize DbType db => Serialize CreateTable' db where
   serialize c = Serialize.statement $ unwords $ catMaybes
     [ Just "CREATE TABLE"
     , if c.ifNotExists then Just "IF NOT EXISTS" else Nothing

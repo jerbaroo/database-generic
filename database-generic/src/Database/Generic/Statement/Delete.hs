@@ -1,9 +1,11 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 module Database.Generic.Statement.Delete where
 
 import Data.Aeson qualified as Aeson
 import Database.Generic.Entity (Entity, Entity')
 import Database.Generic.Entity.EntityName (EntityName, entityName)
-import Database.Generic.Entity.SqlTypes (SqlValue(..))
+import Database.Generic.Entity.SqlTypes (DbValue)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
@@ -40,7 +42,7 @@ instance ReturningFields (Delete o Nothing a) where
   returningFields (Delete Delete' {..}) f = Delete Delete'
     { fields = Just $ Some $ fieldNames f, .. }
 
-instance Serialize SqlValue db => Serialize Delete' db where
+instance Serialize DbValue db => Serialize Delete' db where
   serialize d = Serialize.statement $ unwords $ catMaybes
     [ Just $ "DELETE FROM " <> W.from d.from
     , d.where' <&> \w -> "WHERE " <> serialize @_ @db w

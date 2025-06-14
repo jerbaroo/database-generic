@@ -1,5 +1,6 @@
+{-# LANGUAGE DeriveAnyClass        #-}
 {-# LANGUAGE QuantifiedConstraints #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 module Database.Generic.Entity.SqlTypes where
 
@@ -10,36 +11,40 @@ import Database.Generic.Prelude
 -- import Prelude (read)
 
 data DbT f
-  = DbInt64  !(Eval f Int64)
-  | DbString !(Eval f String)
+  = DbInt64  !(F f Int64)
+  | DbString !(F f String)
   deriving Generic
 
-deriving instance Eq   (DbT Id)
-deriving instance Eq   (DbT Unit)
-deriving instance Show (DbT Id)
-deriving instance Show (DbT Unit)
+-- TODO try defunctionalisation
+type F :: forall f a b. (f :: Type) -> (a :: Type) -> (b :: Type)
+type family F f a where
+  F Id   a = a
+  F Unit _ = Unit
 
-data Id
-data Unit
-
-type Eval :: forall x a b. (x :: Type) -> (a :: Type) -> (b :: Type)
-type family Eval f a where
-  Eval Id   a = a
-  Eval Unit _ = ()
-
-type DbValue = DbT Id
-
--- TODO test this
--- instance Aeson.FromJSON DbValue
--- instance Aeson.ToJSON   DbValue
-
+data Unit   = Unit deriving (Aeson.FromJSON, Eq, Generic, Show)
 type DbType = DbT Unit
+
+deriving instance Aeson.FromJSON (DbT Unit)
+deriving instance Eq             (DbT Unit)
+deriving instance Show           (DbT Unit)
 
 class HasDbType a where
   dbType :: DbType
 
 instance HasDbType Int64 where
-  dbType = DbInt64 ()
+  dbType = DbInt64 Unit
 
 instance HasDbType String where
-  dbType = DbString ()
+  dbType = DbString Unit
+
+data Id
+type DbValue = DbT Id
+
+deriving instance Aeson.FromJSON (DbT Id)
+deriving instance Aeson.ToJSON   (DbT Id)
+deriving instance Eq             (DbT Id)
+deriving instance Show           (DbT Id)
+
+-- TODO test this
+-- instance Aeson.FromJSON DbValue
+-- instance Aeson.ToJSON   DbValue

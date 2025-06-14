@@ -12,62 +12,62 @@ import Database.Generic.Statement.Tx qualified as Tx
 import Database.Generic.Transaction (Tx, runTx)
 
 -- | Convert 'r' to a 'Statement'and execute via current database connection.
-execute :: forall m c r s.
+execute :: forall m c r s dbv.
   ( HasOutputType s
-  , MonadDb m Identity c
+  , MonadDb m Identity c dbv
   , MonadDbHasConn m c
-  , ParseOutput s
+  , ParseOutput dbv s
   , ToStatement r
   , s ~ S r
   )
   => r
-  -> m (Either (ExecuteError (Error m Identity)) (OutputT s))
+  -> m (Either (ExecuteError (Error m Identity) dbv) (OutputT s))
 execute =
   fmap extract . (askDbConn >>=)
   . flip (executeAndParse @_ @Identity) . pure . statement
 
 -- | Like 'execute' but each 'Statement' is appended with a commit statement.
-executeTx :: forall m c r s.
+executeTx :: forall m c r s dbv.
   ( HasOutputType (Cons CommitTx s)
-  , MonadDb m Identity c
+  , MonadDb m Identity c dbv
   , MonadDbWithConn m c
-  , ParseOutput (Cons CommitTx s)
+  , ParseOutput dbv (Cons CommitTx s)
   , ToStatement r
   , s ~ S r
   )
   => r
-  -> m (Either (ExecuteError (Error m Identity)) (OutputT (Cons CommitTx s)))
+  -> m (Either (ExecuteError (Error m Identity) dbv) (OutputT (Cons CommitTx s)))
 executeTx = fmap extract . withDbConn .
   flip (executeAndParse @_ @Identity) . pure . Statement.commitTx . statement
 
 -- | Like 'executeTx' but shape of input and output is of type 't'.
-executeTxs :: forall m t c r s.
+executeTxs :: forall m t c r s dbv.
   ( HasOutputType (Cons CommitTx s)
-  , MonadDb m t c
+  , MonadDb m t c dbv
   , MonadDbNewConn m c
-  , ParseOutput (Cons CommitTx s)
+  , ParseOutput dbv (Cons CommitTx s)
   , ToStatement r
   , s ~ S r
   )
   => t r
-  -> m (t (Either (ExecuteError (Error m t)) (OutputT (Cons CommitTx s))))
+  -> m (t (Either (ExecuteError (Error m t) dbv) (OutputT (Cons CommitTx s))))
 executeTxs =
   (newDbConn >>=) . flip executeAndParse . fmap (Statement.commitTx . statement)
 
 -- | Run the provided actions, then run a commit statement.
-tx :: forall m c a.
-  (MonadDb m Identity c, MonadDbWithConn m c)
-  => Tx m c (Either (ExecuteError (Error (Tx m c) Identity)) a)
-  -> m (Either (ExecuteError (Error (Tx m c) Identity)) a)
+tx :: forall m c a dbv.
+  (MonadDb m Identity c dbv, MonadDbWithConn m c)
+  => Tx m c (Either (ExecuteError (Error (Tx m c) Identity) dbv) a)
+  -> m (Either (ExecuteError (Error (Tx m c) Identity) dbv) a)
 tx m = withDbConn \c -> runTx c $ m >>= \case
   Left  e1 -> pure $ Left e1
   Right a  -> Database.Generic.Operations.execute Tx.CommitTx >>= \case
     Left  e2 -> pure $ Left e2
     Right () -> pure $ Right a
 
-tx_ :: forall m c a.
-  (MonadDb m Identity c, MonadDbWithConn m c)
-  => Tx m c (Either (ExecuteError (Error (Tx m c) Identity)) a)
+tx_ :: forall m c a dbv.
+  (MonadDb m Identity c dbv, MonadDbWithConn m c, Show dbv, Typeable dbv)
+  => Tx m c (Either (ExecuteError (Error (Tx m c) Identity) dbv) a)
   -> m a
 tx_ = do
   let err e = error $
@@ -77,13 +77,13 @@ tx_ = do
 -- * Internal.
 
 -- | Slim wrapper over 'Db.execute' which also parses output.
-executeAndParse :: forall m t c s.
-  (HasOutputType s, MonadDb m t c, ParseOutput s)
+executeAndParse :: forall m t c s dbv.
+  (HasOutputType s, MonadDb m t c dbv, ParseOutput dbv s)
   => c
   -> t (Statement s)
-  -> m (t (Either (ExecuteError (Error m t)) (OutputT s)))
+  -> m (t (Either (ExecuteError (Error m t) dbv) (OutputT s)))
 executeAndParse c ts = fmap f <$> Db.executeStatement' @_ @t c ts
  where
   f (Left  l) = Left l
   -- The 'mapLeft' lifts the 'OutputError' into 'ExecuteError'.
-  f (Right o) = mapLeft from $ parse @s o
+  f (Right o) = mapLeft from $ parse @dbv @s o

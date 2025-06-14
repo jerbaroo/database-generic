@@ -13,6 +13,7 @@ import Data.Functor.Identity (Identity(..))
 import Data.Int (Int64)
 import Database.Generic
 import Database.Generic.Database (PostgreSQL)
+import Database.Generic.Entity.SqlTypes (DbValue)
 import Database.Generic.Prelude (debug')
 import Database.Generic.Serialize (serialize)
 import Database.Generic.Server qualified as Server
@@ -49,7 +50,7 @@ runAppM :: ConnStr -> AppM a -> IO a
 runAppM e (AppM m) = runReaderT m e
 
 -- | Enable our application to communicate with PostgreSQL.
-instance MonadDb AppM Identity PSQL.Connection where
+instance MonadDb AppM Identity PSQL.Connection DbValue where
   executeStatement conn (Identity (s, o)) = Identity . Right <$> liftIO do
     let serialized = debug' "Serialized statement" $ serialize @_ @PostgreSQL s
     case debug' "Expected output type" o of
@@ -99,5 +100,5 @@ main = do
   info "Select specific fields by ID" $
     selectById @Person john.name ==> field @"age"
 
-  putStrLn "Starting a server which will proxy any statements"
+  putStrLn "\nStarting a server which will proxy any statements"
   Server.run (runAppM c) 1234 Server.developmentCors

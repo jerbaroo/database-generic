@@ -1,3 +1,5 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 module Database.Generic.Transaction where
 
 import Control.Monad.IO.Class (MonadIO)
@@ -13,11 +15,11 @@ newtype Tx m c a = Tx (ReaderT c m a)
 instance Monad m => MonadDbHasConn (Tx m c) c where
   askDbConn = ask
 
-instance MonadDb m t c => MonadDb (Tx m c) t c where
+instance MonadDb m t c dbv => MonadDb (Tx m c) t c dbv where
   type Error (Tx m c) t = Error m t
   executeStatement c t = do
     -- 'unsafeCoerce' is safe here because the error types are equal (2 lines up).
-    let mapError :: ExecuteError (Error m t) -> ExecuteError (Error (Tx m c) t)
+    let mapError :: ExecuteError (Error m t) dbv -> ExecuteError (Error (Tx m c) t) dbv
         mapError = unsafeCoerce
     Tx $ ReaderT $ const $
       fmap (mapLeft mapError) <$> executeStatement @m @t c t

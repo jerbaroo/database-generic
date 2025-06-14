@@ -1,67 +1,82 @@
--- TODO review
+{-# LANGUAGE DeriveAnyClass #-}
+
 module Database.Generic.Entity.SqlTypes where
 
 import Data.Aeson qualified as Aeson
 import Data.ByteString (ByteString)
+import Data.ByteString.Char8 qualified as BS
+import Database.Generic.Entity.FromSql (FromDbValues(..))
 import Database.Generic.Prelude
-import Database.HDBC qualified as H
-import Prelude (read)
+import Database.HDBC qualified as HDBC
 
--- | Names of types in SQL.
-data SqlType
-  = SqlBigInt
-  | SqlVarChar
-  deriving (Eq, Generic, Show)
+data DbT f
+  = DbBytes   !(F f Bytes)
+  | DbInt64   !(F f Int64)
+  | DbInteger !(F f Integer)
+  | DbString  !(F f String)
+  deriving Generic
 
-instance Aeson.FromJSON SqlType
-instance Aeson.ToJSON   SqlType
+-- TODO try defunctionalisation
+type F :: forall f a b. (f :: Type) -> (a :: Type) -> (b :: Type)
+type family F f a where
+  F Id   a = a
+  F Unit _ = Unit
 
--- | Types that have a corresponding SQL type.
-class HasSqlType a where
-  sqlType :: SqlType
+data Unit   = Unit deriving (Aeson.FromJSON, Eq, Generic, Show)
+type DbType = DbT Unit
 
--- TODO: should be done on per-db basis.
--- TODO: docs
-instance HasSqlType Int64 where
-  sqlType = SqlBigInt
+deriving instance Aeson.FromJSON (DbT Unit)
+deriving instance Eq             (DbT Unit)
+deriving instance Show           (DbT Unit)
 
-instance HasSqlType String where
-  sqlType = SqlVarChar
+class HasDbType a where
+  dbType :: DbType
 
-data SqlValue
-  = SqlByteString !SqlBS
-  | SqlInt64      !Int64
-  | SqlInteger    !Integer
-  | SqlString     !String
-  deriving (Eq, Generic, Show)
+instance HasDbType Int64 where
+  dbType = DbInt64 Unit
 
-instance Aeson.FromJSON SqlValue
-instance Aeson.ToJSON   SqlValue
+instance HasDbType String where
+  dbType = DbString Unit
 
-instance From H.SqlValue SqlValue where
-  from (H.SqlByteString b) = from b
-  from (H.SqlInt64 i) = from i
-  from (H.SqlInteger i) = from i
-  from (H.SqlString s) = from s
-  from x = error $ "SqlTypes.hs unmatched pattern on " <> show x
+data Id
+type DbValue = DbT Id
 
-instance From ByteString SqlValue where
-  from = SqlByteString . SqlBS
+deriving instance Aeson.FromJSON (DbT Id)
+deriving instance Aeson.ToJSON   (DbT Id)
+deriving instance Eq             (DbT Id)
+deriving instance Show           (DbT Id)
 
-instance From Int64 SqlValue where
-  from = SqlInt64
+instance From Int64 DbValue  where from = DbInt64
+instance From String DbValue where from = DbString
 
-instance From Integer SqlValue where
-  from = SqlInteger
+instance FromDbValues DbValue Int64 where
+  fromDbValues [DbInt64   i] = i
+  fromDbValues [DbInteger i] = unsafeFrom i
+  fromDbValues x = error $ "Error constructing Int64 from " <> show x
 
-instance From String SqlValue where
-  from = SqlString
+instance FromDbValues DbValue String where
+  fromDbValues [DbBytes  b] = from b
+  fromDbValues [DbString s] = s
+  fromDbValues x = error $ "Error constructing Int64 from " <> show x
 
-newtype SqlBS = SqlBS ByteString deriving (Eq, Show)
+-- TODO move to own module
+instance From HDBC.SqlValue DbValue where
+  from (HDBC.SqlString     s) = DbString s
+  from (HDBC.SqlByteString b) = DbBytes $ Bytes b
+  from (HDBC.SqlInt64      i) = DbInt64 i
+  from (HDBC.SqlInteger    i) = DbInteger i
+  from x = error $ "Error 'From HDBC.SqlValue DbValue': " <> show x
 
--- TODO: look at this. convert into SqlString?
-instance Aeson.FromJSON SqlBS where
-  parseJSON = fmap (SqlBS . read) <$> Aeson.parseJSON
+newtype Bytes = Bytes ByteString deriving (Eq, Show)
 
-instance Aeson.ToJSON SqlBS where
-  toJSON = Aeson.toJSON . show
+instance Aeson.FromJSON Bytes where
+  parseJSON = fmap (from @String) <$> Aeson.parseJSON
+
+instance Aeson.ToJSON Bytes where
+  toJSON (Bytes b)= Aeson.toJSON $ BS.unpack b
+
+instance From Bytes String where
+  from (Bytes b) = BS.unpack b
+
+instance From String Bytes where
+  from = Bytes . BS.pack

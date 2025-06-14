@@ -8,7 +8,7 @@ module Database.Generic.Test.Statement where
 
 import Database.Generic
 import Database.Generic.Database (PostgreSQL)
-import Database.Generic.Entity.SqlTypes (SqlType(..), SqlValue (..))
+import Database.Generic.Entity.SqlTypes (DbT (DbInt64, DbString), Unit (Unit))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
@@ -46,12 +46,12 @@ createTablePerson ifNotExists =
         [ CreateTableColumn
             { name = "age"
             , primary = False
-            , type' = SqlBigInt
+            , type' = DbInt64 Unit
             }
         , CreateTableColumn
             { name = "name"
             , primary = True
-            , type' = SqlVarChar
+            , type' = DbString Unit
             }
         ]
     , ifNotExists
@@ -130,7 +130,7 @@ selectByIdPerson = W.from Select'
   , limit   = Nothing
   , offset  = Nothing
   , orderBy = []
-  , where'  = Just $ Equals "name" $ SqlString "John"
+  , where'  = Just $ Equals "name" $ DbString "John"
   }
 
 selectAllPersonPG :: Limit -> Maybe Offset -> String

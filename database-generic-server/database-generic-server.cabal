@@ -18,7 +18,8 @@ common warnings
 library
     import:           warnings
     exposed-modules:  Database.Generic.Server,
-    build-depends:    base,
+    build-depends:    aeson,
+                      base,
                       database-generic,
                       servant,
                       servant-server,

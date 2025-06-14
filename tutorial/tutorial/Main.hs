@@ -71,7 +71,7 @@ main = do
         putStrLn $ "\n" <> m
         print =<< runAppM c (tx $ execute s)
 
-  info "Create table if not exists" $ createTable @Person @_ True
+  info "Create table if not exists" $ createTable @Person True
 
   info "Delete All" $ returning $ deleteAll @Person
 

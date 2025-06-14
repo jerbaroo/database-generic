@@ -18,8 +18,7 @@ common warnings
 executable tutorial
     import:           warnings
     main-is:          Main.hs
-    build-depends:    aeson,
-                      base,
+    build-depends:    base,
                       bytestring,
                       database-generic,
                       database-generic-server,

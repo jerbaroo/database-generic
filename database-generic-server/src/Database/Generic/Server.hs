@@ -43,7 +43,12 @@ developmentCors = Cors.cors $ const $ Just Cors.simpleCorsResourcePolicy
 
 run
   :: forall m c dbv
-  . (Aeson.ToJSON dbv, MonadDb m Identity c dbv, MonadDbWithConn m c, Show dbv, Typeable dbv)
+  . ( Aeson.ToJSON dbv
+    , MonadDb m Identity c dbv
+    , MonadDbWithConn m c
+    , Show dbv
+    , Typeable dbv
+    )
   => (forall a. m a -> IO a)
   -> Int -> Middleware -> IO ()
 run nt port middleware =

@@ -3,10 +3,9 @@
 module Database.Generic.Statement.CreateTable where
 
 import Data.Aeson qualified as Aeson
-import Database.Generic.Entity (Entity')
-import Database.Generic.Entity.EntityName (EntityName(..), entityName)
+import Database.Generic.Entity.EntityName (EntityName(..), entityName, HasEntityName)
 import Database.Generic.Entity.FieldName (FieldName)
-import Database.Generic.Entity.PrimaryKey (primaryKeyFieldName)
+import Database.Generic.Entity.PrimaryKey (primaryKeyFieldName, PrimaryKey)
 import Database.Generic.Entity.SqlColumns (HasDbColumns(..))
 import Database.Generic.Entity.SqlTypes (DbType)
 import Database.Generic.Prelude
@@ -48,7 +47,8 @@ instance Serialize DbType db => Serialize CreateTable' db where
           ]
     ]
 
-createTable :: forall a f b. Entity' a f b => Bool -> CreateTable a
+createTable :: forall a f.
+  (HasDbColumns a, HasEntityName a, PrimaryKey f a) => Bool -> CreateTable a
 createTable ifNotExists = do
   let primaryName = primaryKeyFieldName @a
   let columns = sqlColumns @a <&> \(name, type') ->

@@ -9,7 +9,7 @@ import Database.Generic.Statement.Output (HasOutputType, Output, OutputError, Ou
 
 -- | Monads that can communicate with a database over a given connection.
 class (Exception (Error m t), Functor t, Monad m, Show (Error m t))
-  => MonadDb m t c | m -> c where
+  => MonadDb m t c dbv | m -> c, m -> dbv where
 
   type Error m t :: Type
   type Error m t = SomeException -- Default for convenience.
@@ -18,22 +18,22 @@ class (Exception (Error m t), Functor t, Monad m, Show (Error m t))
   executeStatement
     :: c
     -> t (NT.Statement, OutputType)
-    -> m (t (Either (ExecuteError (Error m t)) Output))
+    -> m (t (Either (ExecuteError (Error m t) dbv) (Output dbv)))
 
 -- | Error on execution of a statement.
-data ExecuteError a
+data ExecuteError a dbv
   = ExeCustomError !a
-  | ExeOutputError !OutputError
+  | ExeOutputError !(OutputError dbv)
   deriving Show
 
-instance Exception a => Exception (ExecuteError a)
+instance (Exception a, Show dbv, Typeable dbv) => Exception (ExecuteError a dbv)
 
-instance From OutputError (ExecuteError a) where
+instance From (OutputError dbv) (ExecuteError a dbv) where
   from = ExeOutputError
 
 -- | Like 'executeStatement' but takes a 'Statement' that still has type info 'r'.
-executeStatement' :: forall m t c r. (HasOutputType r, MonadDb m t c) =>
-  c -> t (Statement r) -> m (t (Either (ExecuteError (Error m t)) Output))
+executeStatement' :: forall m t c r dbv. (HasOutputType r, MonadDb m t c dbv) =>
+  c -> t (Statement r) -> m (t (Either (ExecuteError (Error m t) dbv) (Output dbv)))
 executeStatement' c = executeStatement c . fmap \s -> (from s, outputType @r)
 
 -- | Monads that can provide a dedicated NEW connection.

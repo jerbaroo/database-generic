@@ -45,6 +45,12 @@ deriving instance Aeson.ToJSON   (DbT Id)
 deriving instance Eq             (DbT Id)
 deriving instance Show           (DbT Id)
 
+instance From Int64 DbValue where
+  from = DbInt64
+
+instance From String DbValue where
+  from = DbString
+
 -- TODO test this
 -- instance Aeson.FromJSON DbValue
 -- instance Aeson.ToJSON   DbValue

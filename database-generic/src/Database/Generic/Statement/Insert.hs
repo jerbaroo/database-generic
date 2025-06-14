@@ -3,12 +3,12 @@
 module Database.Generic.Statement.Insert where
 
 import Data.Aeson qualified as Aeson
-import Database.Generic.Entity (Entity)
-import Database.Generic.Entity.EntityName (EntityName(..), entityName)
+import Database.Generic.Entity.EntityName (EntityName(..), entityName, HasEntityName)
 import Database.Generic.Entity.FieldName (FieldName)
 import Database.Generic.Entity.SqlColumns qualified as Sql
+import Database.Generic.Entity.SqlColumns (HasDbColumns)
 import Database.Generic.Entity.SqlTypes (DbValue)
-import Database.Generic.Entity.ToSql (toDbValues)
+import Database.Generic.Entity.ToSql (toDbValues, ToDbValues)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Statement.Fields (Fields(..))
@@ -55,7 +55,8 @@ instance Serialize DbValue db => Serialize Insert' db where
     <> maybe [] (\c -> ["RETURNING " <> serialize c]) i.returning
     <> [ ";" ]
 
-insertOne :: forall a f. Entity a f => a -> Insert One Nothing a
+insertOne :: forall a.
+  (HasDbColumns a, HasEntityName a, ToDbValues a) => a -> Insert One Nothing a
 insertOne a = Insert Insert'
   { into       = entityName @a
   , fieldNames = Sql.fieldNames @a
@@ -63,7 +64,8 @@ insertOne a = Insert Insert'
   , values     = [Values $ toDbValues a]
   }
 
-insertMany :: forall a f. Entity a f => [a] -> Insert Many Nothing a
+insertMany :: forall a.
+  (HasDbColumns a, HasEntityName a, ToDbValues a) => [a] -> Insert Many Nothing a
 insertMany as = Insert Insert'
   { into       = entityName @a
   , fieldNames = Sql.fieldNames @a

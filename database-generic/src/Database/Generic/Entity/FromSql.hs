@@ -2,52 +2,41 @@
 
 module Database.Generic.Entity.FromSql where
 
-import Database.Generic.Entity.SqlTypes (DbT(..), DbValue)
 import Database.Generic.Prelude
 import Generics.Eot qualified as G
 
-data FromSqlError
-  = ErrorConstructing()   ![DbValue]
-  | ErrorConstructingVoid ![DbValue]
-  | NoDbValues           !String
+data FromSqlError dbv
+  = ErrorConstructing()   ![dbv]
+  | ErrorConstructingVoid ![dbv]
+  | NoDbValues            !String
   deriving Show
 
-instance Exception FromSqlError
+instance (Show dbv, Typeable dbv) => Exception (FromSqlError dbv)
 
--- | Values that can be parsed from 'DbValue's.
-class FromDbValues a where
-  fromDbValues :: [DbValue] -> a
+-- | Values that can be parsed from a list of 'dbv'.
+class FromDbValues dbv a where
+  fromDbValues :: [dbv] -> a
 
-instance FromDbValues String where
-  fromDbValues [DbString s] = s
-  -- fromDbValues [DbByteString (SqlBS b)] = unsafeFrom $ into @Utf8S b -- TODO why?
-  fromDbValues xs = error $ "fromDbValues @String got: " <> show xs
-
-instance FromDbValues Int64 where
-  -- fromDbValues [DbInteger i] = unsafeFrom i
-  fromDbValues [DbInt64 i] = i
-  fromDbValues xs = error $ "fromDbValues @Int64 got: " <> show xs
-
-instance {-# OVERLAPPABLE #-} (G.HasEot a, GFromDbValues (G.Eot a)) => FromDbValues a where
+instance {-# OVERLAPPABLE #-} (G.HasEot a, GFromDbValues dbv (G.Eot a)) => FromDbValues dbv a where
   fromDbValues = G.fromEot . gFromDbValues
 
 -- | Typeclass for generic implementation of 'FromDbValues'.
-class GFromDbValues a where
-  gFromDbValues :: [DbValue] -> a
+class GFromDbValues dbv a where
+  gFromDbValues :: [dbv] -> a
 
-instance (GFromDbValues a, Typeable a, Typeable b) => GFromDbValues (Either a b) where
-  gFromDbValues [] = throw $ NoDbValues $ showType @(Either a b)
+instance (GFromDbValues dbv a, Show dbv, Typeable a, Typeable b, Typeable dbv) => GFromDbValues dbv (Either a b) where
+  gFromDbValues [] = throw $ NoDbValues @dbv $ showType @(Either a b)
   gFromDbValues xs = Left $ gFromDbValues xs
 
-instance (FromDbValues a, GFromDbValues as, Typeable a, Typeable as) => GFromDbValues (a, as) where
-  gFromDbValues []     = throw $ NoDbValues $ showType @(a, as)
+instance (FromDbValues dbv a, GFromDbValues dbv as, Show dbv, Typeable a, Typeable as, Typeable dbv) => GFromDbValues dbv (a, as) where
+  gFromDbValues []     = throw $ NoDbValues @dbv $ showType @(a, as)
   gFromDbValues (x:xs) = (fromDbValues [x], gFromDbValues xs)
 
 -- | The end of the right-nested tuples.
-instance GFromDbValues () where
+instance (Show dbv, Typeable dbv) => GFromDbValues dbv () where
   gFromDbValues [] = ()
   gFromDbValues xs = throw $ ErrorConstructing() xs
 
 -- | Necessary boilerplate.
-instance GFromDbValues G.Void where
+instance (Show dbv, Typeable dbv) => GFromDbValues dbv G.Void where
   gFromDbValues = throw . ErrorConstructingVoid

@@ -12,9 +12,21 @@ import Database.Generic.Entity.ToSql (ToDbValue, ToDbValues)
 -- you only need to derive 'Generic' and 'PrimaryKey' to get an 'Entity' instance:
 -- > data Person = Person { age :: Int64, name :: String }
 -- > deriving (Generic, PrimaryKey "name")
-class (FromDbValues a, HasDbColumns a, HasEntityName a, PrimaryKey f a, ToDbValues a) => Entity a f
+class
+  ( FromDbValues dbv a
+  , HasDbColumns a
+  , HasEntityName a
+  , PrimaryKey f a
+  , ToDbValues a
+  ) => Entity a f dbv
 
-instance (FromDbValues a, HasDbColumns a, HasEntityName a, PrimaryKey f a, ToDbValues a) => Entity a f
+instance
+  ( FromDbValues dbv a
+  , HasDbColumns a
+  , HasEntityName a
+  , PrimaryKey f a
+  , ToDbValues a
+  ) => Entity a f dbv
 
 -- | 'Entity' with type 'b' of primary key in scope.
-type Entity' a f b = (Entity a f, PrimaryKey' a f b, ToDbValue b)
+type Entity' a f b dbv = (Entity a f dbv, PrimaryKey' a f b, ToDbValue b)

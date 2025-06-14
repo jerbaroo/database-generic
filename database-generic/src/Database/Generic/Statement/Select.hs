@@ -3,11 +3,11 @@
 module Database.Generic.Statement.Select where
 
 import Data.Aeson qualified as Aeson
-import Database.Generic.Entity (Entity, Entity')
-import Database.Generic.Entity.EntityName (EntityName)
+import Database.Generic.Entity.EntityName (EntityName, HasEntityName)
 import Database.Generic.Entity.EntityName qualified as Entity
 import Database.Generic.Entity.FieldName (FieldName)
 import Database.Generic.Entity.SqlTypes (DbValue)
+import Database.Generic.Entity.PrimaryKey as X (PrimaryKey)
 import Database.Generic.Statement.Fields (Fields(..), fieldNames)
 import Database.Generic.Statement.Limit (Limit, Limitable(..), Offset)
 import Database.Generic.Statement.OrderBy (IsOrderedBy, OrderBy(..), ModifyOrderedBy)
@@ -18,6 +18,7 @@ import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
 import Witch qualified as W
+import Database.Generic.Entity.ToSql (ToDbValue)
 
 -- | Select one or many values from a collection of 'a'.
 newtype Select (o :: OneOrMany) fs a (ob :: Bool) = Select Select'
@@ -73,7 +74,7 @@ instance Serialize DbValue db => Serialize Select' db where
 instance Whereable (Select o fs a ob) a where
   where' (Select s) w = Select s { where' = s.where' <&> (`And` w) }
 
-selectAll :: forall a f. Entity a f => Select Many a a False
+selectAll :: forall a. HasEntityName a => Select Many a a False
 selectAll = Select Select'
   { fields  = All
   , from    = Entity.entityName @a
@@ -83,7 +84,8 @@ selectAll = Select Select'
   , where'  = Nothing
   }
 
-selectById :: forall a f b. Entity' a f b => b -> Select One a a False
+selectById :: forall a f b. (HasEntityName a, PrimaryKey f a, ToDbValue b)
+  => b -> Select One a a False
 selectById b = Select Select'
   { fields  = All
   , from    = Entity.entityName @a

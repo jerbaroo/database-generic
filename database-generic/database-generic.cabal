@@ -20,7 +20,6 @@ library
     exposed-modules:  Database.Generic,
                       Database.Generic.Class,
                       Database.Generic.Database,
-                      Database.Generic.Entity,
                       Database.Generic.Entity.EntityName,
                       Database.Generic.Entity.FieldName,
                       Database.Generic.Entity.FromSql,

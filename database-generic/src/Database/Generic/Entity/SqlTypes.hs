@@ -16,7 +16,6 @@ data DbT f
   | DbString  !(F f String)
   deriving Generic
 
--- TODO try defunctionalisation
 type F :: forall f a b. (f :: Type) -> (a :: Type) -> (b :: Type)
 type family F f a where
   F Id   a = a
@@ -29,13 +28,13 @@ deriving instance Aeson.FromJSON (DbT Unit)
 deriving instance Eq             (DbT Unit)
 deriving instance Show           (DbT Unit)
 
-class HasDbType a where
-  dbType :: DbType
+class HasDbType dbt a where
+  dbType :: dbt
 
-instance HasDbType Int64 where
+instance HasDbType DbType Int64 where
   dbType = DbInt64 Unit
 
-instance HasDbType String where
+instance HasDbType DbType String where
   dbType = DbString Unit
 
 data Id

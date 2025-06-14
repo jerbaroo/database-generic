@@ -8,35 +8,36 @@ import Database.Generic.Prelude
 import Generics.Eot qualified as G
 
 -- | Name of column and database column type for each field of 'a'.
-class HasDbColumns a where
-  sqlColumns :: [(FieldName, DbType)]
+class HasDbColumns dbt a where
+  sqlColumns :: [(FieldName, dbt)]
 
-instance (G.HasEot a, GHasDbColumns a G.Datatype (G.Eot a))
-  => HasDbColumns a where
-  sqlColumns = gDbColumns @a @_ @(G.Eot a) $ G.datatype $ Proxy @a
+instance (G.HasEot a, GHasDbColumns dbt a G.Datatype (G.Eot a))
+  => HasDbColumns dbt a where
+  sqlColumns = gDbColumns @dbt @a @_ @(G.Eot a) $ G.datatype $ Proxy @a
 
-class GHasDbColumns a meta ga where
-  gDbColumns :: meta -> [(FieldName, DbType)]
+class GHasDbColumns dbt a meta ga where
+  gDbColumns :: meta -> [(FieldName, dbt)]
 
-instance GHasDbColumns a [String] fields
-  => GHasDbColumns a G.Datatype (Either fields G.Void) where
+instance GHasDbColumns dbt a [String] fields
+  => GHasDbColumns dbt a G.Datatype (Either fields G.Void) where
   gDbColumns datatype =
     case datatype of
       G.Datatype _ [G.Constructor _ (G.Selectors fields)] ->
-        gDbColumns @a @_ @fields fields
+        gDbColumns @dbt @a @_ @fields fields
       G.Datatype name [G.Constructor cName (G.NoSelectors _)] ->
         error $ name <> " constructor " <> cName <> " has no selectors"
       G.Datatype name _ -> error $ name <> " must have exactly one constructor"
 
-instance (HasDbType f, GHasDbColumns a [String] fs)
-  => GHasDbColumns a [String] (f, fs) where
+instance (HasDbType dbt f, GHasDbColumns dbt a [String] fs)
+  => GHasDbColumns dbt a [String] (f, fs) where
   gDbColumns []     = error "impossible"
   gDbColumns (f:fs) =
-    (fieldNameT $ FieldName f, dbType @f) : gDbColumns @a @_ @fs fs
+    (fieldNameT $ FieldName f, dbType @dbt @f)
+      : gDbColumns @dbt @a @_ @fs fs
 
-instance GHasDbColumns a [String] () where
+instance GHasDbColumns dbt a [String] () where
   gDbColumns [] = []
   gDbColumns _  = error "impossible"
 
-fieldNames :: forall a. HasDbColumns a => [FieldName]
-fieldNames = fst <$> sqlColumns @a
+fieldNames :: forall dbt a. HasDbColumns dbt a => [FieldName]
+fieldNames = fst <$> sqlColumns @dbt @a

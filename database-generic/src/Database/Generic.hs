@@ -1,7 +1,6 @@
 -- | Convenience re-exports for library users.
 module Database.Generic (module X) where
 
-import Database.Generic.Entity as X (Entity)
 import Database.Generic.Entity.PrimaryKey as X (PrimaryKey, PrimaryKey')
 import Database.Generic.Class as X (MonadDb(..), MonadDbNewConn(..))
 import Database.Generic.Operations as X (execute, executeTx, tx, tx_)

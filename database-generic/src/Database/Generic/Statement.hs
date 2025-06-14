@@ -11,14 +11,14 @@ import Database.Generic.Statement.Type (Cons, StatementType(..))
 
 -- | One or more statements. We track a type-level list 's' of the statements,
 -- because the order of the statements can affect what is returned.
-data Statement (s :: [StatementType]) where
-  StatementBeginTx     :: !Tx.BeginTx          -> Statement '[BeginTx]
-  StatementCommitTx    :: !Tx.CommitTx         -> Statement '[CommitTx]
-  StatementCreateTable :: !(C.CreateTable a)   -> Statement '[CreateTable a]
-  StatementDelete      :: !(D.Delete o r a)    -> Statement '[Delete o r a]
-  StatementInsert      :: !(I.Insert o r a)    -> Statement '[Insert o r a]
-  StatementSelect      :: !(S.Select o r a ob) -> Statement '[Select o r a ob]
-  Cons                 :: !(Statement '[s1])   -> (Statement s2) -> Statement (Cons s1 s2)
+data Statement (s :: [StatementType]) dbt where
+  StatementBeginTx     :: !Tx.BeginTx          -> Statement '[BeginTx] dbt
+  StatementCommitTx    :: !Tx.CommitTx         -> Statement '[CommitTx] dbt
+  StatementCreateTable :: !(C.CreateTable dbt a)   -> Statement '[CreateTable a] dbt
+  StatementDelete      :: !(D.Delete o r a)    -> Statement '[Delete o r a] dbt
+  StatementInsert      :: !(I.Insert o r a)    -> Statement '[Insert o r a] dbt
+  StatementSelect      :: !(S.Select o r a ob) -> Statement '[Select o r a ob] dbt
+  Cons                 :: !(Statement '[s1] dbt)   -> (Statement s2 dbt) -> Statement (Cons s1 s2) dbt
 
 instance HasOutputType r => HasOutputType (Statement r) where
   outputType = outputType @r
@@ -26,7 +26,7 @@ instance HasOutputType r => HasOutputType (Statement r) where
 -- | Typeclass to lift individual statements into 'Statement'.
 class ToStatement s where
   type S s :: [StatementType]
-  statement :: s -> Statement (S s)
+  statement :: s -> Statement (S s) dbt
 
 instance ToStatement Tx.CommitTx where
   type S Tx.CommitTx = '[CommitTx]

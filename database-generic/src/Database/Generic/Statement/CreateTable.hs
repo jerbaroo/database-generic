@@ -1,5 +1,3 @@
-{-# LANGUAGE UndecidableInstances #-}
-
 module Database.Generic.Statement.CreateTable where
 
 import Data.Aeson qualified as Aeson
@@ -7,35 +5,34 @@ import Database.Generic.Entity.EntityName (EntityName(..), entityName, HasEntity
 import Database.Generic.Entity.FieldName (FieldName)
 import Database.Generic.Entity.PrimaryKey (primaryKeyFieldName, PrimaryKey)
 import Database.Generic.Entity.SqlColumns (HasDbColumns(..))
-import Database.Generic.Entity.SqlTypes (DbType)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
 
 -- | Create a table for values of type 'a'.
-newtype CreateTable a = CreateTable CreateTable'
-  deriving (Eq, From CreateTable', Show)
+newtype CreateTable a dbt = CreateTable (CreateTable' dbt)
+  deriving (Eq, From (CreateTable' dbt), Show)
 
-instance From (CreateTable a) CreateTable'
+instance From (CreateTable a dbt) (CreateTable' dbt)
 
 -- | 'CreateTable' without type info.
-data CreateTable' = CreateTable'
-  { columns     :: ![CreateTableColumn]
+data CreateTable' dbt = CreateTable'
+  { columns     :: ![CreateTableColumn dbt]
   , ifNotExists :: !Bool
   , name        :: !EntityName
   } deriving (Eq, Generic, Show)
 
-instance Aeson.FromJSON CreateTable'
+instance Aeson.FromJSON dbt => Aeson.FromJSON (CreateTable' dbt)
 
-data CreateTableColumn = CreateTableColumn
+data CreateTableColumn dbt = CreateTableColumn
   { name    :: !FieldName
   , primary :: !Bool
-  , type'   :: !DbType
+  , type'   :: !dbt
   } deriving (Eq, Generic, Show)
 
-instance Aeson.FromJSON CreateTableColumn
+instance Aeson.FromJSON dbt => Aeson.FromJSON (CreateTableColumn dbt)
 
-instance Serialize DbType db => Serialize CreateTable' db where
+instance Serialize dbt db => Serialize (CreateTable' dbt) db where
   serialize c = Serialize.statement $ unwords $ catMaybes
     [ Just "CREATE TABLE"
     , if c.ifNotExists then Just "IF NOT EXISTS" else Nothing
@@ -47,10 +44,11 @@ instance Serialize DbType db => Serialize CreateTable' db where
           ]
     ]
 
-createTable :: forall a f.
-  (HasDbColumns a, HasEntityName a, PrimaryKey f a) => Bool -> CreateTable a
+createTable :: forall a f dbt.
+  (HasDbColumns dbt a, HasEntityName a, PrimaryKey f a)
+  => Bool -> CreateTable a dbt
 createTable ifNotExists = do
   let primaryName = primaryKeyFieldName @a
-  let columns = sqlColumns @a <&> \(name, type') ->
+  let columns = sqlColumns @dbt @a <&> \(name, type') ->
         CreateTableColumn { primary = name == primaryName, .. }
   CreateTable $ CreateTable' { columns, name = entityName @a, .. }

@@ -28,26 +28,15 @@ library
                       wai-cors,
                       warp,
     hs-source-dirs:   src
-    default-language: GHC2021
+    default-language: GHC2024
     default-extensions:
                       AllowAmbiguousTypes,
                       BlockArguments,
                       DataKinds,
                       DefaultSignatures,
-                      DerivingStrategies,
                       DuplicateRecordFields,
                       FunctionalDependencies,
-                      LambdaCase,
                       NoImplicitPrelude,
                       OverloadedRecordDot,
                       RecordWildCards,
                       TypeFamilies,
-
-executable database-generic-server-tutorial
-    import:           warnings
-    main-is:          Main.hs
-    build-depends:    base,
-                      database-generic,
-                      database-generic-server,
-    hs-source-dirs:   tutorial
-    default-language: GHC2021

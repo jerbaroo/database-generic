@@ -1,7 +1,6 @@
-{-# LANGUAGE BlockArguments        #-}
-
 module Main (main) where
 
+import Database.Generic.Prelude
 import Database.Generic.Test.Statement (statementTests)
 import Test.Tasty (TestTree, defaultMain, testGroup)
 

@@ -28,4 +28,4 @@ executable tutorial
                       postgres-options,
                       witch,
     hs-source-dirs:   tutorial
-    default-language: GHC2021
+    default-language: GHC2024

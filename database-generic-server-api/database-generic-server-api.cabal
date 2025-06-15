@@ -22,16 +22,14 @@ library
                       database-generic,
                       servant,
     hs-source-dirs:   src
-    default-language: GHC2021
+    default-language: GHC2024
     default-extensions:
                       AllowAmbiguousTypes,
                       BlockArguments,
                       DataKinds,
                       DefaultSignatures,
-                      DerivingStrategies,
                       DuplicateRecordFields,
                       FunctionalDependencies,
-                      LambdaCase,
                       NoImplicitPrelude,
                       OverloadedRecordDot,
                       RecordWildCards,

@@ -40,22 +40,3 @@ library
                       OverloadedRecordDot,
                       RecordWildCards,
                       TypeFamilies,
-
-executable database-generic-server-tutorial
-    import:           warnings
-    main-is:          Main.hs
-    build-depends:    base,
-                      database-generic,
-                      database-generic-server,
-    hs-source-dirs:   tutorial
-    default-language: GHC2024
-    default-extensions:
-                      AllowAmbiguousTypes,
-                      BlockArguments,
-                      DataKinds,
-                      DefaultSignatures,
-                      DuplicateRecordFields,
-                      FunctionalDependencies,
-                      OverloadedRecordDot,
-                      RecordWildCards,
-                      TypeFamilies,

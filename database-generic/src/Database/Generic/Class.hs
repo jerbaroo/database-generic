@@ -2,38 +2,56 @@
 
 module Database.Generic.Class where
 
+import Database.Generic.Database (Database, DbV)
 import Database.Generic.Prelude
 import Database.Generic.Statement (Statement)
 import Database.Generic.Statement.NoType qualified as NT
 import Database.Generic.Statement.Output (HasOutputType, Output, OutputError, OutputType, outputType)
 
--- | Monads that can communicate with a database over a given connection.
-class (Exception (Error m t), Functor t, Monad m, Show (Error m t))
-  => MonadDb m t c | m -> c where
+type ExecuteReturns m db a = Either (ExecuteError (Error m db) (DbV db)) a
 
-  type Error m t :: Type
-  type Error m t = SomeException -- Default for convenience.
+-- | Monads that can execute database statements.
+class
+  ( Applicative (T m db)
+  , Comonad (T m db)
+  , Database db
+  , Exception (Error m db)
+  , Monad m
+  , Show (Error m db)
+  )
+  => MonadDb m db | m -> db where
+
+  type C m db :: Type
+
+  type T m db :: Type -> Type
+  type T m db = Identity -- Default for convenience.
+
+  type Error m db :: Type
+  type Error m db = SomeException -- Default for convenience.
 
   -- | Execute a statement and parse the output based on expected 'OutputType'.
   executeStatement
-    :: c
-    -> t (NT.Statement, OutputType)
-    -> m (t (Either (ExecuteError (Error m t)) Output))
+    :: C m db
+    -> (T m db) (NT.Statement, OutputType)
+    -> m ((T m db) (ExecuteReturns m db (Output (DbV db))))
 
 -- | Error on execution of a statement.
-data ExecuteError a
+data ExecuteError a dbv
   = ExeCustomError !a
-  | ExeOutputError !OutputError
+  | ExeOutputError !(OutputError dbv)
   deriving Show
 
-instance Exception a => Exception (ExecuteError a)
+instance (Exception a, Show dbv, Typeable dbv) => Exception (ExecuteError a dbv)
 
-instance From OutputError (ExecuteError a) where
+instance From (OutputError dbv) (ExecuteError a dbv) where
   from = ExeOutputError
 
 -- | Like 'executeStatement' but takes a 'Statement' that still has type info 'r'.
-executeStatement' :: forall m t c r. (HasOutputType r, MonadDb m t c) =>
-  c -> t (Statement r) -> m (t (Either (ExecuteError (Error m t)) Output))
+executeStatement' :: forall m r db.
+  (Database db, Functor (T m db), HasOutputType r, MonadDb m db)
+  => C m db
+  -> (T m db) (Statement r)
+  -> m ((T m db) (ExecuteReturns m db (Output (DbV db))))
 executeStatement' c = executeStatement c . fmap \s -> (from s, outputType @r)
 
 -- | Monads that can provide a dedicated NEW connection.

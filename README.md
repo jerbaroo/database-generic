@@ -7,9 +7,9 @@ Database agnostic typeclass to access generically persisted data.
 Explanation of the above:
 - Database agnostic typeclass: the typeclass is called `MonadDb` and you must
   specify how it can communicate with your database (e.g. PostgreSQL server)
-- Generically persisted data: you can derive an instance of `Entity` for your
-  data types via `Generics` (or write your own instance). `MonadDb` can then
-  read/write instances of `Entity` to/from your database.
+- Generically persisted data: you can derive the necessary instances for your
+  data types via `Generics` (or write your own instance). This will enable
+  `MonadDb` to read/write instances of your data types to/from your database.
 
 A key intended feature of this library is that the typeclass `MonadDb` can be
 used either server-side or client-side. Allowing your client application (e.g.
@@ -32,30 +32,30 @@ To run the tutorial on your machine:
 
 ## Features
 
-| Feature                                      | Status | Tested |
-|----------------------------------------------|--------|--------|
-| Create table                                 | ✅     | ✅     |
-| Select all                                   | ✅     | ✅     |
-| Select by ID                                 | ✅     | ✅     |
-| Return subset of fields                      | ✅     | ✅     |
-| Where column equals                          |        |        |
-| Where column is null                         |        |        |
-| Where column is not null                     |        |        |
-| Order by clause                              | ✅     | ✅     |
-| Order by asc/desc                            |        |        |
-| Limit clause                                 | ✅     | ✅     |
-| Offset clause                                | ✅     | ✅     |
-| Insert one                                   | ✅     |        |
-| Insert many                                  | ✅     |        |
-| Insert returning                             | ✅     |        |
-| Delete all                                   | ✅     | ✅     |
-| Delete by ID                                 | ✅     | ✅     |
-| Delete returning                             | ✅     | ✅     |
-| Stream statements over Conduit               |        |        |
-| Stream Entity updates over Conduit           |        |        |
-| Server: endpoint to execute statement        |        |        |
-| Server: stream statements over WebSocket     |        |        |
-| Server: stream Entity updates over WebSocket |        |        |
-| Server: permission checks                    |        |        |
-| Reflex (client-side) MonadDb instance        |        |        |
-| Joins                                        |        |        |
+| Feature                                  | Status | Tested |
+|------------------------------------------|--------|--------|
+| Create table                             | ✅     | ✅     |
+| Select all                               | ✅     | ✅     |
+| Select by ID                             | ✅     | ✅     |
+| Return subset of fields                  | ✅     | ✅     |
+| Where column equals                      |        |        |
+| Where column is null                     |        |        |
+| Where column is not null                 |        |        |
+| Order by clause                          | ✅     | ✅     |
+| Order by asc/desc                        |        |        |
+| Limit clause                             | ✅     | ✅     |
+| Offset clause                            | ✅     | ✅     |
+| Insert one                               | ✅     |        |
+| Insert many                              | ✅     |        |
+| Insert returning                         | ✅     |        |
+| Delete all                               | ✅     | ✅     |
+| Delete by ID                             | ✅     | ✅     |
+| Delete returning                         | ✅     | ✅     |
+| Joins                                    |        |        |
+| Stream statements over Conduit           |        |        |
+| Stream updates over Conduit              |        |        |
+| Server: endpoint to execute statement    | ✅     |        |
+| Server: stream statements over WebSocket |        |        |
+| Server: stream updates over WebSocket    |        |        |
+| Server: permission checks                |        |        |
+| Reflex (client-side) MonadDb instance    |        |        |

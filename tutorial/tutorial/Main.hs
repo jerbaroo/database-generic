@@ -1,8 +1,9 @@
-{-# LANGUAGE BlockArguments       #-}
-{-# LANGUAGE DataKinds            #-}
-{-# LANGUAGE DeriveAnyClass       #-}
-{-# LANGUAGE DerivingStrategies   #-}
-{-# LANGUAGE OverloadedRecordDot  #-}
+{-# LANGUAGE BlockArguments      #-}
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE DeriveAnyClass      #-}
+{-# LANGUAGE DerivingStrategies  #-}
+{-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE TypeFamilies        #-}
 
 module Main where
 
@@ -49,7 +50,9 @@ runAppM :: ConnStr -> AppM a -> IO a
 runAppM e (AppM m) = runReaderT m e
 
 -- | Enable our application to communicate with PostgreSQL.
-instance MonadDb AppM Identity PSQL.Connection where
+instance MonadDb AppM PostgreSQL where
+  type C AppM PostgreSQL = PSQL.Connection
+
   executeStatement conn (Identity (s, o)) = Identity . Right <$> liftIO do
     let serialized = debug' "Serialized statement" $ serialize @_ @PostgreSQL s
     case debug' "Expected output type" o of
@@ -99,5 +102,5 @@ main = do
   info "Select specific fields by ID" $
     selectById @Person john.name ==> field @"age"
 
-  putStrLn "Starting a server which will proxy any statements"
+  putStrLn "\nStarting a server which will proxy any statements"
   Server.run (runAppM c) 1234 Server.developmentCors

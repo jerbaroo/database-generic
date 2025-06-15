@@ -1,27 +1,26 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 module Database.Generic.Serialize where
 
-import Database.Generic.Database (PostgreSQL, SQLite)
-import Database.Generic.Entity.SqlTypes (SqlType(..), SqlValue(..))
+import Database.Generic.Database (PostgreSQL)
+import Database.Generic.Entity.DbTypes (DbT(..), DbType, DbValue, Unit(..))
 import Database.Generic.Prelude
 
 -- TODO alter param order
 class Serialize a db where
   serialize :: a -> String
 
-instance Serialize SqlType PostgreSQL where
-  serialize SqlVarChar = "VARCHAR"
-  serialize SqlBigInt  = "BIGINT"
+instance Serialize DbType PostgreSQL where
+  serialize (DbBytes   Unit) = "BINARY"
+  serialize (DbInt64   Unit) = "BIGINT"
+  serialize (DbInteger Unit) = "BIGINT"
+  serialize (DbString  Unit) = "VARCHAR"
 
-instance Serialize SqlType SQLite where
-  serialize = serialize @_ @PostgreSQL
-
-instance Serialize SqlValue PostgreSQL where
-  serialize (SqlString s) = "'" <> s <> "'"
-  serialize (SqlInt64 i)  = show i
-  serialize s = "Serialize SqlValue db: Not implemented for " <> show s
-
-instance Serialize SqlValue SQLite where
-  serialize = serialize @_ @PostgreSQL
+instance Serialize DbValue PostgreSQL where
+  serialize (DbBytes   b)  = show b
+  serialize (DbInt64   i)  = show i
+  serialize (DbInteger i)  = show i
+  serialize (DbString  s) = "'" <> s <> "'"
 
 parens :: [String] -> String
 parens xs = "(" <> intercalate ", " xs <> ")"

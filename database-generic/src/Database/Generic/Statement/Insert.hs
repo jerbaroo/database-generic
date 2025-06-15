@@ -1,12 +1,14 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 module Database.Generic.Statement.Insert where
 
 import Data.Aeson qualified as Aeson
-import Database.Generic.Entity (Entity)
-import Database.Generic.Entity.EntityName (EntityName(..), entityName)
+import Database.Generic.Entity.DbColumns qualified as Db
+import Database.Generic.Entity.DbColumns (HasDbColumns)
+import Database.Generic.Entity.DbTypes (DbValue)
+import Database.Generic.Entity.EntityName (EntityName(..), entityName, HasEntityName)
 import Database.Generic.Entity.FieldName (FieldName)
-import Database.Generic.Entity.SqlColumns qualified as Sql
-import Database.Generic.Entity.SqlTypes (SqlValue(..))
-import Database.Generic.Entity.ToSql (toSqlValues)
+import Database.Generic.Entity.ToDb (toDbValues, ToDbValues)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Statement.Fields (Fields(..))
@@ -44,7 +46,7 @@ instance ReturningFields (Insert o r a) where
   returningFields (Insert Insert' {..}) f = Insert Insert'
     { returning = Just $ Some $ Fields.fieldNames f, .. }
 
-instance Serialize SqlValue db => Serialize Insert' db where
+instance Serialize DbValue db => Serialize Insert' db where
   serialize i = unwords $
     [ "INSERT INTO", W.from i.into
     , "(", intercalate ", " $ from <$> i.fieldNames, ") VALUES"
@@ -53,18 +55,22 @@ instance Serialize SqlValue db => Serialize Insert' db where
     <> maybe [] (\c -> ["RETURNING " <> serialize c]) i.returning
     <> [ ";" ]
 
-insertOne :: forall a f. Entity a f => a -> Insert One Nothing a
+insertOne :: forall a
+  . (HasDbColumns a, HasEntityName a, ToDbValues a)
+  => a -> Insert One Nothing a
 insertOne a = Insert Insert'
   { into       = entityName @a
-  , fieldNames = Sql.fieldNames @a
+  , fieldNames = Db.fieldNames @a
   , returning  = Nothing
-  , values     = [Values $ toSqlValues a]
+  , values     = [Values $ toDbValues a]
   }
 
-insertMany :: forall a f. Entity a f => [a] -> Insert Many Nothing a
+insertMany :: forall a
+  . (HasDbColumns a, HasEntityName a, ToDbValues a)
+  => [a] -> Insert Many Nothing a
 insertMany as = Insert Insert'
   { into       = entityName @a
-  , fieldNames = Sql.fieldNames @a
+  , fieldNames = Db.fieldNames @a
   , returning  = Nothing
-  , values     = Values . toSqlValues <$> as
+  , values     = Values . toDbValues <$> as
   }

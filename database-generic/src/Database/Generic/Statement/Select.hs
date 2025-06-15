@@ -1,20 +1,23 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 module Database.Generic.Statement.Select where
 
 import Data.Aeson qualified as Aeson
-import Database.Generic.Entity (Entity, Entity')
-import Database.Generic.Entity.EntityName (EntityName)
+import Database.Generic.Entity.DbTypes (DbValue)
+import Database.Generic.Entity.EntityName (EntityName, HasEntityName)
 import Database.Generic.Entity.EntityName qualified as Entity
 import Database.Generic.Entity.FieldName (FieldName)
-import Database.Generic.Entity.SqlTypes (SqlValue(..))
+import Database.Generic.Entity.PrimaryKey as X (PrimaryKey')
 import Database.Generic.Statement.Fields (Fields(..), fieldNames)
 import Database.Generic.Statement.Limit (Limit, Limitable(..), Offset)
 import Database.Generic.Statement.OrderBy (IsOrderedBy, OrderBy(..), ModifyOrderedBy)
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
-import Database.Generic.Statement.Where (Where'(..), Whereable(..), idEquals)
+import Database.Generic.Statement.Where (Where(..), Whereable(..), idEquals)
 import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType, ReturningFields(..), Row)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
+import Database.Generic.Entity.ToDb (ToDbValue)
 import Witch qualified as W
 
 -- | Select one or many values from a collection of 'a'.
@@ -29,7 +32,7 @@ data Select' = Select'
   , limit   :: !(Maybe Limit)
   , offset  :: !(Maybe Offset)
   , orderBy :: ![FieldName]
-  , where'  :: !(Maybe Where')
+  , where'  :: !(Maybe Where)
   } deriving (Eq, Generic, Show)
 
 instance Aeson.FromJSON Select'
@@ -54,7 +57,7 @@ instance ReturningFields (Select o a a ob) where
   returningFields (Select Select' {..}) fs = Select Select'
     { fields = Some $ fieldNames fs, .. }
 
-instance Serialize SqlValue db => Serialize Select' db where
+instance Serialize DbValue db => Serialize Select' db where
   serialize s = Serialize.statement $ unwords $ catMaybes
     [ Just "SELECT"
     , Just $ serialize s.fields
@@ -71,7 +74,7 @@ instance Serialize SqlValue db => Serialize Select' db where
 instance Whereable (Select o fs a ob) a where
   where' (Select s) w = Select s { where' = s.where' <&> (`And` w) }
 
-selectAll :: forall a f. Entity a f => Select Many a a False
+selectAll :: forall a. HasEntityName a => Select Many a a False
 selectAll = Select Select'
   { fields  = All
   , from    = Entity.entityName @a
@@ -81,7 +84,8 @@ selectAll = Select Select'
   , where'  = Nothing
   }
 
-selectById :: forall a f b. Entity' a f b => b -> Select One a a False
+selectById :: forall a f b. (HasEntityName a, PrimaryKey' a f b, ToDbValue b)
+  => b -> Select One a a False
 selectById b = Select Select'
   { fields  = All
   , from    = Entity.entityName @a

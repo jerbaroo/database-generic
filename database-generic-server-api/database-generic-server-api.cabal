@@ -1,5 +1,5 @@
 cabal-version:      3.4
-name:               database-generic-server
+name:               database-generic-server-api
 version:            0.1.0.0
 -- synopsis:
 -- description:
@@ -17,16 +17,10 @@ common warnings
 
 library
     import:           warnings
-    exposed-modules:  Database.Generic.Server,
-    build-depends:    aeson,
-                      base,
+    exposed-modules:  Database.Generic.Server.API,
+    build-depends:    base,
                       database-generic,
-                      database-generic-server-api,
                       servant,
-                      servant-server,
-                      wai,
-                      wai-cors,
-                      warp,
     hs-source-dirs:   src
     default-language: GHC2021
     default-extensions:
@@ -42,12 +36,3 @@ library
                       OverloadedRecordDot,
                       RecordWildCards,
                       TypeFamilies,
-
-executable database-generic-server-tutorial
-    import:           warnings
-    main-is:          Main.hs
-    build-depends:    base,
-                      database-generic,
-                      database-generic-server,
-    hs-source-dirs:   tutorial
-    default-language: GHC2021

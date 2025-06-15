@@ -8,7 +8,7 @@ module Database.Generic.Test.Statement where
 
 import Database.Generic
 import Database.Generic.Database (PostgreSQL)
-import Database.Generic.Entity.SqlTypes (SqlType(..), SqlValue (..))
+import Database.Generic.Entity.DbTypes (DbT (DbInt64, DbString), Unit (Unit))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
@@ -19,7 +19,7 @@ import Database.Generic.Statement.Limit (Limit, Offset, Limitable (limitOffsetMa
 import Database.Generic.Statement.OrderBy qualified as O
 import Database.Generic.Statement.Select (Select, Select'(..))
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
-import Database.Generic.Statement.Where (Where'(Equals))
+import Database.Generic.Statement.Where (Where(Equals))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase, assertEqual)
 import Test.Tasty.SmallCheck qualified as SC
@@ -46,12 +46,12 @@ createTablePerson ifNotExists =
         [ CreateTableColumn
             { name = "age"
             , primary = False
-            , type' = SqlBigInt
+            , type' = DbInt64 Unit
             }
         , CreateTableColumn
             { name = "name"
             , primary = True
-            , type' = SqlVarChar
+            , type' = DbString Unit
             }
         ]
     , ifNotExists
@@ -130,7 +130,7 @@ selectByIdPerson = W.from Select'
   , limit   = Nothing
   , offset  = Nothing
   , orderBy = []
-  , where'  = Just $ Equals "name" $ SqlString "John"
+  , where'  = Just $ Equals "name" $ DbString "John"
   }
 
 selectAllPersonPG :: Limit -> Maybe Offset -> String

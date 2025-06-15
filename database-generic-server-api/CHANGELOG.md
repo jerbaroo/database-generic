@@ -1,4 +1,4 @@
-# Revision history for database-generic-server
+# Revision history for database-generic-server-api
 
 ## 0.1.0.0 -- YYYY-mm-dd
 

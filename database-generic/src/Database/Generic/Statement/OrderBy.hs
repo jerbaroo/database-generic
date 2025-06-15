@@ -3,6 +3,8 @@ module Database.Generic.Statement.OrderBy where
 import Database.Generic.Statement.Fields (FieldsOf)
 import Database.Generic.Statement.Returning (IsReturning, Row)
 
+data Order = Asc | Desc
+
 -- | Statements with an order by clause.
 class IsOrderedBy s
 
@@ -11,6 +13,7 @@ type        ModifyOrderedBy :: forall s1 s2. s1 -> s2
 type family ModifyOrderedBy s1
 
 -- | Class of statements to which order by clauses can be added.
+--
 -- Statements must already be returning something, otherwise nothing to order.
 class IsReturning s => OrderBy s where
   -- | Add an order by clause to a statement.

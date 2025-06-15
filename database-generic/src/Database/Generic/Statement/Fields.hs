@@ -12,6 +12,7 @@ data Fields = All | Some ![FieldName]
 
 instance Aeson.FromJSON Fields
 
+-- TODO this is very SQL specific
 instance Serialize Fields db where
   serialize All       = "*"
   serialize (Some cs) = intercalate ", " $ W.from <$> cs
@@ -54,3 +55,7 @@ field3 :: forall fb fc fd a b c d.
   , HasField fd a d, HasFieldName fd
   ) => F3 a b c d
 field3 = F3 (field @fb @a @b, field @fc @a @c, field @fd @a @d)
+
+-- * fieldOrder - fieldOrder3
+
+data Order = Asc | Desc

@@ -18,6 +18,7 @@ import Database.Generic.Database (PostgreSQL)
 import Database.Generic.Prelude (debug')
 import Database.Generic.Serialize (serialize)
 import Database.Generic.Server qualified as Server
+import Database.Generic.Statement.Fields qualified as F
 import Database.Generic.Statement.Output (Output(..), OutputType(..))
 import Database.HDBC qualified as HDBC
 import Database.HDBC.PostgreSQL qualified as PSQL
@@ -68,29 +69,32 @@ instance MonadDbNewConn AppM PSQL.Connection where
 
 main :: IO ()
 main = do
-  let c    = connStr "127.0.0.1" 5432 "postgres" "demo" "demo"
-  let john = Person 21 "John"
+  let c        = connStr "127.0.0.1" 5432 "postgres" "demo" "demo"
+  let john     = Person 21 "John"
   let info m s = do
         putStrLn $ "\n" <> m
         print =<< runAppM c (tx $ execute s)
 
   info "Create table if not exists" $ createTable @Person True
 
-  info "Delete All" $ returning $ deleteAll @Person
+  info "Delete all" $ deleteAll @Person
 
   info "Delete by ID" $ deleteById @Person "John"
 
-  info "Insert one" $ returning $ insertOne $ john{age=55}
+  info "Insert one" $ returning $ insertOne $ john
+
+  info "Delete all, returning" $ deleteAll @Person
 
   info "Insert two, returning age" $
-    insertMany [john{age=25, name="Bob"}, john {name = "Mary"}] ==> field @"age"
+    insertMany [Person 25 "Bob", Person 70 "Mary"] ==> field @"age"
 
   info "Select by ID" $ selectById @Person john.name
 
   info "Select all" $ selectAll @Person
 
   info "Select all, select 1 fields" $
-    selectAll @Person ==> field2 @"age" @"name"
+    -- selectAll @Person ==> field2 @"age" @"name"
+    selectAll @Person ==> F.field2' (F.F @"age") (F.F @"name")
 
   info "Select all, order by age" $ orderBy (field @"age") $ selectAll @Person
 

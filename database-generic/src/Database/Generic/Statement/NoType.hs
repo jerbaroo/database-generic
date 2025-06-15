@@ -3,7 +3,7 @@
 module Database.Generic.Statement.NoType where
 
 import Data.Aeson qualified as Aeson
-import Database.Generic.Entity.SqlTypes (DbType, DbValue)
+import Database.Generic.Entity.DbTypes (DbType, DbValue)
 import Database.Generic.Prelude
 import Database.Generic.Statement qualified as S
 import Database.Generic.Statement.CreateTable qualified as C

@@ -3,7 +3,7 @@
 module Database.Generic.Serialize where
 
 import Database.Generic.Database (PostgreSQL)
-import Database.Generic.Entity.SqlTypes (DbT(..), DbType, DbValue, Unit(..))
+import Database.Generic.Entity.DbTypes (DbT(..), DbType, DbValue, Unit(..))
 import Database.Generic.Prelude
 
 -- TODO alter param order

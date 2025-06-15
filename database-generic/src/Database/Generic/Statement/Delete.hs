@@ -3,17 +3,17 @@
 module Database.Generic.Statement.Delete where
 
 import Data.Aeson qualified as Aeson
+import Database.Generic.Entity.DbTypes (DbValue)
 import Database.Generic.Entity.EntityName (EntityName, HasEntityName, entityName)
 import Database.Generic.Prelude
 import Database.Generic.Entity.PrimaryKey (PrimaryKey')
-import Database.Generic.Entity.SqlTypes (DbValue)
-import Database.Generic.Entity.ToSql (ToDbValue)
+import Database.Generic.Entity.ToDb (ToDbValue)
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
 import Database.Generic.Statement.Fields (Fields(..), fieldNames)
 import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType, Returning(..), ReturningFields(..), Row)
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
-import Database.Generic.Statement.Where (Where', idEquals)
+import Database.Generic.Statement.Where (Where, idEquals)
 import Witch qualified as W
 
 -- | Delete one or many values of type 'a', maybe returning fields 'fs'.
@@ -25,7 +25,7 @@ instance From (Delete o r a) Delete'
 data Delete' = Delete'
   { fields :: !(Maybe Fields)
   , from   :: !EntityName
-  , where' :: !(Maybe Where')
+  , where' :: !(Maybe Where)
   } deriving (Eq, Generic, Show)
 
 instance Aeson.FromJSON Delete'
@@ -62,5 +62,5 @@ deleteById :: forall a f b.
 deleteById b = Delete Delete'
   { fields = Nothing
   , from   = entityName @a
-  , where' = Just $ idEquals @a @_ @_ b
+  , where' = Just $ idEquals @a b
   }

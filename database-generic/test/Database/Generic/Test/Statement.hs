@@ -8,7 +8,7 @@ module Database.Generic.Test.Statement where
 
 import Database.Generic
 import Database.Generic.Database (PostgreSQL)
-import Database.Generic.Entity.SqlTypes (DbT (DbInt64, DbString), Unit (Unit))
+import Database.Generic.Entity.DbTypes (DbT (DbInt64, DbString), Unit (Unit))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
@@ -19,7 +19,7 @@ import Database.Generic.Statement.Limit (Limit, Offset, Limitable (limitOffsetMa
 import Database.Generic.Statement.OrderBy qualified as O
 import Database.Generic.Statement.Select (Select, Select'(..))
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
-import Database.Generic.Statement.Where (Where'(Equals))
+import Database.Generic.Statement.Where (Where(Equals))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase, assertEqual)
 import Test.Tasty.SmallCheck qualified as SC

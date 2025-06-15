@@ -21,6 +21,7 @@ library
     build-depends:    aeson,
                       base,
                       database-generic,
+                      database-generic-server-api,
                       servant,
                       servant-server,
                       wai,

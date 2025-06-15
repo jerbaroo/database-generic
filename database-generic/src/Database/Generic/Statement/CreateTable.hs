@@ -3,11 +3,11 @@
 module Database.Generic.Statement.CreateTable where
 
 import Data.Aeson qualified as Aeson
+import Database.Generic.Entity.DbColumns (HasDbColumns(..))
+import Database.Generic.Entity.DbTypes (DbType)
 import Database.Generic.Entity.EntityName (EntityName(..), entityName, HasEntityName)
 import Database.Generic.Entity.FieldName (FieldName)
 import Database.Generic.Entity.PrimaryKey (primaryKeyFieldName, PrimaryKey)
-import Database.Generic.Entity.SqlColumns (HasDbColumns(..))
-import Database.Generic.Entity.SqlTypes (DbType)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize

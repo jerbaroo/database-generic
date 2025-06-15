@@ -3,22 +3,22 @@
 module Database.Generic.Statement.Select where
 
 import Data.Aeson qualified as Aeson
+import Database.Generic.Entity.DbTypes (DbValue)
 import Database.Generic.Entity.EntityName (EntityName, HasEntityName)
 import Database.Generic.Entity.EntityName qualified as Entity
 import Database.Generic.Entity.FieldName (FieldName)
-import Database.Generic.Entity.SqlTypes (DbValue)
 import Database.Generic.Entity.PrimaryKey as X (PrimaryKey')
 import Database.Generic.Statement.Fields (Fields(..), fieldNames)
 import Database.Generic.Statement.Limit (Limit, Limitable(..), Offset)
 import Database.Generic.Statement.OrderBy (IsOrderedBy, OrderBy(..), ModifyOrderedBy)
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
-import Database.Generic.Statement.Where (Where'(..), Whereable(..), idEquals)
+import Database.Generic.Statement.Where (Where(..), Whereable(..), idEquals)
 import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType, ReturningFields(..), Row)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
+import Database.Generic.Entity.ToDb (ToDbValue)
 import Witch qualified as W
-import Database.Generic.Entity.ToSql (ToDbValue)
 
 -- | Select one or many values from a collection of 'a'.
 newtype Select (o :: OneOrMany) fs a (ob :: Bool) = Select Select'
@@ -32,7 +32,7 @@ data Select' = Select'
   , limit   :: !(Maybe Limit)
   , offset  :: !(Maybe Offset)
   , orderBy :: ![FieldName]
-  , where'  :: !(Maybe Where')
+  , where'  :: !(Maybe Where)
   } deriving (Eq, Generic, Show)
 
 instance Aeson.FromJSON Select'

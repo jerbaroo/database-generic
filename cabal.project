@@ -1,4 +1,5 @@
 packages:
   database-generic/
   database-generic-server/
+  database-generic-server-api/
   tutorial/

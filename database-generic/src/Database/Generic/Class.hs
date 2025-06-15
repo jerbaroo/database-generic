@@ -10,7 +10,7 @@ import Database.Generic.Statement.Output (HasOutputType, Output, OutputError, Ou
 
 type ExecuteReturns m db a = Either (ExecuteError (Error m db) (DbV db)) a
 
--- | Monads that can communicate with a database.
+-- | Monads that can execute database statements.
 class
   ( Applicative (T m db)
   , Comonad (T m db)

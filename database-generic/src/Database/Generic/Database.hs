@@ -1,7 +1,7 @@
 module Database.Generic.Database where
 
 import Database.Generic.Prelude
-import Database.Generic.Entity.SqlTypes (DbValue)
+import Database.Generic.Entity.DbTypes (DbValue)
 
 class Database db where
   type DbV db :: Type

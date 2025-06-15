@@ -3,7 +3,7 @@
 module Database.Generic.Statement.Values where
 
 import Data.Aeson qualified as Aeson
-import Database.Generic.Entity.SqlTypes (DbValue)
+import Database.Generic.Entity.DbTypes (DbValue)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 

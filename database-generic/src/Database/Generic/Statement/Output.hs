@@ -4,7 +4,7 @@ module Database.Generic.Statement.Output where
 
 import Data.Aeson qualified as Aeson
 import Database.Generic.Prelude
-import Database.Generic.Entity.FromSql (FromDbValues(..))
+import Database.Generic.Entity.FromDb (FromDbValues(..))
 import Database.Generic.Statement.Type (StatementType(..))
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 

@@ -6,6 +6,7 @@ import Control.Monad.IO.Class (MonadIO(..))
 import Data.Aeson qualified as Aeson
 import Database.Generic.Class (MonadDb(..), MonadDbWithConn(..))
 import Database.Generic.Database (Database(..))
+import Database.Generic.Server.API (API)
 import Database.Generic.Statement.NoType qualified as NT
 import Database.Generic.Statement.Output (Output, OutputType)
 import Database.Generic.Prelude
@@ -13,13 +14,6 @@ import Network.Wai ( Middleware )
 import Network.Wai.Handler.Warp qualified as Warp
 import Network.Wai.Middleware.Cors qualified as Cors
 import Servant (Handler, Server, serve)
-import Servant.API
-
--- TODO API to separate package
-type API dbv =
-  "executeStatement"
-  :> ReqBody '[JSON] (NT.Statement, OutputType)
-  :> Post '[JSON] (Either String (Output dbv))
 
 apiHandler
   :: forall m db

@@ -5,6 +5,7 @@ module Database.Generic.Server where
 import Control.Monad.IO.Class (MonadIO(..))
 import Data.Aeson qualified as Aeson
 import Database.Generic.Class (MonadDb(..), MonadDbWithConn(..))
+import Database.Generic.Database (Database(..))
 import Database.Generic.Statement.NoType qualified as NT
 import Database.Generic.Statement.Output (Output, OutputType)
 import Database.Generic.Prelude
@@ -21,18 +22,32 @@ type API dbv =
   :> Post '[JSON] (Either String (Output dbv))
 
 apiHandler
-  :: (MonadDb m Identity c dbv, MonadDbWithConn m c, Show dbv, Typeable dbv)
+  :: forall m db
+  .  ( Database db
+     , MonadDb m db
+     , MonadDbWithConn m (C m db)
+     , Show (DbV db)
+     , T m db ~ Identity
+     , Typeable (DbV db)
+     )
   => (forall a. m a -> IO a)
   -> (NT.Statement, OutputType)
-  -> Handler (Either String (Output dbv))
+  -> Handler (Either String (Output (DbV db)))
 apiHandler nt (s, o) =
-  liftIO (nt $ withDbConn $ \c -> executeStatement c $ Identity (s, o))
-    <&> mapLeft displayException  . extract
+  fmap (mapLeft displayException  . extract) $ liftIO$ nt $ withDbConn \c ->
+    executeStatement c $ Identity (s, o)
 
 server
-  :: (MonadDb m Identity c dbv, MonadDbWithConn m c, Show dbv, Typeable dbv)
+  :: forall m db
+  . ( Database db
+    , MonadDb m db
+    , MonadDbWithConn m (C m db)
+    , Show (DbV db)
+    , T m db ~ Identity
+    , Typeable (DbV db)
+    )
   => (forall a. m a -> IO a)
-  -> Server (API dbv)
+  -> Server (API (DbV db))
 server = apiHandler
 
 developmentCors :: Middleware
@@ -42,14 +57,16 @@ developmentCors = Cors.cors $ const $ Just Cors.simpleCorsResourcePolicy
   }
 
 run
-  :: forall m c dbv
-  . ( Aeson.ToJSON dbv
-    , MonadDb m Identity c dbv
-    , MonadDbWithConn m c
-    , Show dbv
-    , Typeable dbv
+  :: forall m db
+  . ( Aeson.ToJSON (DbV db)
+    , Database db
+    , MonadDb m db
+    , MonadDbWithConn m (C m db)
+    , Show (DbV db)
+    , T m db ~ Identity
+    , Typeable (DbV db)
     )
   => (forall a. m a -> IO a)
   -> Int -> Middleware -> IO ()
 run nt port middleware =
-  Warp.run port $ middleware $ serve (Proxy @(API dbv)) $ server nt
+  Warp.run port $ middleware $ serve (Proxy @(API (DbV db))) $ server nt

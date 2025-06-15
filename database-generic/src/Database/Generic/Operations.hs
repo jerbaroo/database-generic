@@ -1,8 +1,9 @@
 -- TODO docs
 module Database.Generic.Operations where
 
-import Database.Generic.Class (Error, ExecuteError, MonadDb, MonadDbHasConn(..), MonadDbNewConn(..), MonadDbWithConn(..))
+import Database.Generic.Class (ExecuteReturns, MonadDb(..), MonadDbHasConn(..), MonadDbNewConn(..), MonadDbWithConn(..))
 import Database.Generic.Class qualified as Db
+import Database.Generic.Database (Database, DbV)
 import Database.Generic.Prelude
 import Database.Generic.Statement (Statement(..), ToStatement(..))
 import Database.Generic.Statement qualified as Statement
@@ -12,62 +13,72 @@ import Database.Generic.Statement.Tx qualified as Tx
 import Database.Generic.Transaction (Tx, runTx)
 
 -- | Convert 'r' to a 'Statement'and execute via current database connection.
-execute :: forall m c r s dbv.
-  ( HasOutputType s
-  , MonadDb m Identity c dbv
-  , MonadDbHasConn m c
-  , ParseOutput dbv s
+execute :: forall m r s db.
+  ( Database db
+  , HasOutputType s
+  , MonadDb m db
+  , MonadDbHasConn m (C m db)
+  , ParseOutput (DbV db) s
   , ToStatement r
   , s ~ S r
   )
   => r
-  -> m (Either (ExecuteError (Error m Identity) dbv) (OutputT s))
+  -> m (ExecuteReturns m db (OutputT s))
 execute =
-  fmap extract . (askDbConn >>=)
-  . flip (executeAndParse @_ @Identity) . pure . statement
+  fmap extract . (askDbConn >>=) . flip executeAndParse . pure . statement
 
 -- | Like 'execute' but each 'Statement' is appended with a commit statement.
-executeTx :: forall m c r s dbv.
-  ( HasOutputType (Cons CommitTx s)
-  , MonadDb m Identity c dbv
-  , MonadDbWithConn m c
-  , ParseOutput dbv (Cons CommitTx s)
+executeTx :: forall m r s db.
+  ( Database db
+  , HasOutputType (Cons CommitTx s)
+  , MonadDb m db
+  , MonadDbWithConn m (C m db)
+  , ParseOutput (DbV db) (Cons CommitTx s)
   , ToStatement r
   , s ~ S r
   )
   => r
-  -> m (Either (ExecuteError (Error m Identity) dbv) (OutputT (Cons CommitTx s)))
-executeTx = fmap extract . withDbConn .
-  flip (executeAndParse @_ @Identity) . pure . Statement.commitTx . statement
+  -> m (ExecuteReturns m db (OutputT (Cons CommitTx s)))
+executeTx =
+  fmap extract . withDbConn . flip executeAndParse . pure . Statement.commitTx . statement
 
 -- | Like 'executeTx' but shape of input and output is of type 't'.
-executeTxs :: forall m t c r s dbv.
-  ( HasOutputType (Cons CommitTx s)
-  , MonadDb m t c dbv
-  , MonadDbNewConn m c
-  , ParseOutput dbv (Cons CommitTx s)
+executeTxs :: forall m r s db.
+  ( Database db
+  , HasOutputType (Cons CommitTx s)
+  , MonadDb m db
+  , MonadDbNewConn m (C m db)
+  , ParseOutput (DbV db) (Cons CommitTx s)
   , ToStatement r
   , s ~ S r
   )
-  => t r
-  -> m (t (Either (ExecuteError (Error m t) dbv) (OutputT (Cons CommitTx s))))
+  => (T m db) r
+  -> m ((T m db) (ExecuteReturns m db (OutputT (Cons CommitTx s))))
 executeTxs =
   (newDbConn >>=) . flip executeAndParse . fmap (Statement.commitTx . statement)
 
 -- | Run the provided actions, then run a commit statement.
-tx :: forall m c a dbv.
-  (MonadDb m Identity c dbv, MonadDbWithConn m c)
-  => Tx m c (Either (ExecuteError (Error (Tx m c) Identity) dbv) a)
-  -> m (Either (ExecuteError (Error (Tx m c) Identity) dbv) a)
+tx :: forall m a db
+  . ( Database db
+    , MonadDb m db
+    , MonadDbWithConn m (C m db)
+    )
+  => Tx m (C m db) (ExecuteReturns (Tx m (C m db)) db a)
+  -> m (ExecuteReturns (Tx m (C m db)) db a)
 tx m = withDbConn \c -> runTx c $ m >>= \case
   Left  e1 -> pure $ Left e1
   Right a  -> Database.Generic.Operations.execute Tx.CommitTx >>= \case
     Left  e2 -> pure $ Left e2
     Right () -> pure $ Right a
 
-tx_ :: forall m c a dbv.
-  (MonadDb m Identity c dbv, MonadDbWithConn m c, Show dbv, Typeable dbv)
-  => Tx m c (Either (ExecuteError (Error (Tx m c) Identity) dbv) a)
+tx_ :: forall m a db
+  . ( Database db
+    , MonadDb m db
+    , MonadDbWithConn m (C m db)
+    , Show (DbV db)
+    , Typeable (DbV db)
+    )
+  => Tx m (C m db) (ExecuteReturns (Tx m (C m db)) db a)
   -> m a
 tx_ = do
   let err e = error $
@@ -77,13 +88,13 @@ tx_ = do
 -- * Internal.
 
 -- | Slim wrapper over 'Db.execute' which also parses output.
-executeAndParse :: forall m t c s dbv.
-  (HasOutputType s, MonadDb m t c dbv, ParseOutput dbv s)
-  => c
-  -> t (Statement s)
-  -> m (t (Either (ExecuteError (Error m t) dbv) (OutputT s)))
-executeAndParse c ts = fmap f <$> Db.executeStatement' @_ @t c ts
+executeAndParse :: forall m s db.
+  (Database db, HasOutputType s, MonadDb m db, ParseOutput (DbV db) s)
+  => C m db
+  -> (T m db) (Statement s)
+  -> m ((T m db) (ExecuteReturns m db (OutputT s)))
+executeAndParse c ts = fmap f <$> Db.executeStatement' c ts
  where
   f (Left  l) = Left l
   -- The 'mapLeft' lifts the 'OutputError' into 'ExecuteError'.
-  f (Right o) = mapLeft from $ parse @dbv @s o
+  f (Right o) = mapLeft from $ parse @_ @s o

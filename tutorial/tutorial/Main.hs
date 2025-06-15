@@ -1,8 +1,9 @@
-{-# LANGUAGE BlockArguments       #-}
-{-# LANGUAGE DataKinds            #-}
-{-# LANGUAGE DeriveAnyClass       #-}
-{-# LANGUAGE DerivingStrategies   #-}
-{-# LANGUAGE OverloadedRecordDot  #-}
+{-# LANGUAGE BlockArguments      #-}
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE DeriveAnyClass      #-}
+{-# LANGUAGE DerivingStrategies  #-}
+{-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE TypeFamilies        #-}
 
 module Main where
 
@@ -13,7 +14,6 @@ import Data.Functor.Identity (Identity(..))
 import Data.Int (Int64)
 import Database.Generic
 import Database.Generic.Database (PostgreSQL)
-import Database.Generic.Entity.SqlTypes (DbValue)
 import Database.Generic.Prelude (debug')
 import Database.Generic.Serialize (serialize)
 import Database.Generic.Server qualified as Server
@@ -50,7 +50,9 @@ runAppM :: ConnStr -> AppM a -> IO a
 runAppM e (AppM m) = runReaderT m e
 
 -- | Enable our application to communicate with PostgreSQL.
-instance MonadDb AppM Identity PSQL.Connection DbValue where
+instance MonadDb AppM PostgreSQL where
+  type C AppM PostgreSQL = PSQL.Connection
+
   executeStatement conn (Identity (s, o)) = Identity . Right <$> liftIO do
     let serialized = debug' "Serialized statement" $ serialize @_ @PostgreSQL s
     case debug' "Expected output type" o of

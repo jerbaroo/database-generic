@@ -15,14 +15,17 @@ newtype Tx m c a = Tx (ReaderT c m a)
 instance Monad m => MonadDbHasConn (Tx m c) c where
   askDbConn = ask
 
-instance MonadDb m t c dbv => MonadDb (Tx m c) t c dbv where
-  type Error (Tx m c) t = Error m t
+instance MonadDb m db => MonadDb (Tx m c) db where
+  type C     (Tx m c) db = C     m db
+  type T     (Tx m c) db = T     m db
+  type Error (Tx m c) db = Error m db
   executeStatement c t = do
-    -- 'unsafeCoerce' is safe here because the error types are equal (2 lines up).
-    let mapError :: ExecuteError (Error m t) dbv -> ExecuteError (Error (Tx m c) t) dbv
-        mapError = unsafeCoerce
+    let mapError
+          :: ExecuteError (Error m        db) dbv
+          -> ExecuteError (Error (Tx m c) db) dbv
+        mapError = unsafeCoerce -- safe because the error types are equal.
     Tx $ ReaderT $ const $
-      fmap (mapLeft mapError) <$> executeStatement @m @t c t
+      fmap (mapLeft mapError) <$> executeStatement c t
 
 runTx :: c -> Tx m c a -> m a
 runTx c (Tx m) = runReaderT m c

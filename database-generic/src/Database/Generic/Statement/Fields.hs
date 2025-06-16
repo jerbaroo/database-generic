@@ -69,28 +69,22 @@ field3 = F3 (field @fb @a @b, field @fc @a @c, field @fd @a @d)
 
 data Order = Asc | Desc
 
-data Label (f :: Symbol) = L
+newtype FieldOrder a b (o :: Order) = FieldOrder { name :: FieldName }
+  deriving Generic
 
-data Field' f a b = Field'
+instance FieldsOf (FieldOrder a b o) a b where
+  fieldNames fb = [fb.name]
 
-instance IsLabel f (Field' f a b) where
-  fromLabel = Field'
+fieldOrder :: forall f o a b. (HasField f a b, HasFieldName f) => FieldOrder a b o
+fieldOrder = FieldOrder (fieldName @f)
 
-data Person = Person { age :: !Int64, name :: !String }
-  deriving (Generic, PrimaryKey "name", Show)
+newtype F2Order a b c o1 o2 = F2Order (FieldOrder a b o1, FieldOrder a c o2)
 
-x :: Field' "name" a b
-x = Field' @"name"
+instance FieldsOf (F2Order a b c o1 o2) a (b, c) where
+  fieldNames (F2Order (fb, fc)) = [fb.name, fc.name]
 
-x2 :: Field' "name" a b
-x2 = #name
-
-data F2' a f1 f2 b1 b2 = F2' (Field' f1 a b1, Field' f2 a b2)
-
-field2' :: forall a f1 f2 b1 b2
-  .  (HasField f1 a b1, HasField f2 a b2)
-  => Field' f1 a b1 -> Field' f2 a b2 -> F2' a f1 f2 b1 b2
-field2' f1 f2 = F2' (f1, f2)
-
-x3 :: F2' Person "name" "age" _ _
-x3 = field2' @Person #name #age
+field2Order :: forall fb o1 o2 fc a b c.
+  ( HasField fb a b, HasFieldName fb
+  , HasField fc a c, HasFieldName fc
+  ) => F2Order a b c o1 o2
+field2Order = F2Order (fieldOrder @fb @o1 @a @b, fieldOrder @fc @o2 @a @c)

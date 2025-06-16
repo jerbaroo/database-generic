@@ -19,7 +19,6 @@ import Database.Generic.Database (PostgreSQL)
 import Database.Generic.Prelude (debug')
 import Database.Generic.Serialize (serialize)
 import Database.Generic.Server qualified as Server
-import Database.Generic.Statement.Fields qualified as F
 import Database.Generic.Statement.Output (Output(..), OutputType(..))
 import Database.HDBC qualified as HDBC
 import Database.HDBC.PostgreSQL qualified as PSQL
@@ -105,7 +104,7 @@ main = do
     limitOffset 1 2 $ orderBy (field @"name") $ selectAll @Person
 
   info "Select specific fields by ID" $
-    selectById @Person john.name ==> F.f #age
+    selectById @Person john.name ==> fieldOrder @"age" @Asc
 
   putStrLn "\nStarting a server which will proxy any statements"
   Server.run (runAppM c) 1234 Server.developmentCors

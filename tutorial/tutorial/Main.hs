@@ -25,6 +25,7 @@ import Database.HDBC.PostgreSQL qualified as PSQL
 import Database.PostgreSQL.Simple.Options as PSQL
 import GHC.Generics (Generic)
 import Witch (from)
+import Database.Generic.Statement.Fields (Field'(FieldCons), (/\))
 
 -- | Data type we want to persist.
 data Person = Person { age :: !Int64, name :: !String }
@@ -93,17 +94,17 @@ main = do
   info "Select all" $ selectAll @Person
 
   info "Select all, select 1 fields" $
-    selectAll @Person ==> field2 @"age" @"name"
+    selectAll @Person ==> (field @"age" /\ field @"name")
 
   info "Select all, order by age" $
     orderBy (fieldOrder @"age" @Desc) $ selectAll @Person
 
-  info "Select all, limit 1" $
-    limit 1 $ orderBy (fieldOrder @"name" @Asc) $ selectAll @Person
+  -- info "Select all, limit 1" $
+  --   limit 1 $ orderBy (fieldOrder @"name" @Asc) $ selectAll @Person
 
   info "Select all, order by (name desc, age asc), limit 1, offset 2"
     $ limitOffset 5 0
-    $ orderBy (fieldOrder2 @"age" @Asc @"name" @Asc)
+    $ orderBy (fieldOrder @"age" @Asc /\ fieldOrder @"name" @Asc)
     $ selectAll @Person
 
   info "Select specific fields by ID" $

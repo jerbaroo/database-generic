@@ -6,6 +6,7 @@ import Database.Generic.Prelude
 import Database.Generic.Statement.Order (Order(..))
 import Database.Generic.Serialize (Serialize(..))
 import Witch qualified as W
+import Database.Generic.Statement.Type (Cons)
 
 -- | Named fields in a statement.
 data Fields = All | Some ![FieldName]
@@ -38,76 +39,52 @@ class OrderedFieldsOf fs a | fs -> a where
 -- * field - field3
 
 -- | A named field of type 'b' belonging to 'a'.
---
--- This can be used to filter results to only a subset of 'a's fields.
-newtype Field a b = Field { name :: FieldName } deriving Generic
-
-instance FieldsOf (Field a b) a b where
-  fieldNames fb = [fb.name]
-
-field :: forall f a b. (HasField f a b, HasFieldName f) => Field a b
+field :: forall f a b. (HasField f a b, HasFieldName f) => Field' a '[b]
 field = Field $ fieldName @f
 
-newtype Field2 a b c = Field2 (Field a b, Field a c)
-
-instance FieldsOf (Field2 a b c) a (b, c) where
-  fieldNames (Field2 (fb, fc)) = [fb.name, fc.name]
-
-field2
-  :: forall fb fc a b c.
-  ( HasField fb a b, HasFieldName fb
-  , HasField fc a c, HasFieldName fc
-  ) => Field2 a b c
-field2 = Field2 (field @fb @a @b, field @fc @a @c)
-
-newtype Field3 a b c d = Field3 (Field a b, Field a c, Field a d)
-
-instance FieldsOf (Field3 a b c d) a (b, c, d) where
-  fieldNames (Field3 (fb, fc, fd)) = [fb.name, fc.name, fd.name]
-
-field3
-  :: forall fb fc fd a b c d.
-  ( HasField fb a b, HasFieldName fb
-  , HasField fc a c, HasFieldName fc
-  , HasField fd a d, HasFieldName fd
-  ) => Field3 a b c d
-field3 = Field3 (field @fb @a @b, field @fc @a @c, field @fd @a @d)
-
--- * fieldOrder - fieldOrder3
-
--- | A named field belonging to 'a', with ordering 'o'.
---
--- This can be used to order a query of a collection of 'a's.
-newtype FieldOrder a (o :: Order) = FieldOrder { name :: FieldName }
-  deriving Generic
-
-instance OrderedFieldsOf (FieldOrder a Asc) a where
-  orderedFieldNames fb = OrderedFields [(fb.name, Asc)]
-
-instance OrderedFieldsOf (FieldOrder a Desc) a where
-  orderedFieldNames fb = OrderedFields [(fb.name, Desc)]
-
+-- | A named fields of type 'b' belonging to 'a', with ordering 'o'.
 fieldOrder
   :: forall f (o :: Order) a b
   . (HasField f a b, HasFieldName f)
-  => FieldOrder a o
-fieldOrder = FieldOrder (fieldName @f)
+  => FieldOrder a '[o]
+fieldOrder = Field (fieldName @f)
 
-newtype FieldOrder2 a o1 o2 =
-  FieldOrder2 (FieldOrder a o1, FieldOrder a o2)
+-- | Cons fields together.
+(/\) :: Field' a '[b] -> Field' a bs -> Field' a (Cons b bs)
+(/\) = FieldCons
 
-instance
-  ( OrderedFieldsOf (FieldOrder a o1) a
-  , OrderedFieldsOf (FieldOrder a o2) a
-  ) => OrderedFieldsOf (FieldOrder2 a o1 o2) a where
-  orderedFieldNames (FieldOrder2 (fb, fc)) =
-    orderedFieldNames fb <> orderedFieldNames fc
+-- | One or more named fields belonging to 'a'.
+--
+-- Can be used to filter results to only a subset of 'a's fields.
+type Field a (bs :: [Type]) = Field' a bs
 
-fieldOrder2 :: forall fb (o1 :: Order) fc (o2 :: Order) a b c.
-  ( HasField fb a b, HasFieldName fb
-  , HasField fc a c, HasFieldName fc
-  ) => FieldOrder2 a o1 o2
-fieldOrder2 = FieldOrder2
-  ( fieldOrder @fb @o1 @a @b
-  , fieldOrder @fc @o2 @a @c
-  )
+-- | One or more named fields belonging to 'a', with ordering 'o'.
+--
+-- This can be used to order a query of a collection of 'a's.
+type FieldOrder a (os :: [Order]) = Field' a os
+
+data Field' a x where
+  Field     :: !FieldName       -> Field' a '[b]
+  FieldCons :: !(Field' a '[b]) -> !(Field' a bs) -> Field' a (Cons b bs)
+
+instance FieldsOf (Field' a '[b]) a b where
+  fieldNames (Field fn) = [fn]
+
+instance FieldsOf (Field' a '[b1, b2]) a (b1, b2) where
+  fieldNames (FieldCons f fs) = fieldNames f <> fieldNames fs
+
+instance FieldsOf (Field' a '[b1, b2, b3]) a (b1, b2, b3) where
+  fieldNames (FieldCons f fs) = fieldNames f <> fieldNames fs
+
+instance FieldsOf (Field' a '[b1, b2, b3, b4]) a (b1, b2, b3, b4) where
+  fieldNames (FieldCons f fs) = fieldNames f <> fieldNames fs
+
+instance OrderedFieldsOf (Field' a '[Asc]) a where
+  orderedFieldNames (Field fn) = OrderedFields [(fn, Asc)]
+
+instance OrderedFieldsOf (Field' a '[Desc]) a where
+  orderedFieldNames (Field fn) = OrderedFields [(fn, Desc)]
+
+-- instance OrderedFieldsOf (Field' a '[o1, o2]) a where
+--   orderedFieldNames (FieldCons f fs) =
+--     orderedFieldNames f <> orderedFieldNames fs

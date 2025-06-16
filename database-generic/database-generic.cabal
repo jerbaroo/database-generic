@@ -37,6 +37,7 @@ library
                       Database.Generic.Statement.Insert,
                       Database.Generic.Statement.Limit,
                       Database.Generic.Statement.NoType,
+                      Database.Generic.Statement.Order,
                       Database.Generic.Statement.OrderBy,
                       Database.Generic.Statement.Output,
                       Database.Generic.Statement.Returning,

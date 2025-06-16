@@ -70,7 +70,7 @@ instance MonadDbNewConn AppM PSQL.Connection where
 main :: IO ()
 main = do
   let c        = connStr "127.0.0.1" 5432 "postgres" "demo" "demo"
-  let john     = Person 21 "John"
+  let john     = Person 70 "John"
   let info m s = do
         putStrLn $ "\n" <> m
         print =<< runAppM c (tx $ execute s)
@@ -85,8 +85,8 @@ main = do
 
   info "Delete all, returning" $ deleteAll @Person
 
-  info "Insert two, returning age" $
-    insertMany [Person 25 "Bob", Person 70 "Mary"] ==> field @"age"
+  info "Insert many, returning age" $
+    insertMany [john, Person 25 "Bob", Person 25 "Mary"] ==> field @"age"
 
   info "Select by ID" $ selectById @Person john.name
 
@@ -96,14 +96,14 @@ main = do
     selectAll @Person ==> field2 @"age" @"name"
 
   info "Select all, order by age" $
-    orderBy (fieldOrder @"age" @Asc) $ selectAll @Person
+    orderBy (fieldOrder @"age" @Desc) $ selectAll @Person
 
   info "Select all, limit 1" $
     limit 1 $ orderBy (fieldOrder @"name" @Asc) $ selectAll @Person
 
   info "Select all, order by (name desc, age asc), limit 1, offset 2"
-    $ limitOffset 1 2
-    $ orderBy (fieldOrder2 @"name" @Desc @"age" @Asc)
+    $ limitOffset 5 0
+    $ orderBy (fieldOrder2 @"age" @Asc @"name" @Asc)
     $ selectAll @Person
 
   info "Select specific fields by ID" $

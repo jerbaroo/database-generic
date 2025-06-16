@@ -11,7 +11,7 @@ import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
 import Database.Generic.Statement.CreateTable (CreateTable, CreateTable'(..), CreateTableColumn(..))
 import Database.Generic.Statement.Delete (Delete, Delete'(..))
-import Database.Generic.Statement.Fields (Fields(..))
+import Database.Generic.Statement.Fields (Fields(..), OrderedFields (OrderedFields))
 import Database.Generic.Statement.Limit (Limit, Offset, Limitable (limitOffsetMay))
 import Database.Generic.Statement.OrderBy qualified as O
 import Database.Generic.Statement.Select (Select, Select'(..))
@@ -112,13 +112,14 @@ selectAllPerson = W.from Select'
   , from    = "person"
   , limit   = Nothing
   , offset  = Nothing
-  , orderBy = []
+  , orderBy = OrderedFields []
   , where'  = Nothing
   }
 
 -- | This is a test that 'O.orderBy' modifies the type correctly.
 selectAllPersonOrderByName :: Select Many Person Person True
-selectAllPersonOrderByName = O.orderBy (field @"name") selectAll
+selectAllPersonOrderByName =
+  O.orderBy (fieldOrder @"name" @Asc) $ selectAll @Person
 
 selectByIdPerson :: Select One Person Person False
 selectByIdPerson = W.from Select'
@@ -126,13 +127,13 @@ selectByIdPerson = W.from Select'
   , from    = "person"
   , limit   = Nothing
   , offset  = Nothing
-  , orderBy = []
+  , orderBy = OrderedFields []
   , where'  = Just $ Equals "name" $ DbString "John"
   }
 
 selectAllPersonPG :: Limit -> Maybe Offset -> String
 selectAllPersonPG limit offset = Serialize.statement $ unwords $ catMaybes
-  [ Just $ "SELECT * FROM person ORDER BY age LIMIT " <> show limit
+  [ Just $ "SELECT * FROM person ORDER BY age ASC LIMIT " <> show limit
   , offset <&> \l -> "OFFSET " <> show l
   ]
 
@@ -142,6 +143,8 @@ selectTests = testGroup "Select statement tests"
   , testCase "selectById @Person" $ assertEqual "" selectByIdPerson $ selectById "John"
   , SC.testProperty "serialize limit offset" \(l, o) ->
       selectAllPersonPG l o == serialize @_ @PostgreSQL
-        (into @Select' $
-           limitOffsetMay l o $ O.orderBy (field @"age") $ selectAll @Person)
+        (into @Select'
+           $ limitOffsetMay l o
+           $ O.orderBy (fieldOrder @"age" @Asc) $ selectAll @Person
+        )
   ]

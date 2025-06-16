@@ -12,6 +12,7 @@ import Database.Generic.Statement.Insert qualified as C
 import Database.Generic.Statement.Select qualified as C
 import Database.Generic.Statement.Tx qualified as Tx
 import Database.Generic.Serialize (Serialize(..))
+import Database.Generic.Statement.Fields (OrderedFields)
 
 -- | Similar to 'Database.Generic.Statement.Statement' but without type info.
 --
@@ -42,6 +43,7 @@ instance From (S.Statement s) Statement where
 instance
   ( Serialize DbType db
   , Serialize DbValue db
+  , Serialize OrderedFields db
   ) => Serialize Statement db where
   serialize (StatementBeginTx     s) = serialize @_ @db s
   serialize (StatementCommitTx    s) = serialize @_ @db s

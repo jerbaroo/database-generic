@@ -1,9 +1,3 @@
-{-# LANGUAGE DeriveAnyClass   #-}
-{-# LANGUAGE OverloadedLabels #-}
-{-# LANGUAGE MonoLocalBinds   #-}
-{-# LANGUAGE MagicHash        #-}
-{-# LANGUAGE PartialTypeSignatures #-}
-
 module Database.Generic.Statement.Fields where
 
 import Data.Aeson qualified as Aeson
@@ -11,9 +5,6 @@ import Database.Generic.Entity.FieldName (FieldName, HasFieldName, fieldName)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Witch qualified as W
-import GHC.OverloadedLabels (IsLabel(..))
-import Database.Generic.Entity.PrimaryKey (PrimaryKey)
-import GHC.TypeLits (KnownSymbol, Symbol)
 
 -- | Named fields in a statement.
 data Fields = All | Some ![FieldName]
@@ -21,15 +12,27 @@ data Fields = All | Some ![FieldName]
 
 instance Aeson.FromJSON Fields
 
--- TODO this is very SQL specific
 instance Serialize Fields db where
   serialize All       = "*"
   serialize (Some cs) = intercalate ", " $ W.from <$> cs
 
+-- | Named fields to order by in a statement.
+newtype OrderedFields = OrderedFields [(FieldName, Order)]
+  deriving (Aeson.FromJSON, Eq, Generic, Semigroup, Show)
+
+instance Serialize Order db => Serialize OrderedFields db where
+  serialize (OrderedFields fs) = intercalate ", " $ fs <&> \(fn, o) ->
+    from fn <> " " <> serialize @_ @db o
+
 -- | Fields 'fs' of 'a' that can be parsed into a 'b'.
 class FieldsOf fs a b | fs -> a, fs -> b where
   -- | The names of the fields to be selected.
-  fieldNames :: fs -> [FieldName]
+  fieldNames :: fs -> [FieldName] -- TODO
+
+-- | Ordered fields 'fs' of 'a'.
+class OrderedFieldsOf fs a | fs -> a where
+  -- | The names of the fields to be selected.
+  orderedFieldNames :: fs -> OrderedFields
 
 -- * field - field3
 
@@ -67,24 +70,40 @@ field3 = F3 (field @fb @a @b, field @fc @a @c, field @fd @a @d)
 
 -- * fieldOrder - fieldOrder3
 
-data Order = Asc | Desc
+data Order = Asc | Desc deriving (Eq, Generic, Show)
 
-newtype FieldOrder a b (o :: Order) = FieldOrder { name :: FieldName }
+instance Aeson.FromJSON Order
+
+instance Serialize Order db where
+  serialize Asc  = "ASC"
+  serialize Desc = "DESC"
+
+newtype FieldOrder a o = FieldOrder { name :: FieldName }
   deriving Generic
 
-instance FieldsOf (FieldOrder a b o) a b where
-  fieldNames fb = [fb.name]
+instance OrderedFieldsOf (FieldOrder a Asc) a where
+  orderedFieldNames fb = OrderedFields [(fb.name, Asc)]
 
-fieldOrder :: forall f o a b. (HasField f a b, HasFieldName f) => FieldOrder a b o
+instance OrderedFieldsOf (FieldOrder a Desc) a where
+  orderedFieldNames fb = OrderedFields [(fb.name, Desc)]
+
+fieldOrder
+  :: forall f (o :: Order) a b
+  . (HasField f a b, HasFieldName f) => FieldOrder a o
 fieldOrder = FieldOrder (fieldName @f)
 
-newtype F2Order a b c o1 o2 = F2Order (FieldOrder a b o1, FieldOrder a c o2)
+newtype FieldOrder2 a o1 o2 =
+  FieldOrder2 (FieldOrder a o1, FieldOrder a o2)
 
-instance FieldsOf (F2Order a b c o1 o2) a (b, c) where
-  fieldNames (F2Order (fb, fc)) = [fb.name, fc.name]
+instance
+  ( OrderedFieldsOf (FieldOrder a o1) a
+  , OrderedFieldsOf (FieldOrder a o2) a
+  ) => OrderedFieldsOf (FieldOrder2 a o1 o2) a where
+  orderedFieldNames (FieldOrder2 (fb, fc)) =
+    orderedFieldNames fb <> orderedFieldNames fc
 
-field2Order :: forall fb o1 o2 fc a b c.
+fieldOrder2 :: forall fb (o1 :: Order) fc (o2 :: Order) a b c.
   ( HasField fb a b, HasFieldName fb
   , HasField fc a c, HasFieldName fc
-  ) => F2Order a b c o1 o2
-field2Order = F2Order (fieldOrder @fb @o1 @a @b, fieldOrder @fc @o2 @a @c)
+  ) => FieldOrder2 a o1 o2
+fieldOrder2 = FieldOrder2 (fieldOrder @fb @o1 @a @b, fieldOrder @fc @o2 @a @c)

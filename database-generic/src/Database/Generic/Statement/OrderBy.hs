@@ -1,11 +1,11 @@
 module Database.Generic.Statement.OrderBy where
 
-import Database.Generic.Statement.Fields (FieldsOf)
+import Database.Generic.Statement.Fields (OrderedFieldsOf)
 import Database.Generic.Statement.Returning (IsReturning, Row)
 
-data Order = Asc | Desc
-
 -- | Statements with an order by clause.
+--
+-- Used to determine if a limit clause may be applied.
 class IsOrderedBy s
 
 -- | Modify the statement type to reflect the statement has an order by clause.
@@ -17,7 +17,7 @@ type family ModifyOrderedBy s1
 -- Statements must already be returning something, otherwise nothing to order.
 class IsReturning s => OrderBy s where
   -- | Add an order by clause to a statement.
-  orderBy :: forall fs a. (FieldsOf fs (Row s) a)
+  orderBy :: forall fs. OrderedFieldsOf fs (Row s)
     => fs                -- ^ Fields to order by.
     -> s                 -- ^ The original statement.
     -> ModifyOrderedBy s -- ^ Statement now with an order by clause.

@@ -95,16 +95,19 @@ main = do
   info "Select all, select 1 fields" $
     selectAll @Person ==> field2 @"age" @"name"
 
-  info "Select all, order by age" $ orderBy (field @"age") $ selectAll @Person
+  info "Select all, order by age" $
+    orderBy (fieldOrder @"age" @Asc) $ selectAll @Person
 
   info "Select all, limit 1" $
-    limit 1 $ orderBy (field @"name") $ selectAll @Person
+    limit 1 $ orderBy (fieldOrder @"name" @Asc) $ selectAll @Person
 
-  info "Select all, limit 1, offset 2" $
-    limitOffset 1 2 $ orderBy (field @"name") $ selectAll @Person
+  info "Select all, order by (name desc, age asc), limit 1, offset 2"
+    $ limitOffset 1 2
+    $ orderBy (fieldOrder2 @"name" @Desc @"age" @Asc)
+    $ selectAll @Person
 
   info "Select specific fields by ID" $
-    selectById @Person john.name ==> fieldOrder @"age" @Asc
+    selectById @Person john.name ==> field @"age"
 
   putStrLn "\nStarting a server which will proxy any statements"
   Server.run (runAppM c) 1234 Server.developmentCors

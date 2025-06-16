@@ -3,6 +3,7 @@
 {-# LANGUAGE BlockArguments      #-}
 {-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE DeriveAnyClass      #-}
+{-# LANGUAGE OverloadedLabels    #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE TypeFamilies        #-}
 
@@ -93,8 +94,7 @@ main = do
   info "Select all" $ selectAll @Person
 
   info "Select all, select 1 fields" $
-    -- selectAll @Person ==> field2 @"age" @"name"
-    selectAll @Person ==> F.field2' (F.F @"age") (F.F @"name")
+    selectAll @Person ==> field2 @"age" @"name"
 
   info "Select all, order by age" $ orderBy (field @"age") $ selectAll @Person
 
@@ -105,7 +105,7 @@ main = do
     limitOffset 1 2 $ orderBy (field @"name") $ selectAll @Person
 
   info "Select specific fields by ID" $
-    selectById @Person john.name ==> field @"age"
+    selectById @Person john.name ==> F.f #age
 
   putStrLn "\nStarting a server which will proxy any statements"
   Server.run (runAppM c) 1234 Server.developmentCors

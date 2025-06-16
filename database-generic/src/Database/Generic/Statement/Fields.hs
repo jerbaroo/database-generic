@@ -1,3 +1,9 @@
+{-# LANGUAGE DeriveAnyClass   #-}
+{-# LANGUAGE OverloadedLabels #-}
+{-# LANGUAGE MonoLocalBinds   #-}
+{-# LANGUAGE MagicHash        #-}
+{-# LANGUAGE PartialTypeSignatures #-}
+
 module Database.Generic.Statement.Fields where
 
 import Data.Aeson qualified as Aeson
@@ -5,6 +11,9 @@ import Database.Generic.Entity.FieldName (FieldName, HasFieldName, fieldName)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Witch qualified as W
+import GHC.OverloadedLabels (IsLabel(..))
+import Database.Generic.Entity.PrimaryKey (PrimaryKey)
+import GHC.TypeLits (KnownSymbol, Symbol)
 
 -- | Named fields in a statement.
 data Fields = All | Some ![FieldName]
@@ -59,3 +68,29 @@ field3 = F3 (field @fb @a @b, field @fc @a @c, field @fd @a @d)
 -- * fieldOrder - fieldOrder3
 
 data Order = Asc | Desc
+
+data Label (f :: Symbol) = L
+
+data Field' f a b = Field'
+
+instance IsLabel f (Field' f a b) where
+  fromLabel = Field'
+
+data Person = Person { age :: !Int64, name :: !String }
+  deriving (Generic, PrimaryKey "name", Show)
+
+x :: Field' "name" a b
+x = Field' @"name"
+
+x2 :: Field' "name" a b
+x2 = #name
+
+data F2' a f1 f2 b1 b2 = F2' (Field' f1 a b1, Field' f2 a b2)
+
+field2' :: forall a f1 f2 b1 b2
+  .  (HasField f1 a b1, HasField f2 a b2)
+  => Field' f1 a b1 -> Field' f2 a b2 -> F2' a f1 f2 b1 b2
+field2' f1 f2 = F2' (f1, f2)
+
+x3 :: F2' Person "name" "age" _ _
+x3 = field2' @Person #name #age

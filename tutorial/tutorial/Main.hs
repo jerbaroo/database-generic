@@ -74,38 +74,38 @@ main = do
         print =<< runAppM c (tx $ execute s)
 
   info "Create table if not exists" $ createTable @Person True
-
-  info "Delete all" $ deleteAll @Person
-
-  info "Delete by ID" $ deleteById @Person "John"
+  info "Delete all" $ deleteAll @Person -- Clear table before tutorial.
 
   info "Insert one" $ returning $ insertOne $ john
 
-  info "Delete all, returning" $ deleteAll @Person
+  info "Insert many" $
+    insertMany [Person 25 "Alice", Person 25 "Bob"]
+
+  info "Insert many, returning" $
+    returning $ insertMany [Person 26 "Charlie", Person 26 "Dee"]
 
   info "Insert many, returning age" $
-    insertMany [john, Person 25 "Bob", Person 25 "Mary"] ==> field @"age"
-
-  info "Select by ID" $ selectById @Person john.name
+    insertMany [Person 27 "Enid", Person 27 "Flavio"] ==> field @"age"
 
   info "Select all" $ selectAll @Person
 
-  info "Select all, select 1 fields" $
+  info "Select by PK" $ selectById @Person "John"
+
+  info "Select all, returning two fields" $
     selectAll @Person ==> (field @"age" /\ field @"name")
 
-  info "Select all, order by age" $
-    orderBy (order @"age" @Desc) $ selectAll @Person
+  info "Select all, order by age then name" $
+    orderBy (order @"age" @Desc /\ order @"name" @Asc) $ selectAll @Person
 
   info "Select all, limit 1" $
     limit 1 $ orderBy (order @"name" @Asc) $ selectAll @Person
 
-  info "Select all, order by (name desc, age asc), limit 1, offset 2"
-    $ limitOffset 1 2
-    $ orderBy (order @"age" @Asc /\ order @"name" @Asc)
-    $ selectAll @Person
+  info "Select all, order by name, limit 1, offset 2"
+    $ limitOffset 1 2 $ orderBy (order @"name" @Asc) $ selectAll @Person
 
-  info "Select specific fields by ID" $
-    selectById @Person john.name ==> field @"age"
+  info "Delete by PK" $ deleteById @Person "John"
+
+  info "Delete all, returning" $ returning $  deleteAll @Person
 
   putStrLn "\nStarting a server which will proxy any statements"
   Server.run (runAppM c) 1234 Server.developmentCors

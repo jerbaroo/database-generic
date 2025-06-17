@@ -32,30 +32,33 @@ To run the tutorial on your machine:
 
 ## Features
 
-| Feature                                  | Status | Tested |
-|------------------------------------------|--------|--------|
-| Create table                             | ✅     | ✅     |
-| Select all                               | ✅     | ✅     |
-| Select by ID                             | ✅     | ✅     |
-| Return subset of fields                  | ✅     | ✅     |
-| Where column equals                      |        |        |
-| Where column is null                     |        |        |
-| Where column is not null                 |        |        |
-| Order by clause                          | ✅     | ✅     |
-| Order by asc/desc                        |        |        |
-| Limit clause                             | ✅     | ✅     |
-| Offset clause                            | ✅     | ✅     |
-| Insert one                               | ✅     |        |
-| Insert many                              | ✅     |        |
-| Insert returning                         | ✅     |        |
-| Delete all                               | ✅     | ✅     |
-| Delete by ID                             | ✅     | ✅     |
-| Delete returning                         | ✅     | ✅     |
-| Joins                                    |        |        |
-| Stream statements over Conduit           |        |        |
-| Stream updates over Conduit              |        |        |
-| Server: endpoint to execute statement    | ✅     |        |
-| Server: stream statements over WebSocket |        |        |
-| Server: stream updates over WebSocket    |        |        |
-| Server: permission checks                |        |        |
-| Reflex (client-side) MonadDb instance    |        |        |
+Examples of the following features can be found in [the
+tutorial](tutorial/tutorial/Main.hs).
+
+| Feature                                  | In Tutorial | Tested |
+|------------------------------------------|-------------|--------|
+| Create table                             | ✅          | ✅     |
+| Insert one                               | ✅          |        |
+| Insert many                              | ✅          |        |
+| Insert returning                         | ✅          |        |
+| Insert returning fields                  | ✅          | ✅     |
+| Select by ID                             | ✅          | ✅     |
+| Select all                               | ✅          | ✅     |
+| Select returning fields                  | ✅          | ✅     |
+| Where column equals                      |             |        |
+| Where column is null                     |             |        |
+| Where column is not null                 |             |        |
+| Limit clause                             | ✅          | ✅     |
+| Offset clause                            | ✅          | ✅     |
+| Order by clause                          | ✅          | ✅     |
+| Delete by ID                             | ✅          | ✅     |
+| Delete all                               | ✅          | ✅     |
+| Delete returning                         | ✅          | ✅     |
+| Server: endpoint to execute statement    | ✅          |        |
+| Joins                                    |             |        |
+| Stream statements over Conduit           |             |        |
+| Stream updates over Conduit              |             |        |
+| Server: stream statements over WebSocket |             |        |
+| Server: stream updates over WebSocket    |             |        |
+| Server: permission checks                |             |        |
+| Reflex (client-side) MonadDb instance    |             |        |

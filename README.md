@@ -7,7 +7,7 @@ Database-agnostic interface to generically persisted data.
 Explanation of the above:
 - Database-agnostic: the typeclass is called `MonadDb`, and you must specify how
   an instance can communicate with your database. We provide an example for
-  connecting to PostgreSQL in the [tutorial](tutorial/tutorial/main.hs).
+  connecting to Postgres in the [runnable tutorial](tutorial/tutorial/main.hs).
 - Generically persisted data: you can derive the necessary instances in one line
   via `Generics`, to enable `MonadDb` to read/write instances of your data types
   to/from your database.
@@ -23,7 +23,7 @@ to your database without having to write the usual server boilerplate.
 
 ## Quick Start
 
-The [tutorial as code](tutorial/tutorial/Main.hs) is the recommended way of
+The [runnable tutorial](tutorial/tutorial/Main.hs) is the recommended way of
 becoming familiar with `database-generic`.
 
 To run the tutorial on your machine:

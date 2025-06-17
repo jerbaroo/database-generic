@@ -76,13 +76,7 @@ main = do
   info "Create table if not exists" $ createTable @Person True
   info "Delete all" $ deleteAll @Person -- Clear table before tutorial.
 
-  let x = returning $ insertOne john -- Insert One (Just Person) Person
-  --
-  -- HasOutputType (Insert o (Just Person) a) where
-  --   outputType = OutputTypeRows
-  --
-  -- ParseOutput DbValue s where
-  info "Insert one" x
+  info "Insert one" $ insertOne john
 
   info "Insert many" $
     insertMany [Person 25 "Alice" True, Person 25 "Bob" False]

@@ -2,9 +2,9 @@
 
 module Database.Generic.Entity.FromDb where
 
-import Database.Generic.Prelude
 import Database.Generic.Entity.DbColumns (HasDbColumns)
 import Database.Generic.Entity.DbTypes (DbT(..), DbValue)
+import Database.Generic.Prelude
 import Generics.Eot qualified as G
 
 data FromDbError dbv

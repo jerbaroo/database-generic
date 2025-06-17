@@ -5,12 +5,12 @@ Database-agnostic interface to generically persisted data.
 ## Introduction
 
 Explanation of the above:
-- Database-agnostic interface: the typeclass is called `MonadDb`, and you must
-  specify how it can communicate with your database (we provide an example for
-  connecting to a PostgreSQL server).
-- Generically persisted data: you can derive the necessary instances for your
-  data types via `Generics`. This will enable `MonadDb` to read/write instances
-  of your data types to/from your database.
+- Database-agnostic: the typeclass is called `MonadDb`, and you must specify how
+  an instance can communicate with your database. We provide an example for
+  connecting to PostgreSQL in the [tutorial](tutorial/tutorial/main.hs).
+- Generically persisted data: you can derive the necessary instances in one line
+  via `Generics`, to enable `MonadDb` to read/write instances of your data types
+  to/from your database.
 
 A key intended feature of this library is that the typeclass `MonadDb` can be
 used either server-side or client-side. Allowing your client application (e.g.
@@ -23,7 +23,8 @@ to your database without having to write the usual server boilerplate.
 
 ## Quick Start
 
-A tutorial as code exists [here](tutorial/tutorial/Main.hs).
+The [tutorial as code](tutorial/tutorial/Main.hs) is the recommended way of
+becoming familiar with `database-generic`.
 
 To run the tutorial on your machine:
 1. Clone this repo.

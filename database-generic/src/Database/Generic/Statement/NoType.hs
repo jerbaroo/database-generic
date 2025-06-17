@@ -8,11 +8,11 @@ import Database.Generic.Prelude
 import Database.Generic.Statement qualified as S
 import Database.Generic.Statement.CreateTable qualified as C
 import Database.Generic.Statement.Delete qualified as C
+import Database.Generic.Statement.Fields (OrderedFields)
 import Database.Generic.Statement.Insert qualified as C
 import Database.Generic.Statement.Select qualified as C
 import Database.Generic.Statement.Tx qualified as Tx
 import Database.Generic.Serialize (Serialize(..))
-import Database.Generic.Statement.Fields (OrderedFields)
 
 -- | Similar to 'Database.Generic.Statement.Statement' but without type info.
 --

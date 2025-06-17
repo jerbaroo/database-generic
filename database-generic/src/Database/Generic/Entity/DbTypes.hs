@@ -19,8 +19,8 @@ data DbT f
 
 type F :: forall f a b. (f :: Type) -> (a :: Type) -> (b :: Type)
 type family F f a where
-  F Id       a = a
-  F Unit     _ = Unit
+  F Id   a = a
+  F Unit _ = Unit
 
 data Unit   = Unit deriving (Aeson.FromJSON, Eq, Generic, Show)
 type DbType = DbT Unit

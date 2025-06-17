@@ -18,12 +18,12 @@ class ToDbValue a where
 instance {-# OVERLAPPABLE #-} From a DbValue => ToDbValue a where
   toDbValue = Just . from
 
-instance {-# OVERLAPPABLE #-} From a DbValue => ToDbValue (Maybe a) where
-  toDbValue = fmap from
-
 -- | Values that can be converted into a list of 'DbValue'.
 class ToDbValues a where
   toDbValues :: a -> [DbValueN]
+
+instance {-# OVERLAPPABLE #-} ToDbValue (Maybe a) => ToDbValues (Maybe a) where
+  toDbValues = (:[]) . toDbValue
 
 instance {-# OVERLAPPABLE #-}
   ( G.HasEot a

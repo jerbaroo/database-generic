@@ -29,7 +29,7 @@ instance Serialize Order db => Serialize OrderedFields db where
 -- | Fields 'fs' of 'a' that can be parsed into a 'b'.
 class FieldsOf fs a b | fs -> a, fs -> b where
   -- | The names of the fields to be selected.
-  fieldNames :: fs -> [FieldName] -- TODO
+  fieldNames :: fs -> [FieldName]
 
 -- | Ordered fields 'fs' of 'a'.
 class OrderedFieldsOf fs a | fs -> a where

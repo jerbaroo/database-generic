@@ -1,5 +1,3 @@
-{-# LANGUAGE UndecidableInstances #-}
-
 module Database.Generic.Class where
 
 import Database.Generic.Database (Database, DbV)
@@ -8,6 +6,7 @@ import Database.Generic.Statement (Statement)
 import Database.Generic.Statement.NoType qualified as NT
 import Database.Generic.Statement.Output (HasOutputType, Output, OutputError, OutputType, outputType)
 
+-- | Type synonym to simplify the type of values returned by executing statements.
 type ExecuteReturns m db a = Either (ExecuteError (Error m db) (DbV db)) a
 
 -- | Monads that can execute database statements.
@@ -21,15 +20,21 @@ class
   )
   => MonadDb m db | m -> db where
 
+  -- | Connection type, over which statements are executed.
   type C m db :: Type
 
+  -- | Wrapper type over input and output  to 'executeStatement'.
   type T m db :: Type -> Type
   type T m db = Identity -- Default for convenience.
 
   type Error m db :: Type
   type Error m db = SomeException -- Default for convenience.
 
-  -- | Execute a statement and parse the output based on expected 'OutputType'.
+  -- | Execute a statement and parse the 'Output' based on expected 'OutputType'.
+  --
+  -- If you want to modify the type of value returned by 'executeStatement' (to
+  -- be parsed into fields of your data type), then implement 'Database' with a
+  -- custom 'DbV' type. Probably you don't want to do this though.
   executeStatement
     :: C m db
     -> (T m db) (NT.Statement, OutputType)

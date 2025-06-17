@@ -8,6 +8,7 @@ import Database.Generic.Prelude
 import Database.Generic.Statement qualified as S
 import Database.Generic.Statement.CreateTable qualified as C
 import Database.Generic.Statement.Delete qualified as C
+import Database.Generic.Statement.Fields (OrderedFields)
 import Database.Generic.Statement.Insert qualified as C
 import Database.Generic.Statement.Select qualified as C
 import Database.Generic.Statement.Tx qualified as Tx
@@ -42,6 +43,7 @@ instance From (S.Statement s) Statement where
 instance
   ( Serialize DbType db
   , Serialize DbValue db
+  , Serialize OrderedFields db
   ) => Serialize Statement db where
   serialize (StatementBeginTx     s) = serialize @_ @db s
   serialize (StatementCommitTx    s) = serialize @_ @db s

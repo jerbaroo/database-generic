@@ -3,6 +3,8 @@ module Database.Generic.Statement.Fields where
 import Data.Aeson qualified as Aeson
 import Database.Generic.Entity.FieldName (FieldName, HasFieldName, fieldName)
 import Database.Generic.Prelude
+import Database.Generic.Statement.Order (Order(..))
+import Database.Generic.Statement.Type (List(..))
 import Database.Generic.Serialize (Serialize(..))
 import Witch qualified as W
 
@@ -16,41 +18,80 @@ instance Serialize Fields db where
   serialize All       = "*"
   serialize (Some cs) = intercalate ", " $ W.from <$> cs
 
+-- | Named fields to order by in a statement.
+newtype OrderedFields = OrderedFields [(FieldName, Order)]
+  deriving (Aeson.FromJSON, Eq, Generic, Semigroup, Show)
+
+instance Serialize Order db => Serialize OrderedFields db where
+  serialize (OrderedFields fs) = intercalate ", " $ fs <&> \(fn, o) ->
+    from fn <> " " <> serialize @_ @db o
+
 -- | Fields 'fs' of 'a' that can be parsed into a 'b'.
 class FieldsOf fs a b | fs -> a, fs -> b where
   -- | The names of the fields to be selected.
   fieldNames :: fs -> [FieldName]
 
+-- | Ordered fields 'fs' of 'a'.
+class OrderedFieldsOf fs a | fs -> a where
+  -- | The names of the fields to be selected.
+  orderedFieldNames :: fs -> OrderedFields
+
 -- * field - field3
 
--- | Value-level representation of a field of type 'b' belonging to 'a'.
-newtype Field a b = Field { name :: FieldName } deriving Generic
-
-instance FieldsOf (Field a b) a b where
-  fieldNames fb = [fb.name]
-
-field :: forall f a b. (HasField f a b, HasFieldName f) => Field a b
+-- | A named field of type 'b' belonging to 'a'.
+field :: forall f a b. (HasField f a b, HasFieldName f) => Field' a (One b)
 field = Field $ fieldName @f
 
-newtype F2 a b c = F2 (Field a b, Field a c)
+-- | A named fields of type 'b' belonging to 'a', with ordering 'o'.
+order
+  :: forall f (o :: Order) a b
+  . (HasField f a b, HasFieldName f)
+  => FieldOrder a (One o)
+order = Field (fieldName @f)
 
-instance FieldsOf (F2 a b c) a (b, c) where
-  fieldNames (F2 (fb, fc)) = [fb.name, fc.name]
+-- | Cons fields together.
+(/\) :: Field' a (One b) -> Field' a bs -> Field' a (L b bs)
+(/\) = FieldCons
 
-field2 :: forall fb fc a b c.
-  ( HasField fb a b, HasFieldName fb
-  , HasField fc a c, HasFieldName fc
-  ) => F2 a b c
-field2 = F2 (field @fb @a @b, field @fc @a @c)
+-- | One or more named fields belonging to 'a'.
+--
+-- Can be used to filter results to only a subset of 'a's fields.
+type Field a (bs :: List Type) = Field' a bs
 
-newtype F3 a b c d = F3 (Field a b, Field a c, Field a d)
+-- | One or more named fields belonging to 'a', with ordering 'o'.
+--
+-- This can be used to order a query of a collection of 'a's.
+type FieldOrder a (os :: List Order) = Field' a os
 
-instance FieldsOf (F3 a b c d) a (b, c, d) where
-  fieldNames (F3 (fb, fc, fd)) = [fb.name, fc.name, fd.name]
+data Field' a x where
+  Field     :: !FieldName           -> Field' a (One b)
+  FieldCons :: !(Field' a (One b)) -> !(Field' a bs) -> Field' a (L b bs)
 
-field3 :: forall fb fc fd a b c d.
-  ( HasField fb a b, HasFieldName fb
-  , HasField fc a c, HasFieldName fc
-  , HasField fd a d, HasFieldName fd
-  ) => F3 a b c d
-field3 = F3 (field @fb @a @b, field @fc @a @c, field @fd @a @d)
+-- TODO the following code should avoid an instance per list length
+
+instance FieldsOf (Field' a (One b)) a b where
+  fieldNames (Field fn) = [fn]
+
+instance FieldsOf (Field' a (L b1 (One b2))) a (b1, b2) where
+  fieldNames (FieldCons f fs) = fieldNames f <> fieldNames fs
+
+instance FieldsOf (Field' a (L b1 (L b2 (One b3)))) a (b1, b2, b3) where
+  fieldNames (FieldCons f fs) = fieldNames f <> fieldNames fs
+
+instance FieldsOf (Field' a (L b1 (L b2 (L b3 (One b4))))) a (b1, b2, b3, b4) where
+  fieldNames (FieldCons f fs) = fieldNames f <> fieldNames fs
+
+class    SingOrder o    where singOrder :: Order
+instance SingOrder Asc  where singOrder =  Asc
+instance SingOrder Desc where singOrder =  Desc
+
+-- TODO the following code should avoid an instance per list length
+
+instance SingOrder o => OrderedFieldsOf (Field' a (One o)) a where
+  orderedFieldNames (Field fn) = OrderedFields [(fn, singOrder @o)]
+
+instance (SingOrder o1, SingOrder o2) => OrderedFieldsOf (Field' a (L o1 (One o2)) ) a where
+  orderedFieldNames (FieldCons (Field f1) (Field f2)) = OrderedFields [(f1, singOrder @o1), (f2, singOrder @o2)]
+
+instance (SingOrder o1, SingOrder o2, SingOrder o3) => OrderedFieldsOf (Field' a (L o1 (L o2 (One o3))) ) a where
+  orderedFieldNames (FieldCons (Field f1) (FieldCons (Field f2) (Field f3))) = OrderedFields [(f1, singOrder @o1), (f2, singOrder @o2), (f3, singOrder @o3)]

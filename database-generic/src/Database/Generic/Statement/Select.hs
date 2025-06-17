@@ -6,9 +6,8 @@ import Data.Aeson qualified as Aeson
 import Database.Generic.Entity.DbTypes (DbValue)
 import Database.Generic.Entity.EntityName (EntityName, HasEntityName)
 import Database.Generic.Entity.EntityName qualified as Entity
-import Database.Generic.Entity.FieldName (FieldName)
 import Database.Generic.Entity.PrimaryKey as X (PrimaryKey')
-import Database.Generic.Statement.Fields (Fields(..), fieldNames)
+import Database.Generic.Statement.Fields (Fields(..), OrderedFields(..), fieldNames, orderedFieldNames)
 import Database.Generic.Statement.Limit (Limit, Limitable(..), Offset)
 import Database.Generic.Statement.OrderBy (IsOrderedBy, OrderBy(..), ModifyOrderedBy)
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
@@ -31,7 +30,7 @@ data Select' = Select'
   , from    :: !EntityName
   , limit   :: !(Maybe Limit)
   , offset  :: !(Maybe Offset)
-  , orderBy :: ![FieldName]
+  , orderBy :: !OrderedFields
   , where'  :: !(Maybe Where)
   } deriving (Eq, Generic, Show)
 
@@ -51,13 +50,13 @@ instance Limitable (Select Many fs a True) where
   limitOffsetMay l offset (Select s) = Select s { limit = Just l, offset }
 
 instance OrderBy (Select o fs a ob) where
-  orderBy fs (Select s) = Select s { orderBy = fieldNames fs }
+  orderBy fs (Select s) = Select s { orderBy = orderedFieldNames fs }
 
 instance ReturningFields (Select o a a ob) where
   returningFields (Select Select' {..}) fs = Select Select'
     { fields = Some $ fieldNames fs, .. }
 
-instance Serialize DbValue db => Serialize Select' db where
+instance (Serialize DbValue db, Serialize OrderedFields db) => Serialize Select' db where
   serialize s = Serialize.statement $ unwords $ catMaybes
     [ Just "SELECT"
     , Just $ serialize s.fields
@@ -65,8 +64,8 @@ instance Serialize DbValue db => Serialize Select' db where
     , Just $ W.from s.from
     , s.where' <&> \w -> "WHERE " <> serialize @_ @db w
     , case s.orderBy of
-        []     -> Nothing
-        fields -> Just $ "ORDER BY " <> serialize (Some fields)
+        (OrderedFields []) -> Nothing
+        fields             -> Just $ "ORDER BY " <> serialize @_ @db fields
     , s.limit <&> \l -> "LIMIT " <> show l
     , s.offset <&> \o -> "OFFSET " <> show o
     ]
@@ -80,7 +79,7 @@ selectAll = Select Select'
   , from    = Entity.entityName @a
   , limit   = Nothing
   , offset  = Nothing
-  , orderBy = []
+  , orderBy = OrderedFields []
   , where'  = Nothing
   }
 
@@ -91,6 +90,6 @@ selectById b = Select Select'
   , from    = Entity.entityName @a
   , limit   = Nothing
   , offset  = Nothing
-  , orderBy = []
+  , orderBy = OrderedFields []
   , where'  = Just $ idEquals @a b
   }

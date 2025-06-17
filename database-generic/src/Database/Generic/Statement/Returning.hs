@@ -16,7 +16,7 @@ class Returning s1 s2 | s1 -> s2 where
 
 class ReturningFields s where
   -- | Update a statement 's' to return fields 'fs' (parsed into 'a's).
-  returningFields :: forall fs a. (FieldsOf fs (Row s) a)
+  returningFields :: forall fs a. FieldsOf fs (Row s) a
     => s                    -- ^ The original statement.
     -> fs                   -- ^ Fields to select, parsed into 'a's.
     -> ModifyReturnType s a -- ^ Statement now returning 'a's.

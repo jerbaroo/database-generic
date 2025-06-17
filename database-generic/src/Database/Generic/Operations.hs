@@ -8,7 +8,7 @@ import Database.Generic.Prelude
 import Database.Generic.Statement (Statement(..), ToStatement(..))
 import Database.Generic.Statement qualified as Statement
 import Database.Generic.Statement.Output (HasOutputType, OutputT, ParseOutput(..))
-import Database.Generic.Statement.Type (StatementType(..), Cons)
+import Database.Generic.Statement.Type (List(..), StatementType(..))
 import Database.Generic.Statement.Tx qualified as Tx
 import Database.Generic.Transaction (Tx, runTx)
 
@@ -30,30 +30,30 @@ execute =
 -- | Like 'execute' but each 'Statement' is appended with a commit statement.
 executeTx :: forall m r s db.
   ( Database db
-  , HasOutputType (Cons CommitTx s)
+  , HasOutputType (L CommitTx s)
   , MonadDb m db
   , MonadDbWithConn m (C m db)
-  , ParseOutput (DbV db) (Cons CommitTx s)
+  , ParseOutput (DbV db) (L CommitTx s)
   , ToStatement r
   , s ~ S r
   )
   => r
-  -> m (ExecuteReturns m db (OutputT (Cons CommitTx s)))
+  -> m (ExecuteReturns m db (OutputT (L CommitTx s)))
 executeTx =
   fmap extract . withDbConn . flip executeAndParse . pure . Statement.commitTx . statement
 
 -- | Like 'executeTx' but shape of input and output is of type 't'.
 executeTxs :: forall m r s db.
   ( Database db
-  , HasOutputType (Cons CommitTx s)
+  , HasOutputType (L CommitTx s)
   , MonadDb m db
   , MonadDbNewConn m (C m db)
-  , ParseOutput (DbV db) (Cons CommitTx s)
+  , ParseOutput (DbV db) (L CommitTx s)
   , ToStatement r
   , s ~ S r
   )
   => (T m db) r
-  -> m ((T m db) (ExecuteReturns m db (OutputT (Cons CommitTx s))))
+  -> m ((T m db) (ExecuteReturns m db (OutputT (L CommitTx s))))
 executeTxs =
   (newDbConn >>=) . flip executeAndParse . fmap (Statement.commitTx . statement)
 

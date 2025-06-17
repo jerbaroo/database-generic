@@ -1,9 +1,7 @@
 -- This tutorial uses GHC2024.
 
 {-# LANGUAGE BlockArguments      #-}
-{-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE DeriveAnyClass      #-}
-{-# LANGUAGE OverloadedLabels    #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE TypeFamilies        #-}
 
@@ -25,7 +23,6 @@ import Database.HDBC.PostgreSQL qualified as PSQL
 import Database.PostgreSQL.Simple.Options as PSQL
 import GHC.Generics (Generic)
 import Witch (from)
-import Database.Generic.Statement.Fields (Field'(FieldCons), (/\))
 
 -- | Data type we want to persist.
 data Person = Person { age :: !Int64, name :: !String }
@@ -97,14 +94,14 @@ main = do
     selectAll @Person ==> (field @"age" /\ field @"name")
 
   info "Select all, order by age" $
-    orderBy (fieldOrder @"age" @Desc) $ selectAll @Person
+    orderBy (order @"age" @Desc) $ selectAll @Person
 
-  -- info "Select all, limit 1" $
-  --   limit 1 $ orderBy (fieldOrder @"name" @Asc) $ selectAll @Person
+  info "Select all, limit 1" $
+    limit 1 $ orderBy (order @"name" @Asc) $ selectAll @Person
 
   info "Select all, order by (name desc, age asc), limit 1, offset 2"
-    $ limitOffset 5 0
-    $ orderBy (fieldOrder @"age" @Asc /\ fieldOrder @"name" @Asc)
+    $ limitOffset 1 2
+    $ orderBy (order @"age" @Asc /\ order @"name" @Asc)
     $ selectAll @Person
 
   info "Select specific fields by ID" $

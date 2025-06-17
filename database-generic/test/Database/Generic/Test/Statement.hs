@@ -91,7 +91,7 @@ deleteByIdReturning = returning $ deleteById "john"
 -- | This is a test that 'returningFields' modifies the type correctly.
 deleteByIdReturningTwoFields :: Delete One (Just (Int64, String)) Person
 deleteByIdReturningTwoFields =
-  returningFields (deleteById "john") $ field2 @"age" @"name"
+  returningFields (deleteById "john") $ field @"age" /\ field @"name"
 
 deleteTests :: TestTree
 deleteTests = testGroup "Delete statement tests"
@@ -119,7 +119,7 @@ selectAllPerson = W.from Select'
 -- | This is a test that 'O.orderBy' modifies the type correctly.
 selectAllPersonOrderByName :: Select Many Person Person True
 selectAllPersonOrderByName =
-  O.orderBy (fieldOrder @"name" @Asc) $ selectAll @Person
+  O.orderBy (order @"name" @Asc) $ selectAll @Person
 
 selectByIdPerson :: Select One Person Person False
 selectByIdPerson = W.from Select'
@@ -145,6 +145,7 @@ selectTests = testGroup "Select statement tests"
       selectAllPersonPG l o == serialize @_ @PostgreSQL
         (into @Select'
            $ limitOffsetMay l o
-           $ O.orderBy (fieldOrder @"age" @Asc) $ selectAll @Person
+           $ O.orderBy (order @"age" @Asc)
+           $ selectAll @Person
         )
   ]

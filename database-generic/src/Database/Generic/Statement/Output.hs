@@ -5,7 +5,7 @@ module Database.Generic.Statement.Output where
 import Data.Aeson qualified as Aeson
 import Database.Generic.Prelude
 import Database.Generic.Entity.FromDb (FromDbValues(..))
-import Database.Generic.Statement.Type (StatementType(..))
+import Database.Generic.Statement.Type (Head, List, StatementType(..))
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 
 -- | Output from executing an SQL statement.
@@ -54,12 +54,7 @@ instance HasOutputType (Insert o (Just fs) a) where
 instance HasOutputType (Select o fs a ob) where
   outputType = OutputTypeRows
 
-type Head :: forall a. [a] -> a
-type family Head xs where
-  Head '[a]   = a
-  Head (a:as) = a
-
-instance HasOutputType (Head s) => HasOutputType (s :: [StatementType]) where
+instance HasOutputType (Head s) => HasOutputType (s :: List StatementType) where
   outputType = outputType @(Head s)
 
 data OutputError dbv
@@ -155,6 +150,6 @@ instance forall fs a ob dbv. FromDbValues dbv fs => ParseOutput dbv (Select Many
   parse output                       = Left  $ ExpectedMaybeOne output
 
 -- TODO this needs to be made smarter. Requires knowledge of SQL behaviour.
-instance ParseOutput dbv (Head s) => ParseOutput dbv (s :: [StatementType]) where
+instance ParseOutput dbv (Head s) => ParseOutput dbv (s :: List StatementType) where
   type OutputT s = OutputT (Head s)
   parse = parse @dbv @(Head s)

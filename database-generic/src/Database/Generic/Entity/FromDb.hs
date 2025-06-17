@@ -3,7 +3,7 @@
 module Database.Generic.Entity.FromDb where
 
 import Database.Generic.Entity.DbColumns (HasDbColumns)
-import Database.Generic.Entity.DbTypes (DbT(..), DbValue)
+import Database.Generic.Entity.DbTypes (DbT(..), DbValue, DbValueN)
 import Database.Generic.Prelude
 import Generics.Eot qualified as G
 
@@ -32,6 +32,11 @@ instance FromDbValues DbValue String where
   fromDbValues [DbBytes  b] = from b
   fromDbValues [DbString s] = s
   fromDbValues x = error $ "Error constructing Int64 from " <> show x
+
+instance (FromDbValues DbValue a, Typeable a) => FromDbValues DbValueN (Maybe a) where
+  fromDbValues [Nothing ] = Nothing
+  fromDbValues [Just dbv] = Just $ fromDbValues @DbValue [dbv]
+  fromDbValues x = error $ "Error constructing Maybe " <> showType @a <> " from " <> show x
 
 instance {-# OVERLAPPABLE #-}
   ( G.HasEot a

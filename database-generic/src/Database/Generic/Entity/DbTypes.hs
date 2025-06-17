@@ -8,6 +8,7 @@ import Data.ByteString.Char8 qualified as BS
 import Database.Generic.Prelude
 import Database.HDBC qualified as HDBC
 
+-- | A primitive database type.
 data DbT f
   = DbBool    !(F f Bool)
   | DbBytes   !(F f Bytes)
@@ -18,11 +19,15 @@ data DbT f
 
 type F :: forall f a b. (f :: Type) -> (a :: Type) -> (b :: Type)
 type family F f a where
-  F Id   a = a
-  F Unit _ = Unit
+  F Id       a = a
+  F Unit     _ = Unit
 
 data Unit   = Unit deriving (Aeson.FromJSON, Eq, Generic, Show)
 type DbType = DbT Unit
+
+-- | Slim wrapper over 'DbType' to allow for a nullable flag.
+data DbTypeN = DbTypeN !Bool !DbType
+  deriving (Aeson.FromJSON, Eq, Generic, Show)
 
 deriving instance Aeson.FromJSON (DbT Unit)
 deriving instance Eq             (DbT Unit)
@@ -30,19 +35,27 @@ deriving instance Show           (DbT Unit)
 
 -- TODO should have db as a type parameter?
 class HasDbType a where
-  dbType :: DbType
+  dbType :: DbTypeN
 
 instance HasDbType Bool where
-  dbType = DbBool Unit
+  dbType = DbTypeN False $ DbBool Unit
 
 instance HasDbType Int64 where
-  dbType = DbInt64 Unit
+  dbType = DbTypeN False $ DbInt64 Unit
 
 instance HasDbType String where
-  dbType = DbString Unit
+  dbType = DbTypeN False $ DbString Unit
+
+instance HasDbType a => HasDbType (Maybe a) where
+  dbType = case dbType @a of
+    DbTypeN False t -> DbTypeN True t -- Becomes nullable.
+    x               -> x
 
 data Id
 type DbValue = DbT Id
+
+-- | Slim wrapper over 'DbValue' to allow for nullable values.
+type DbValueN = Maybe DbValue
 
 deriving instance Aeson.FromJSON (DbT Id)
 deriving instance Aeson.ToJSON   (DbT Id)

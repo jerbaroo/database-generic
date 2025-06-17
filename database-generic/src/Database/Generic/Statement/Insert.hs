@@ -5,7 +5,7 @@ module Database.Generic.Statement.Insert where
 import Data.Aeson qualified as Aeson
 import Database.Generic.Entity.DbColumns qualified as Db
 import Database.Generic.Entity.DbColumns (HasDbColumns)
-import Database.Generic.Entity.DbTypes (DbValue)
+import Database.Generic.Entity.DbTypes (DbValueN)
 import Database.Generic.Entity.EntityName (EntityName(..), entityName, HasEntityName)
 import Database.Generic.Entity.FieldName (FieldName)
 import Database.Generic.Entity.ToDb (toDbValues, ToDbValues)
@@ -46,7 +46,7 @@ instance ReturningFields (Insert o r a) where
   returningFields (Insert Insert' {..}) f = Insert Insert'
     { returning = Just $ Some $ Fields.fieldNames f, .. }
 
-instance Serialize DbValue db => Serialize Insert' db where
+instance Serialize DbValueN db => Serialize Insert' db where
   serialize i = unwords $
     [ "INSERT INTO", W.from i.into
     , "(", intercalate ", " $ from <$> i.fieldNames, ") VALUES"

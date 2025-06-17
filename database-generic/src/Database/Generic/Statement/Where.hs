@@ -3,7 +3,7 @@
 module Database.Generic.Statement.Where where
 
 import Data.Aeson qualified as Aeson
-import Database.Generic.Entity.DbTypes (DbValue)
+import Database.Generic.Entity.DbTypes (DbValueN)
 import Database.Generic.Entity.FieldName (FieldName, fieldName, HasFieldName)
 import Database.Generic.Entity.PrimaryKey (PrimaryKey', primaryKeyFieldName)
 import Database.Generic.Entity.ToDb (ToDbValue(..))
@@ -12,14 +12,14 @@ import Database.Generic.Serialize (Serialize(..))
 
 -- | Condition to filter values of type 'a'.
 data Where where
-  And    :: !Where    -> !Where  -> Where
-  Equals :: !FieldName -> !DbValue -> Where
-  IsNull :: !FieldName -> !Bool    -> Where
+  And    :: !Where     -> !Where    -> Where
+  Equals :: !FieldName -> !DbValueN -> Where
+  IsNull :: !FieldName -> !Bool     -> Where
   deriving (Eq, Generic, Show)
 
 instance Aeson.FromJSON Where
 
-instance Serialize DbValue db => Serialize Where db where
+instance Serialize DbValueN db => Serialize Where db where
   serialize (And a b) =
     "(" <> serialize @_ @db a <> " AND " <> serialize @_ @db b <> ")"
   serialize (Equals fName value) = from fName <> "=" <> serialize @_ @db value

@@ -3,7 +3,7 @@
 module Database.Generic.Entity.ToDb where
 
 import Database.Generic.Entity.DbColumns (HasDbColumns)
-import Database.Generic.Entity.DbTypes (DbValue)
+import Database.Generic.Entity.DbTypes (DbValue, DbValueN)
 import Database.Generic.Prelude
 import Generics.Eot qualified as G
 
@@ -13,14 +13,17 @@ instance Exception ToDbValuesError
 
 -- | Values that can be converted into a single 'DbValue'.
 class ToDbValue a where
-  toDbValue :: a -> DbValue
+  toDbValue :: a -> DbValueN
 
 instance {-# OVERLAPPABLE #-} From a DbValue => ToDbValue a where
-  toDbValue = from
+  toDbValue = Just . from
+
+instance {-# OVERLAPPABLE #-} From a DbValue => ToDbValue (Maybe a) where
+  toDbValue = fmap from
 
 -- | Values that can be converted into a list of 'DbValue'.
 class ToDbValues a where
-  toDbValues :: a -> [DbValue]
+  toDbValues :: a -> [DbValueN]
 
 instance {-# OVERLAPPABLE #-}
   ( G.HasEot a
@@ -32,7 +35,7 @@ instance {-# OVERLAPPABLE #-}
 
 -- | Typeclass for generic implementation of 'ToDbValues'.
 class GToDbValues a where
-  gToDbValues :: a -> [DbValue]
+  gToDbValues :: a -> [DbValueN]
 
 -- | Convert the first data constructor's fields to '[DbValue]'.
 --

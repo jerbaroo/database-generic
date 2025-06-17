@@ -3,7 +3,7 @@
 module Database.Generic.Statement.Select where
 
 import Data.Aeson qualified as Aeson
-import Database.Generic.Entity.DbTypes (DbValue)
+import Database.Generic.Entity.DbTypes (DbValueN)
 import Database.Generic.Entity.EntityName (EntityName, HasEntityName)
 import Database.Generic.Entity.EntityName qualified as Entity
 import Database.Generic.Entity.PrimaryKey as X (PrimaryKey')
@@ -56,7 +56,7 @@ instance ReturningFields (Select o a a ob) where
   returningFields (Select Select' {..}) fs = Select Select'
     { fields = Some $ fieldNames fs, .. }
 
-instance (Serialize DbValue db, Serialize OrderedFields db) => Serialize Select' db where
+instance (Serialize DbValueN db, Serialize OrderedFields db) => Serialize Select' db where
   serialize s = Serialize.statement $ unwords $ catMaybes
     [ Just "SELECT"
     , Just $ serialize s.fields

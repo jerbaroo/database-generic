@@ -2,6 +2,7 @@
 
 module Database.Generic.Entity.ToDb where
 
+import Database.Generic.Entity.DbColumns (HasDbColumns)
 import Database.Generic.Entity.DbTypes (DbValue)
 import Database.Generic.Prelude
 import Generics.Eot qualified as G
@@ -21,7 +22,12 @@ instance {-# OVERLAPPABLE #-} From a DbValue => ToDbValue a where
 class ToDbValues a where
   toDbValues :: a -> [DbValue]
 
-instance {-# OVERLAPPABLE #-} (G.HasEot a, GToDbValues (G.Eot a)) => ToDbValues a where
+instance {-# OVERLAPPABLE #-}
+  ( G.HasEot a
+  , GToDbValues (G.Eot a)
+  , HasDbColumns a -- Only included to ensure that 'ToDbValues' instances aren't
+                   -- derived for simple datatypes such as 'Bool'.
+  ) => ToDbValues a where
   toDbValues = gToDbValues . G.toEot
 
 -- | Typeclass for generic implementation of 'ToDbValues'.

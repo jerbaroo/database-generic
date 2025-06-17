@@ -25,7 +25,7 @@ import GHC.Generics (Generic)
 import Witch (from)
 
 -- | Data type we want to persist.
-data Person = Person { age :: !Int64, name :: !String }
+data Person = Person { age :: !Int64, name :: !String, ownsDog :: !Bool }
   deriving (Generic, PrimaryKey "name", Show)
 
 -- | Connection string to access our PostgreSQL DB.
@@ -68,7 +68,7 @@ instance MonadDbNewConn AppM PSQL.Connection where
 main :: IO ()
 main = do
   let c        = connStr "127.0.0.1" 5432 "postgres" "demo" "demo"
-  let john     = Person 70 "John"
+  let john     = Person 70 "John" False
   let info m s = do
         putStrLn $ "\n" <> m
         print =<< runAppM c (tx $ execute s)
@@ -76,16 +76,16 @@ main = do
   info "Create table if not exists" $ createTable @Person True
   info "Delete all" $ deleteAll @Person -- Clear table before tutorial.
 
-  info "Insert one" $ returning $ insertOne $ john
+  info "Insert one" $ insertOne john
 
   info "Insert many" $
-    insertMany [Person 25 "Alice", Person 25 "Bob"]
+    insertMany [Person 25 "Alice" True, Person 25 "Bob" False]
 
   info "Insert many, returning" $
-    returning $ insertMany [Person 26 "Charlie", Person 26 "Dee"]
+    returning $ insertMany [Person 26 "Charlie" False, Person 26 "Dee" True]
 
   info "Insert many, returning age" $
-    insertMany [Person 27 "Enid", Person 27 "Flavio"] ==> field @"age"
+    insertMany [Person 27 "Enid" False, Person 27 "Flavio" True] ==> field @"age"
 
   info "Select all" $ selectAll @Person
 

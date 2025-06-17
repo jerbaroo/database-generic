@@ -5,12 +5,12 @@ module Database.Generic.Entity.DbTypes where
 import Data.Aeson qualified as Aeson
 import Data.ByteString (ByteString)
 import Data.ByteString.Char8 qualified as BS
-import Database.Generic.Entity.FromDb (FromDbValues(..))
 import Database.Generic.Prelude
 import Database.HDBC qualified as HDBC
 
 data DbT f
-  = DbBytes   !(F f Bytes)
+  = DbBool    !(F f Bool)
+  | DbBytes   !(F f Bytes)
   | DbInt64   !(F f Int64)
   | DbInteger !(F f Integer)
   | DbString  !(F f String)
@@ -32,6 +32,9 @@ deriving instance Show           (DbT Unit)
 class HasDbType a where
   dbType :: DbType
 
+instance HasDbType Bool where
+  dbType = DbBool Unit
+
 instance HasDbType Int64 where
   dbType = DbInt64 Unit
 
@@ -46,20 +49,12 @@ deriving instance Aeson.ToJSON   (DbT Id)
 deriving instance Eq             (DbT Id)
 deriving instance Show           (DbT Id)
 
-instance From Int64 DbValue  where from = DbInt64
+instance From Bool   DbValue where from = DbBool
+instance From Int64  DbValue where from = DbInt64
 instance From String DbValue where from = DbString
 
-instance FromDbValues DbValue Int64 where
-  fromDbValues [DbInt64   i] = i
-  fromDbValues [DbInteger i] = unsafeFrom i
-  fromDbValues x = error $ "Error constructing Int64 from " <> show x
-
-instance FromDbValues DbValue String where
-  fromDbValues [DbBytes  b] = from b
-  fromDbValues [DbString s] = s
-  fromDbValues x = error $ "Error constructing Int64 from " <> show x
-
 instance From HDBC.SqlValue DbValue where
+  from (HDBC.SqlBool       b) = DbBool b
   from (HDBC.SqlString     s) = DbString s
   from (HDBC.SqlByteString b) = DbBytes $ Bytes b
   from (HDBC.SqlInt64      i) = DbInt64 i

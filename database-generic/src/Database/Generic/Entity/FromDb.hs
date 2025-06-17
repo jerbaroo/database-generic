@@ -3,6 +3,8 @@
 module Database.Generic.Entity.FromDb where
 
 import Database.Generic.Prelude
+import Database.Generic.Entity.DbColumns (HasDbColumns)
+import Database.Generic.Entity.DbTypes (DbT(..), DbValue)
 import Generics.Eot qualified as G
 
 data FromDbError dbv
@@ -17,7 +19,26 @@ instance (Show dbv, Typeable dbv) => Exception (FromDbError dbv)
 class FromDbValues dbv a where
   fromDbValues :: [dbv] -> a
 
-instance {-# OVERLAPPABLE #-} (G.HasEot a, GFromDbValues dbv (G.Eot a)) => FromDbValues dbv a where
+instance FromDbValues DbValue Bool where
+  fromDbValues [DbBool b] = b
+  fromDbValues x = error $ "Error constructing Bool from " <> show x
+
+instance FromDbValues DbValue Int64 where
+  fromDbValues [DbInt64   i] = i
+  fromDbValues [DbInteger i] = unsafeFrom i
+  fromDbValues x = error $ "Error constructing Int64 from " <> show x
+
+instance FromDbValues DbValue String where
+  fromDbValues [DbBytes  b] = from b
+  fromDbValues [DbString s] = s
+  fromDbValues x = error $ "Error constructing Int64 from " <> show x
+
+instance {-# OVERLAPPABLE #-}
+  ( G.HasEot a
+  , GFromDbValues dbv (G.Eot a)
+  , HasDbColumns a -- Only included to ensure that 'FromDbValues' instances aren't
+                   -- derived for simple datatypes such as 'Bool'.
+  ) => FromDbValues dbv a where
   fromDbValues = G.fromEot . gFromDbValues
 
 -- | Typeclass for generic implementation of 'FromDbValues'.

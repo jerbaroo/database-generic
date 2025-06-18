@@ -6,7 +6,6 @@ import Data.Aeson qualified as Aeson
 import Data.ByteString (ByteString)
 import Data.ByteString.Char8 qualified as BS
 import Database.Generic.Prelude
-import Database.HDBC qualified as HDBC
 
 -- | A primitive database type.
 data DbT f
@@ -62,28 +61,20 @@ deriving instance Aeson.ToJSON   (DbT Id)
 deriving instance Eq             (DbT Id)
 deriving instance Show           (DbT Id)
 
-instance From Bool   DbValue where from = DbBool
-instance From Int64  DbValue where from = DbInt64
-instance From String DbValue where from = DbString
-
-instance From HDBC.SqlValue DbValue where
-  from (HDBC.SqlBool       b) = DbBool b
-  from (HDBC.SqlString     s) = DbString s
-  from (HDBC.SqlByteString b) = DbBytes $ Bytes b
-  from (HDBC.SqlInt64      i) = DbInt64 i
-  from (HDBC.SqlInteger    i) = DbInteger i
-  from x = error $ "Error 'From HDBC.SqlValue DbValue': " <> show x
+-- instance From Bool   DbValue where from = DbBool
+-- instance From Int64  DbValue where from = DbInt64
+-- instance From String DbValue where from = DbString
 
 newtype Bytes = Bytes ByteString deriving (Eq, Show)
 
 instance Aeson.FromJSON Bytes where
-  parseJSON = fmap (from @String) <$> Aeson.parseJSON
+  parseJSON = fmap (Bytes . BS.pack) <$> Aeson.parseJSON
 
 instance Aeson.ToJSON Bytes where
   toJSON (Bytes b)= Aeson.toJSON $ BS.unpack b
 
-instance From Bytes String where
-  from (Bytes b) = BS.unpack b
+-- instance From Bytes String where
+--   from (Bytes b) = BS.unpack b
 
-instance From String Bytes where
-  from = Bytes . BS.pack
+-- instance From String Bytes where
+--   from = Bytes . BS.pack

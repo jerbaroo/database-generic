@@ -5,6 +5,7 @@ import Database.Generic.Prelude
 import Database.Generic.Statement (Statement)
 import Database.Generic.Statement.NoType qualified as NT
 import Database.Generic.Statement.Output (HasOutputType, Output, OutputError, OutputType, outputType)
+import Witch (From(from))
 
 -- | Type synonym to simplify the type of values returned by executing statements.
 type ExecuteReturns m db a = Either (ExecuteError (Error m db) (DbV db)) a

@@ -3,7 +3,7 @@
 module Database.Generic.Entity.ToDb where
 
 import Database.Generic.Entity.DbColumns (HasDbColumns)
-import Database.Generic.Entity.DbTypes (DbValue, DbValueN)
+import Database.Generic.Entity.DbTypes (DbT(..), DbValueN)
 import Database.Generic.Prelude
 import Generics.Eot qualified as G
 
@@ -11,14 +11,19 @@ newtype ToDbValuesError = MoreThanOneConstructor String deriving Show
 
 instance Exception ToDbValuesError
 
--- | Values that can be converted into a single 'DbValue'.
+-- | Values that can be converted into a single 'DbValueN'.
 class ToDbValue a where
   toDbValue :: a -> DbValueN
 
-instance {-# OVERLAPPABLE #-} From a DbValue => ToDbValue a where
-  toDbValue = Just . from
+instance ToDbValue Bool   where toDbValue = Just . DbBool
+instance ToDbValue Int64  where toDbValue = Just . DbInt64
+instance ToDbValue String where toDbValue = Just . DbString
 
--- | Values that can be converted into a list of 'DbValue'.
+instance ToDbValue a => ToDbValue (Maybe a) where
+  toDbValue Nothing  = Nothing
+  toDbValue (Just a) = toDbValue a
+
+-- | Values that can be converted into a list of 'DbValueN'.
 class ToDbValues a where
   toDbValues :: a -> [DbValueN]
 

@@ -11,6 +11,7 @@ import Database.Generic.Entity.PrimaryKey (primaryKeyFieldName, PrimaryKey)
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
+import Witch (From(from))
 
 -- | Create a table for values of type 'a'.
 newtype CreateTable a = CreateTable CreateTable'

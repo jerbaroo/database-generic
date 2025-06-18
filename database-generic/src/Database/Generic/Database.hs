@@ -1,7 +1,7 @@
 module Database.Generic.Database where
 
 import Database.Generic.Prelude
-import Database.Generic.Entity.DbTypes (DbValue)
+import Database.Generic.Entity.DbTypes (DbValueN)
 
 class Database db where
   -- | Type representing one cell in a row, as returned from statement execution.
@@ -12,4 +12,4 @@ class Database db where
 data PostgreSQL
 
 instance Database PostgreSQL where
-  type DbV PostgreSQL = DbValue
+  type DbV PostgreSQL = DbValueN

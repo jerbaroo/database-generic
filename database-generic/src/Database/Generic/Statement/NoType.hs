@@ -13,6 +13,7 @@ import Database.Generic.Statement.Insert qualified as C
 import Database.Generic.Statement.Select qualified as C
 import Database.Generic.Statement.Tx qualified as Tx
 import Database.Generic.Serialize (Serialize(..))
+import Witch (From(from))
 
 -- | Similar to 'Database.Generic.Statement.Statement' but without type info.
 --

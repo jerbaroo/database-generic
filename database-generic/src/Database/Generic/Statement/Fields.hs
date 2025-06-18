@@ -6,7 +6,7 @@ import Database.Generic.Prelude
 import Database.Generic.Statement.Order (Order(..))
 import Database.Generic.Statement.Type (List(..))
 import Database.Generic.Serialize (Serialize(..))
-import Witch qualified as W
+import Witch (from)
 
 -- | Named fields in a statement.
 data Fields = All | Some ![FieldName]
@@ -16,7 +16,7 @@ instance Aeson.FromJSON Fields
 
 instance Serialize Fields db where
   serialize All       = "*"
-  serialize (Some cs) = intercalate ", " $ W.from <$> cs
+  serialize (Some cs) = intercalate ", " $ from <$> cs
 
 -- | Named fields to order by in a statement.
 newtype OrderedFields = OrderedFields [(FieldName, Order)]

@@ -1,5 +1,6 @@
 packages:
   database-generic/
+  database-generic-hdbc/
   database-generic-server/
   database-generic-server-api/
   tutorial/

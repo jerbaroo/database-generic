@@ -11,6 +11,7 @@ import Database.Generic.Statement.Output (HasOutputType, OutputT, ParseOutput(..
 import Database.Generic.Statement.Type (List(..), StatementType(..))
 import Database.Generic.Statement.Tx qualified as Tx
 import Database.Generic.Transaction (Tx, runTx)
+import Witch (From(from))
 
 -- | Convert 'r' to a 'Statement'and execute via current database connection.
 execute :: forall m r s db.

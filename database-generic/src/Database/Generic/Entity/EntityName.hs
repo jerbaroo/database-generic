@@ -2,6 +2,7 @@ module Database.Generic.Entity.EntityName where
 
 import Data.Aeson qualified as Aeson
 import Database.Generic.Prelude
+import Witch (From)
 
 -- | Identifier for a collection in a database (e.g. "Person" table).
 newtype EntityName = EntityName String

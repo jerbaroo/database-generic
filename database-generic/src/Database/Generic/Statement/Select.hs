@@ -17,6 +17,7 @@ import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
 import Database.Generic.Entity.ToDb (ToDbValue)
+import Witch (From)
 import Witch qualified as W
 
 -- | Select one or many values from a collection of 'a'.

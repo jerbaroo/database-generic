@@ -16,7 +16,7 @@ import Database.Generic.Statement.Fields qualified as Fields
 import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType, Returning(..), ReturningFields(..), Row)
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Values (Values(..))
-import Witch qualified as W
+import Witch (From(from))
 
 -- | Insert one or many values of type 'a', maybe returning fields 'fs'.
 newtype Insert (o :: OneOrMany) (r :: Maybe fs) a = Insert Insert'
@@ -48,7 +48,7 @@ instance ReturningFields (Insert o r a) where
 
 instance Serialize DbValueN db => Serialize Insert' db where
   serialize i = unwords $
-    [ "INSERT INTO", W.from i.into
+    [ "INSERT INTO", from i.into
     , "(", intercalate ", " $ from <$> i.fieldNames, ") VALUES"
     , intercalate ", " $ serialize @_ @db <$> i.values
     ]

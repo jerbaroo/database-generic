@@ -1,9 +1,8 @@
 -- This tutorial uses GHC2024.
 
-{-# LANGUAGE BlockArguments      #-}
-{-# LANGUAGE DeriveAnyClass      #-}
-{-# LANGUAGE OverloadedRecordDot #-}
-{-# LANGUAGE TypeFamilies        #-}
+{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE TypeFamilies   #-}
 
 module Main where
 
@@ -14,6 +13,7 @@ import Data.Functor.Identity (Identity(..))
 import Data.Int (Int64)
 import Database.Generic
 import Database.Generic.Database (PostgreSQL)
+import Database.Generic.HDBC ()
 import Database.Generic.Prelude (debug')
 import Database.Generic.Serialize (serialize)
 import Database.Generic.Server qualified as Server
@@ -53,6 +53,7 @@ runAppM e (AppM m) = runReaderT m e
 instance MonadDb AppM PostgreSQL where
   type C AppM PostgreSQL = PSQL.Connection
 
+  -- TODO move to HDBC module
   executeStatement conn (Identity (s, o)) = Identity . Right <$> liftIO do
     let serialized = debug' "Serialized statement" $ serialize @_ @PostgreSQL s
     case debug' "Expected output type" o of

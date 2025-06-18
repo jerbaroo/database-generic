@@ -18,8 +18,8 @@ instance Serialize DbType PostgreSQL where
   serialize (DbString  Unit) = "VARCHAR"
 
 instance Serialize DbTypeN PostgreSQL where
-  serialize (DbTypeN False dbType) = serialize @_ @PostgreSQL dbType <> " NOT NULLABLE"
-  serialize (DbTypeN True  dbType) = serialize @_ @PostgreSQL dbType <> " NULLABLE"
+  serialize (DbTypeN False dbType) = serialize @_ @PostgreSQL dbType <> " NOT NULL"
+  serialize (DbTypeN True  dbType) = serialize @_ @PostgreSQL dbType
 
 instance Serialize DbValue PostgreSQL where
   serialize (DbBool    b)  = show b

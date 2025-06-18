@@ -1,5 +1,5 @@
 cabal-version:      3.4
-name:               tutorial
+name:               database-generic-hdbc
 version:            0.1.0.0
 -- synopsis:
 -- description:
@@ -15,18 +15,23 @@ extra-doc-files:    CHANGELOG.md
 common warnings
     ghc-options: -Wall -Wno-name-shadowing
 
-executable tutorial
+library
     import:           warnings
-    main-is:          Main.hs
+    exposed-modules:  Database.Generic.HDBC
     build-depends:    base,
-                      bytestring,
                       database-generic,
-                      database-generic-hdbc,
-                      database-generic-server,
                       HDBC,
-                      HDBC-postgresql,
-                      mtl,
-                      postgres-options,
                       witch,
-    hs-source-dirs:   tutorial
+    hs-source-dirs:   src
     default-language: GHC2024
+    default-extensions:
+                      AllowAmbiguousTypes,
+                      BlockArguments,
+                      DataKinds,
+                      DefaultSignatures,
+                      DuplicateRecordFields,
+                      FunctionalDependencies,
+                      NoImplicitPrelude,
+                      OverloadedRecordDot,
+                      RecordWildCards,
+                      TypeFamilies,

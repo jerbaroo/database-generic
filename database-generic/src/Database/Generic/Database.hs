@@ -6,7 +6,7 @@ import Database.Generic.Entity.DbTypes (DbValueN)
 class Database db where
   -- | Type representing one cell in a row, as returned from statement execution.
   --
-  -- Needs to be parsable via 'FromDbValues', into the fields of your data types.
+  -- Fields of your data types need to be parsable from this type via 'FromDbValues'.
   type DbV db :: Type
 
 data PostgreSQL

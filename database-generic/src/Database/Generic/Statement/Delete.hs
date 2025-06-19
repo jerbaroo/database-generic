@@ -14,7 +14,6 @@ import Database.Generic.Statement.Fields (Fields(..), fieldNames)
 import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType, Returning(..), ReturningFields(..), Row)
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Where (Where, idEquals)
-import Witch (From)
 import Witch qualified as W
 
 -- | Delete one or many values of type 'a', maybe returning fields 'fs'.

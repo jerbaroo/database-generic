@@ -16,7 +16,6 @@ import Database.Generic.Statement.Fields qualified as Fields
 import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType, Returning(..), ReturningFields(..), Row)
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Values (Values(..))
-import Witch (From(from))
 
 -- | Insert one or many values of type 'a', maybe returning fields 'fs'.
 newtype Insert (o :: OneOrMany) (r :: Maybe fs) a = Insert Insert'

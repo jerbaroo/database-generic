@@ -6,7 +6,6 @@ import Database.Generic.Prelude
 import Database.Generic.Statement.Order (Order(..))
 import Database.Generic.Statement.Type (List(..))
 import Database.Generic.Serialize (Serialize(..))
-import Witch (from)
 
 -- | Named fields in a statement.
 data Fields = All | Some ![FieldName]

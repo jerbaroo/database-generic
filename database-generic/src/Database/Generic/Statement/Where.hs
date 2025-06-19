@@ -9,7 +9,6 @@ import Database.Generic.Entity.PrimaryKey (PrimaryKey', primaryKeyFieldName)
 import Database.Generic.Entity.ToDb (ToDbValue(..))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
-import Witch (from)
 
 -- | Condition to filter values of type 'a'.
 data Where where

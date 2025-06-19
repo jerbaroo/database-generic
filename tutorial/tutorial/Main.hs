@@ -25,7 +25,11 @@ import GHC.Generics (Generic)
 import Witch (from)
 
 -- | Data type we want to persist.
-data Person = Person { age :: !Int64, name :: !String, ownsDog :: !(Maybe Bool) }
+data Person = Person
+  { age     :: !Int64
+  , name    :: !String
+  , ownsDog :: !(Maybe Bool) -- Yes, no, maybe.. I don't know..
+  }
   deriving (Generic, PrimaryKey "name", Show)
 
 -- | Connection string to access our PostgreSQL DB.

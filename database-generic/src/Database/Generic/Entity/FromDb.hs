@@ -3,9 +3,11 @@
 module Database.Generic.Entity.FromDb where
 
 import Database.Generic.Entity.DbColumns (HasDbColumns)
-import Database.Generic.Entity.DbTypes (DbT(..), DbValue)
+import Database.Generic.Entity.DbTypes (Bytes(..), DbT(..), DbValueN)
 import Database.Generic.Prelude
 import Generics.Eot qualified as G
+import GHC.Num (Num(fromInteger))
+import Data.ByteString.Char8 qualified as BS
 
 data FromDbError dbv
   = ErrorConstructing()   ![dbv]
@@ -19,19 +21,24 @@ instance (Show dbv, Typeable dbv) => Exception (FromDbError dbv)
 class FromDbValues dbv a where
   fromDbValues :: [dbv] -> a
 
-instance FromDbValues DbValue Bool where
-  fromDbValues [DbBool b] = b
+instance FromDbValues DbValueN Bool where
+  fromDbValues [Just (DbBool b)] = b
   fromDbValues x = error $ "Error constructing Bool from " <> show x
 
-instance FromDbValues DbValue Int64 where
-  fromDbValues [DbInt64   i] = i
-  fromDbValues [DbInteger i] = unsafeFrom i
+instance FromDbValues DbValueN Int64 where
+  fromDbValues [Just (DbInt64   i)] = i
+  fromDbValues [Just (DbInteger i)] = fromInteger i
   fromDbValues x = error $ "Error constructing Int64 from " <> show x
 
-instance FromDbValues DbValue String where
-  fromDbValues [DbBytes  b] = from b
-  fromDbValues [DbString s] = s
+instance FromDbValues DbValueN String where
+  fromDbValues [Just (DbBytes  (Bytes b))] = BS.unpack b
+  fromDbValues [Just (DbString s)] = s
   fromDbValues x = error $ "Error constructing Int64 from " <> show x
+
+instance (FromDbValues DbValueN a, Typeable a) => FromDbValues DbValueN (Maybe a) where
+  fromDbValues [Nothing ] = Nothing
+  fromDbValues [Just dbv] = Just $ fromDbValues @DbValueN @a [Just dbv]
+  fromDbValues x = error $ "Error constructing Maybe " <> showType @a <> " from " <> show x
 
 instance {-# OVERLAPPABLE #-}
   ( G.HasEot a

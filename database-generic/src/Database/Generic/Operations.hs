@@ -1,4 +1,3 @@
--- TODO docs
 module Database.Generic.Operations where
 
 import Database.Generic.Class (ExecuteReturns, MonadDb(..), MonadDbHasConn(..), MonadDbNewConn(..), MonadDbWithConn(..))

@@ -6,7 +6,6 @@ import Data.Aeson qualified as Aeson
 import Data.ByteString (ByteString)
 import Data.ByteString.Char8 qualified as BS
 import Database.Generic.Prelude
-import Database.HDBC qualified as HDBC
 
 data DbT f
   = DbBool    !(F f Bool)
@@ -21,8 +20,13 @@ type family F f a where
   F Id   a = a
   F Unit _ = Unit
 
-data Unit   = Unit deriving (Aeson.FromJSON, Eq, Generic, Show)
+-- | A database type.
 type DbType = DbT Unit
+data Unit   = Unit deriving (Aeson.FromJSON, Eq, Generic, Show)
+
+-- | Slim wrapper over 'DbType' to allow for a nullable flag.
+data DbTypeN = DbTypeN !Bool !DbType
+  deriving (Aeson.FromJSON, Eq, Generic, Show)
 
 deriving instance Aeson.FromJSON (DbT Unit)
 deriving instance Eq             (DbT Unit)
@@ -30,47 +34,44 @@ deriving instance Show           (DbT Unit)
 
 -- TODO should have db as a type parameter?
 class HasDbType a where
-  dbType :: DbType
+  dbType :: DbTypeN
 
 instance HasDbType Bool where
-  dbType = DbBool Unit
+  dbType = DbTypeN False $ DbBool Unit
 
 instance HasDbType Int64 where
-  dbType = DbInt64 Unit
+  dbType = DbTypeN False $ DbInt64 Unit
 
 instance HasDbType String where
-  dbType = DbString Unit
+  dbType = DbTypeN False $ DbString Unit
 
-data Id
+instance HasDbType a => HasDbType (Maybe a) where
+  dbType = case dbType @a of
+    DbTypeN False t -> DbTypeN True t -- Becomes nullable.
+    x               -> x
+
+-- | A database value.
 type DbValue = DbT Id
+data Id
+
+-- | Slim wrapper over 'DbValue' to allow for nullable values.
+type DbValueN = Maybe DbValue
 
 deriving instance Aeson.FromJSON (DbT Id)
 deriving instance Aeson.ToJSON   (DbT Id)
 deriving instance Eq             (DbT Id)
 deriving instance Show           (DbT Id)
 
-instance From Bool   DbValue where from = DbBool
-instance From Int64  DbValue where from = DbInt64
-instance From String DbValue where from = DbString
-
-instance From HDBC.SqlValue DbValue where
-  from (HDBC.SqlBool       b) = DbBool b
-  from (HDBC.SqlString     s) = DbString s
-  from (HDBC.SqlByteString b) = DbBytes $ Bytes b
-  from (HDBC.SqlInt64      i) = DbInt64 i
-  from (HDBC.SqlInteger    i) = DbInteger i
-  from x = error $ "Error 'From HDBC.SqlValue DbValue': " <> show x
-
 newtype Bytes = Bytes ByteString deriving (Eq, Show)
 
 instance Aeson.FromJSON Bytes where
-  parseJSON = fmap (from @String) <$> Aeson.parseJSON
+  parseJSON = fmap (Bytes . BS.pack) <$> Aeson.parseJSON
 
 instance Aeson.ToJSON Bytes where
   toJSON (Bytes b)= Aeson.toJSON $ BS.unpack b
 
-instance From Bytes String where
-  from (Bytes b) = BS.unpack b
+-- instance From Bytes String where
+--   from (Bytes b) = BS.unpack b
 
-instance From String Bytes where
-  from = Bytes . BS.pack
+-- instance From String Bytes where
+--   from = Bytes . BS.pack

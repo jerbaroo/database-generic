@@ -3,7 +3,7 @@
 module Database.Generic.Statement.NoType where
 
 import Data.Aeson qualified as Aeson
-import Database.Generic.Entity.DbTypes (DbType, DbValue)
+import Database.Generic.Entity.DbTypes (DbTypeN, DbValueN)
 import Database.Generic.Prelude
 import Database.Generic.Statement qualified as S
 import Database.Generic.Statement.CreateTable qualified as C
@@ -41,8 +41,8 @@ instance From (S.Statement s) Statement where
   from (S.Cons s1 s2) = Cons (from s1) (from s2)
 
 instance
-  ( Serialize DbType db
-  , Serialize DbValue db
+  ( Serialize DbTypeN db
+  , Serialize DbValueN db
   , Serialize OrderedFields db
   ) => Serialize Statement db where
   serialize (StatementBeginTx     s) = serialize @_ @db s

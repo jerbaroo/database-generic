@@ -21,6 +21,7 @@ executable tutorial
     build-depends:    base,
                       bytestring,
                       database-generic,
+                      database-generic-hdbc,
                       database-generic-server,
                       HDBC,
                       HDBC-postgresql,

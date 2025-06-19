@@ -1,9 +1,8 @@
 -- This tutorial uses GHC2024.
 
-{-# LANGUAGE BlockArguments      #-}
-{-# LANGUAGE DeriveAnyClass      #-}
-{-# LANGUAGE OverloadedRecordDot #-}
-{-# LANGUAGE TypeFamilies        #-}
+{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE TypeFamilies   #-}
 
 module Main where
 
@@ -14,6 +13,7 @@ import Data.Functor.Identity (Identity(..))
 import Data.Int (Int64)
 import Database.Generic
 import Database.Generic.Database (PostgreSQL)
+import Database.Generic.HDBC ()
 import Database.Generic.Prelude (debug')
 import Database.Generic.Serialize (serialize)
 import Database.Generic.Server qualified as Server
@@ -25,7 +25,11 @@ import GHC.Generics (Generic)
 import Witch (from)
 
 -- | Data type we want to persist.
-data Person = Person { age :: !Int64, name :: !String, ownsDog :: !Bool }
+data Person = Person
+  { age     :: !Int64
+  , name    :: !String
+  , ownsDog :: !(Maybe Bool) -- Yes, no, maybe.. I don't know..
+  }
   deriving (Generic, PrimaryKey "name", Show)
 
 -- | Connection string to access our PostgreSQL DB.
@@ -53,6 +57,7 @@ runAppM e (AppM m) = runReaderT m e
 instance MonadDb AppM PostgreSQL where
   type C AppM PostgreSQL = PSQL.Connection
 
+  -- TODO move to HDBC module
   executeStatement conn (Identity (s, o)) = Identity . Right <$> liftIO do
     let serialized = debug' "Serialized statement" $ serialize @_ @PostgreSQL s
     case debug' "Expected output type" o of
@@ -68,7 +73,7 @@ instance MonadDbNewConn AppM PSQL.Connection where
 main :: IO ()
 main = do
   let c        = connStr "127.0.0.1" 5432 "postgres" "demo" "demo"
-  let john     = Person 70 "John" False
+  let john     = Person 70 "John" $ Just False
   let info m s = do
         putStrLn $ "\n" <> m
         print =<< runAppM c (tx $ execute s)
@@ -79,13 +84,13 @@ main = do
   info "Insert one" $ insertOne john
 
   info "Insert many" $
-    insertMany [Person 25 "Alice" True, Person 25 "Bob" False]
+    insertMany [Person 25 "Alice" $ Just True, Person 25 "Bob" Nothing]
 
   info "Insert many, returning" $
-    returning $ insertMany [Person 26 "Charlie" False, Person 26 "Dee" True]
+    returning $ insertMany [Person 26 "Charlie" Nothing, Person 26 "Dee" $ Just False]
 
   info "Insert many, returning age" $
-    insertMany [Person 27 "Enid" False, Person 27 "Flavio" True] ==> field @"age"
+    insertMany [Person 27 "Enid" Nothing, Person 27 "Flavio" Nothing] ==> field @"age"
 
   info "Select all" $ selectAll @Person
 

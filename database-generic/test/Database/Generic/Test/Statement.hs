@@ -5,7 +5,7 @@ module Database.Generic.Test.Statement where
 
 import Database.Generic
 import Database.Generic.Database (PostgreSQL)
-import Database.Generic.Entity.DbTypes (DbT (DbInt64, DbString), Unit (Unit))
+import Database.Generic.Entity.DbTypes (DbT(..), Unit(Unit), DbTypeN (..))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
@@ -31,7 +31,7 @@ statementTests = testGroup "Statement tests"
 
 -- * Helpers.
 
-data Person = Person { age :: !Int64, name :: !String }
+data Person = Person { age :: !Int64, name :: !String, ownsDog :: !(Maybe Bool)}
   deriving (Eq, Generic, PrimaryKey "name", Show)
 
 -- * Create table tests.
@@ -43,12 +43,17 @@ createTablePerson ifNotExists =
         [ CreateTableColumn
             { name = "age"
             , primary = False
-            , type' = DbInt64 Unit
+            , type' = DbTypeN False $ DbInt64 Unit
             }
         , CreateTableColumn
             { name = "name"
             , primary = True
-            , type' = DbString Unit
+            , type' = DbTypeN False $ DbString Unit
+            }
+        , CreateTableColumn
+            { name = "ownsdog"
+            , primary = False
+            , type' = DbTypeN True $ DbBool Unit
             }
         ]
     , ifNotExists
@@ -59,7 +64,7 @@ createTablePersonPG :: Bool -> String
 createTablePersonPG ifNotExists = unwords $ catMaybes
   [ Just "CREATE TABLE"
   , if ifNotExists then Just "IF NOT EXISTS" else Nothing
-  , Just "person (age BIGINT, name VARCHAR PRIMARY KEY);"
+  , Just "person (age BIGINT NOT NULL, name VARCHAR NOT NULL PRIMARY KEY, ownsdog BOOLEAN);"
   ]
 
 createTableTests :: TestTree
@@ -68,7 +73,7 @@ createTableTests = testGroup "Create table statement tests"
       createTable @Person b == createTablePerson b
   , SC.testProperty "serialize CreateTable Person" \b ->
       serialize @_ @PostgreSQL (into @CreateTable' $ createTable @Person b)
-      == createTablePersonPG b
+        == createTablePersonPG b
   ]
 
 -- * Delete tests.
@@ -128,7 +133,7 @@ selectByIdPerson = W.from Select'
   , limit   = Nothing
   , offset  = Nothing
   , orderBy = OrderedFields []
-  , where'  = Just $ Equals "name" $ DbString "John"
+  , where'  = Just $ Equals "name" $ Just $ DbString "John"
   }
 
 selectAllPersonPG :: Limit -> Maybe Offset -> String

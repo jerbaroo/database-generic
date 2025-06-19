@@ -2,7 +2,6 @@ module Database.Generic.Entity.FieldName where
 
 import Data.Aeson qualified as Aeson
 import Database.Generic.Prelude
-import Witch.Utility (over)
 
 -- | Name of a field of an 'Entity' (column of a database collection).
 --

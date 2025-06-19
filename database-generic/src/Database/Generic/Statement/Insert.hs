@@ -5,7 +5,7 @@ module Database.Generic.Statement.Insert where
 import Data.Aeson qualified as Aeson
 import Database.Generic.Entity.DbColumns qualified as Db
 import Database.Generic.Entity.DbColumns (HasDbColumns)
-import Database.Generic.Entity.DbTypes (DbValue)
+import Database.Generic.Entity.DbTypes (DbValueN)
 import Database.Generic.Entity.EntityName (EntityName(..), entityName, HasEntityName)
 import Database.Generic.Entity.FieldName (FieldName)
 import Database.Generic.Entity.ToDb (toDbValues, ToDbValues)
@@ -16,7 +16,6 @@ import Database.Generic.Statement.Fields qualified as Fields
 import Database.Generic.Statement.Returning (IsReturning, ModifyReturnType, Returning(..), ReturningFields(..), Row)
 import Database.Generic.Statement.Type.OneOrMany (OneOrMany(..))
 import Database.Generic.Statement.Values (Values(..))
-import Witch qualified as W
 
 -- | Insert one or many values of type 'a', maybe returning fields 'fs'.
 newtype Insert (o :: OneOrMany) (r :: Maybe fs) a = Insert Insert'
@@ -46,9 +45,9 @@ instance ReturningFields (Insert o r a) where
   returningFields (Insert Insert' {..}) f = Insert Insert'
     { returning = Just $ Some $ Fields.fieldNames f, .. }
 
-instance Serialize DbValue db => Serialize Insert' db where
+instance Serialize DbValueN db => Serialize Insert' db where
   serialize i = unwords $
-    [ "INSERT INTO", W.from i.into
+    [ "INSERT INTO", from i.into
     , "(", intercalate ", " $ from <$> i.fieldNames, ") VALUES"
     , intercalate ", " $ serialize @_ @db <$> i.values
     ]

@@ -56,7 +56,6 @@ library
                       extra,
                       from-sum,
                       generics-eot,
-                      HDBC,
                       mtl,
                       transformers,
                       witch,

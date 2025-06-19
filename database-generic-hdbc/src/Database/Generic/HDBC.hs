@@ -1,9 +1,9 @@
+-- | HDBC driver for PostgreSQL.
 module Database.Generic.HDBC where
 
 import Database.Generic.Entity.DbTypes (Bytes(..), DbT(..), DbValueN)
 import Database.Generic.Prelude
 import Database.HDBC qualified as HDBC
-import Witch (From(from))
 
 instance From HDBC.SqlValue DbValueN where
   from (HDBC.SqlBool       b) = Just $ DbBool b

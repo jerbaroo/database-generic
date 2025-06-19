@@ -5,7 +5,7 @@ module Database.Generic.Test.Statement where
 
 import Database.Generic
 import Database.Generic.Database (PostgreSQL)
-import Database.Generic.Entity.DbTypes (DbT (DbInt64, DbString), Unit (Unit), DbTypeN (DbTypeN))
+import Database.Generic.Entity.DbTypes (DbT(..), Unit(Unit), DbTypeN (..))
 import Database.Generic.Prelude
 import Database.Generic.Serialize (Serialize(..))
 import Database.Generic.Serialize qualified as Serialize
@@ -51,6 +51,11 @@ createTablePerson ifNotExists =
             , primary = True
             , type' = DbTypeN False $ DbString Unit
             }
+        , CreateTableColumn
+            { name = "ownsDog"
+            , primary = False
+            , type' = DbTypeN True $ DbBool Unit
+            }
         ]
     , ifNotExists
     , name = "person"
@@ -60,7 +65,7 @@ createTablePersonPG :: Bool -> String
 createTablePersonPG ifNotExists = unwords $ catMaybes
   [ Just "CREATE TABLE"
   , if ifNotExists then Just "IF NOT EXISTS" else Nothing
-  , Just "person (age BIGINT NOT NULL, name VARCHAR NOT NULL PRIMARY KEY);"
+  , Just "person (age BIGINT NOT NULL, name VARCHAR NOT NULL PRIMARY KEY, ownsDog BOOLEAN);"
   ]
 
 createTableTests :: TestTree

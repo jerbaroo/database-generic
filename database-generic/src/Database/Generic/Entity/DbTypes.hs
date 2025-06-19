@@ -7,7 +7,6 @@ import Data.ByteString (ByteString)
 import Data.ByteString.Char8 qualified as BS
 import Database.Generic.Prelude
 
--- | A primitive database type.
 data DbT f
   = DbBool    !(F f Bool)
   | DbBytes   !(F f Bytes)
@@ -21,8 +20,9 @@ type family F f a where
   F Id   a = a
   F Unit _ = Unit
 
-data Unit   = Unit deriving (Aeson.FromJSON, Eq, Generic, Show)
+-- | A database type.
 type DbType = DbT Unit
+data Unit   = Unit deriving (Aeson.FromJSON, Eq, Generic, Show)
 
 -- | Slim wrapper over 'DbType' to allow for a nullable flag.
 data DbTypeN = DbTypeN !Bool !DbType
@@ -50,8 +50,9 @@ instance HasDbType a => HasDbType (Maybe a) where
     DbTypeN False t -> DbTypeN True t -- Becomes nullable.
     x               -> x
 
-data Id
+-- | A database value.
 type DbValue = DbT Id
+data Id
 
 -- | Slim wrapper over 'DbValue' to allow for nullable values.
 type DbValueN = Maybe DbValue
@@ -60,10 +61,6 @@ deriving instance Aeson.FromJSON (DbT Id)
 deriving instance Aeson.ToJSON   (DbT Id)
 deriving instance Eq             (DbT Id)
 deriving instance Show           (DbT Id)
-
--- instance From Bool   DbValue where from = DbBool
--- instance From Int64  DbValue where from = DbInt64
--- instance From String DbValue where from = DbString
 
 newtype Bytes = Bytes ByteString deriving (Eq, Show)
 

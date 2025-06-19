@@ -52,7 +52,7 @@ createTablePerson ifNotExists =
             , type' = DbTypeN False $ DbString Unit
             }
         , CreateTableColumn
-            { name = "ownsDog"
+            { name = "ownsdog"
             , primary = False
             , type' = DbTypeN True $ DbBool Unit
             }
@@ -65,17 +65,16 @@ createTablePersonPG :: Bool -> String
 createTablePersonPG ifNotExists = unwords $ catMaybes
   [ Just "CREATE TABLE"
   , if ifNotExists then Just "IF NOT EXISTS" else Nothing
-  , Just "person (age BIGINT NOT NULL, name VARCHAR NOT NULL PRIMARY KEY, ownsDog BOOLEAN);"
+  , Just "person (age BIGINT NOT NULL, name VARCHAR NOT NULL PRIMARY KEY, ownsdog BOOLEAN);"
   ]
 
 createTableTests :: TestTree
 createTableTests = testGroup "Create table statement tests"
   [ SC.testProperty "createTable @Person" \b ->
       createTable @Person b == createTablePerson b
-  -- , SC.testProperty "serialize CreateTable Person" \b ->
-  , testCase "TODO" $ assertEqual ""
-      (serialize @_ @PostgreSQL (into @CreateTable' $ createTable @Person True))
-      $ createTablePersonPG True
+  , SC.testProperty "serialize CreateTable Person" \b ->
+      serialize @_ @PostgreSQL (into @CreateTable' $ createTable @Person b)
+        == createTablePersonPG b
   ]
 
 -- * Delete tests.

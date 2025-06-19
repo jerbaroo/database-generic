@@ -23,6 +23,8 @@ executable tutorial
                       database-generic,
                       database-generic-hdbc,
                       database-generic-server,
+                      HDBC,
+                      HDBC-postgresql,
                       mtl,
                       postgres-options,
                       witch,

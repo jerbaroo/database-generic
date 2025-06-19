@@ -21,7 +21,6 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase, assertEqual)
 import Test.Tasty.SmallCheck qualified as SC
 import Witch qualified as W
-import Witch (into)
 
 statementTests :: TestTree
 statementTests = testGroup "Statement tests"

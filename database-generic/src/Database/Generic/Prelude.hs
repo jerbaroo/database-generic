@@ -27,7 +27,7 @@ import Debug.Trace as X (trace)
 import GHC.Generics as X (Generic)
 import GHC.Records as X (HasField(getField))
 import Prelude as X (Applicative(pure), Bool(True, False), Eq, Functor(fmap), IO, Int, Integer, Monad((>>=)), Monoid, Read, Show(show), String, (.), ($), (==), (/=), (>>=), (<$>), const, error, flip, fst, undefined, unwords, zip)
-import Witch as X (From(from), into)
+import Witch as X (From(from), TryFrom(tryFrom), into)
 import Witch.Utility as X (over)
 
 debug :: Show a => a -> a

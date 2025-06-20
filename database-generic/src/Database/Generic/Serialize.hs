@@ -11,22 +11,22 @@ class Serialize a db where
   serialize :: a -> String
 
 instance Serialize DbType PostgreSQL where
-  serialize (DbBool    Unit) = "BOOLEAN"
-  serialize (DbBytes   Unit) = "BINARY"
-  serialize (DbInt64   Unit) = "BIGINT"
-  serialize (DbInteger Unit) = "BIGINT"
-  serialize (DbString  Unit) = "VARCHAR"
+  serialize (DbBool       Unit) = "BOOLEAN"
+  serialize (DbByteString Unit) = "BINARY"
+  serialize (DbInt64      Unit) = "BIGINT"
+  serialize (DbInteger    Unit) = "BIGINT"
+  serialize (DbString     Unit) = "VARCHAR"
 
 instance Serialize DbTypeN PostgreSQL where
   serialize (DbTypeN False dbType) = serialize @_ @PostgreSQL dbType <> " NOT NULL"
   serialize (DbTypeN True  dbType) = serialize @_ @PostgreSQL dbType
 
 instance Serialize DbValue PostgreSQL where
-  serialize (DbBool    b)  = show b
-  serialize (DbBytes   b)  = show b
-  serialize (DbInt64   i)  = show i
-  serialize (DbInteger i)  = show i
-  serialize (DbString  s) = "'" <> s <> "'"
+  serialize (DbBool       b)  = show b
+  serialize (DbByteString b)  = show b
+  serialize (DbInt64      i)  = show i
+  serialize (DbInteger    i)  = show i
+  serialize (DbString     s) = "'" <> s <> "'"
 
 instance Serialize DbValueN PostgreSQL where
   serialize Nothing  = "NULL"

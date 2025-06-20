@@ -7,9 +7,12 @@ import Data.ByteString (ByteString)
 import Data.ByteString.Char8 qualified as BS
 import Database.Generic.Prelude
 
+class DbT a where
+  type DbTUnit a :: Type
+  type DbTUnit a :: Type
 data DbT f
   = DbBool    !(F f Bool)
-  | DbBytes   !(F f Bytes)
+  | DbBytes   !(F f ByteString)
   | DbInt64   !(F f Int64)
   | DbInteger !(F f Integer)
   | DbString  !(F f String)
@@ -61,17 +64,3 @@ deriving instance Aeson.FromJSON (DbT Id)
 deriving instance Aeson.ToJSON   (DbT Id)
 deriving instance Eq             (DbT Id)
 deriving instance Show           (DbT Id)
-
-newtype Bytes = Bytes ByteString deriving (Eq, Show)
-
-instance Aeson.FromJSON Bytes where
-  parseJSON = fmap (Bytes . BS.pack) <$> Aeson.parseJSON
-
-instance Aeson.ToJSON Bytes where
-  toJSON (Bytes b)= Aeson.toJSON $ BS.unpack b
-
--- instance From Bytes String where
---   from (Bytes b) = BS.unpack b
-
--- instance From String Bytes where
---   from = Bytes . BS.pack

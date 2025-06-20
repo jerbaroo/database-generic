@@ -3,11 +3,11 @@
 module Database.Generic.Entity.FromDb where
 
 import Database.Generic.Entity.DbColumns (HasDbColumns)
-import Database.Generic.Entity.DbTypes (Bytes(..), DbT(..), DbValueN)
+import Database.Generic.Entity.DbTypes (DbT(..), DbValueN)
 import Database.Generic.Prelude
 import Generics.Eot qualified as G
 import GHC.Num (Num(fromInteger))
-import Data.ByteString.Char8 qualified as BS
+import Witch (Utf8S, unsafeFrom)
 
 data FromDbError dbv
   = ErrorConstructing()   ![dbv]
@@ -31,8 +31,8 @@ instance FromDbValues DbValueN Int64 where
   fromDbValues x = error $ "Error constructing Int64 from " <> show x
 
 instance FromDbValues DbValueN String where
-  fromDbValues [Just (DbBytes  (Bytes b))] = BS.unpack b
-  fromDbValues [Just (DbString s)] = s
+  fromDbValues [Just (DbByteString b)] = unsafeFrom $ into @Utf8S b
+  fromDbValues [Just (DbString     s)] = s
   fromDbValues x = error $ "Error constructing Int64 from " <> show x
 
 instance (FromDbValues DbValueN a, Typeable a) => FromDbValues DbValueN (Maybe a) where

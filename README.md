@@ -64,3 +64,75 @@ tutorial](tutorial/tutorial/Main.hs).
 | Server: stream updates over WebSocket    |             |        |
 | Server: permission checks                |             |        |
 | Reflex (client-side) MonadDb instance    |             |        |
+
+## Documentation
+
+The following attempts to descibe how the library works, and the various type
+classes involved. However it is recommended to begin by reading through the code
+in the [runnable tutorial](tutorial/tutorial/Main.hs), and only come back and
+read this if you feel you need to.
+
+### Necessary Instances
+
+The easiest way to use a data type with this library is to:
+- ensure the data type only has one constructor
+- derive a `Generic` instance
+- derive a `PrimaryKey` instance
+- ensure each field has a `FromDbValues` instance (for reading)
+- ensure each field has a `HasDbType` instance (for schema)
+- ensure each field has a `ToDbValues` instance (for writing)
+
+Here is a simple example which meets all of the criteria:
+``` hs
+data Person = Person { age :: !Int64, name :: !String, ownsDog :: !(Maybe Bool) }
+  deriving (Generic, PrimaryKey "name")
+```
+
+Since `Person` meets all of the critera, a few type classes will be
+automatically derived for `Person` via `Generic`:
+- `HasDbColumns Person`: to provide a database schema
+- `HasEntityName Person`: to provide a database schema
+- `FromDbValues Person`: to convert from database values
+- `ToDbValues Person`: to convert to database values
+
+### HasDbColumns
+
+`HasDbColumns` is responsible for converting each field into a named field along
+with type information. Here is the definition of `HasDbColumns`:
+``` hs
+class HasDbColumns a where
+  dbColumns :: [(FieldName, DbTypeN)]
+```
+
+For our `Person` data type, `dbColumns` will return:
+``` hs
+[ (FieldName "age"    , DbTypeN False (DbInt64  Unit))
+, (FieldName "name"   , DbTypeN False (DbString Unit))
+, (FieldName "ownsdog", DbTypeN True  (DbBool   Unit))
+]
+```
+
+To customize column names just create an instance of `FieldNameTransformation`.
+``` hs
+instance FieldNameTransformation Person where
+  fieldNameT = toSnakeCase
+```
+
+### HasEntityName
+
+When using the provided `PostgreSQL` database type, a `createTable @Person`
+statement will be translated to the following SQL:
+
+``` sql
+CREATE TABLE (age BIGINT NOT NULL, name VARCHAR NOT NULL PRIMARY KEY, ownsdog BOOLEAN);
+```
+
+### FromDBValues
+
+Above we mentioned that each field of a data type needs to have a `FromDbValues`
+instance. This is to ensure that each field can be parsed from a column value
+read from the database.
+
+However `FromDbValues dbv a` is actually a multi-parameter type class. When
+using the provided `PostgreSQL` database the `dbv` will be instantiated to
+the library provided `DbValueN` type.

@@ -32,7 +32,7 @@ instance (HasDbType f, GHasDbColumns a [String] fs)
   => GHasDbColumns a [String] (f, fs) where
   gDbColumns []     = error "impossible"
   gDbColumns (f:fs) =
-    (fieldNameT $ FieldName f, dbType @f) : gDbColumns @a @_ @fs fs
+    (fieldNameT @a $ FieldName f, dbType @f) : gDbColumns @a @_ @fs fs
 
 instance GHasDbColumns a [String] () where
   gDbColumns [] = []

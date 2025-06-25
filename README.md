@@ -2,29 +2,38 @@
 
 Database-agnostic interface to generically persisted data.
 
+Easy way to go from idea to prototype for your Haskell backend.
+
+Intended for:
+- quick demos/prototypes
+- internal dashboards
+
+Not (yet) intended for:
+- public-facing production apps
+- apps requiring complex database queries
+
 ## Introduction
 
-Explanation of the above:
-- Database-agnostic: the typeclass is called `MonadDb`, and you must specify how
-  an instance can communicate with your database. We provide an example for
-  connecting to Postgres in the [runnable tutorial](tutorial/tutorial/Main.hs).
-- Generically persisted data: you can derive the necessary instances in one line
-  via `Generics`, to enable `MonadDb` to read/write instances of your data types
-  to/from your database.
+Explanation of the tagline:
+- Database-agnostic: this library exports a typeclass called `MonadDb` for
+  communicating with a database of your choice, so you will need to write an
+  `instance MonadDb MyApp` to specify how to communicate with your database. We
+  provide an example for Postgres in the [tutorial](tutorial/tutorial/Main.hs).
+- Generically persisted data: it is easy to derive all the necessary instances
+  for your data types in one line. This will allow `MonadDb` to read/write
+  instances of your data types to/from your database.
 
-A key intended feature of this library is that the typeclass `MonadDb` can be
-used either server-side or client-side. Allowing your client application (e.g.
-web app) to use the same functions to access your data as your server-side does.
-
-Another important intended feature is an optional `servant` server. Merely
-provide an instance of `MonadDb` so the server knows how to communicate with
-your database, then the server can act as a proxy to allow clients to read/write
-to your database without having to write the usual server boilerplate.
+Two important features of this library:
+- **Server for free**: merely provide an instance of `MonadDb` so the server
+  knows how to communicate with your database. Avoid needing to write the usual
+  server boilerplate!
+- **Same code server-side and client-side**: your client application (e.g. web
+  app) can use the same functions to access your data as your server-side does!
 
 ## Quick Start
 
-The [runnable tutorial](tutorial/tutorial/Main.hs) is the recommended way of
-becoming familiar with `database-generic`.
+The [tutorial](tutorial/tutorial/Main.hs) is the recommended way of becoming
+familiar with `database-generic`.
 
 To run the tutorial on your machine:
 1. Clone this repo.
@@ -34,8 +43,8 @@ To run the tutorial on your machine:
 
 ## Features
 
-Examples of the following features can be found in [the
-tutorial](tutorial/tutorial/Main.hs).
+Working examples of the following features can be found in the
+[tutorial](tutorial/tutorial/Main.hs).
 
 | Feature                                  | In Tutorial | Tested |
 |------------------------------------------|-------------|--------|
@@ -67,12 +76,18 @@ tutorial](tutorial/tutorial/Main.hs).
 
 ## Documentation
 
-The following attempts to descibe how the library works, and the various type
-classes involved. However it is recommended to begin by reading through the code
-in the [runnable tutorial](tutorial/tutorial/Main.hs), and only come back and
-read this if you feel you need to.
+The following _attempts_ to descibe how this library works. However it is
+recommended to read through the [tutorial](tutorial/tutorial/Main.hs) first, and
+only come back and read this if you feel you need to.
 
 ### Necessary Instances
+
+Since `Person` meets all of the critera, a few type classes will be
+automatically derived for `Person` via `Generic`:
+- `HasDbColumns Person`: names & types of database fields/columns
+- `HasEntityName Person`: a name for the database collection/table
+- `FromDbValues Person`: to convert from database values
+- `ToDbValues Person`: to convert to database values
 
 The easiest way to use a data type with this library is to:
 - ensure the data type only has one constructor
@@ -87,13 +102,6 @@ Here is a simple example which meets all of the criteria:
 data Person = Person { age :: !Int64, name :: !String, ownsDog :: !(Maybe Bool) }
   deriving (Generic, PrimaryKey "name")
 ```
-
-Since `Person` meets all of the critera, a few type classes will be
-automatically derived for `Person` via `Generic`:
-- `HasDbColumns Person`: to provide a database schema
-- `HasEntityName Person`: to provide a database schema
-- `FromDbValues Person`: to convert from database values
-- `ToDbValues Person`: to convert to database values
 
 ### HasDbColumns
 

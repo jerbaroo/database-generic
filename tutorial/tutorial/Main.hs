@@ -86,11 +86,13 @@ main = do
   info "Insert many" $
     insertMany [Person 25 "Alice" $ Just True, Person 25 "Bob" Nothing]
 
-  info "Insert many, returning" $
-    returning $ insertMany [Person 26 "Charlie" Nothing, Person 26 "Dee" $ Just False]
+  info "Insert many, returning"
+    $ returning
+    $ insertMany [Person 26 "Charlie" Nothing, Person 26 "Dee" $ Just False]
 
-  info "Insert many, returning age" $
-    insertMany [Person 27 "Enid" Nothing, Person 27 "Flavio" Nothing] ==> field @"age"
+  info "Insert many, returning age"
+    $ insertMany [Person 27 "Enid" Nothing, Person 27 "Flavio" Nothing]
+    ==> field @"age"
 
   info "Select all" $ selectAll @Person
 

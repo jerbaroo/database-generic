@@ -1,11 +1,9 @@
 # database-generic
 
-Database-agnostic interface to generically persisted data.
-
-Easy way to go from idea to prototype for your Haskell backend.
+Easy way to start serving your Haskell data types from your database.
 
 Intended for:
-- quick demos/prototypes
+- rapid prototyping
 - internal dashboards
 
 Not (yet) intended for:
@@ -14,14 +12,17 @@ Not (yet) intended for:
 
 ## Introduction
 
-Explanation of the tagline:
+This library provides a database-agnostic interface to generically persisted
+data.
+
+Explanation:
 - Database-agnostic: this library exports a typeclass called `MonadDb` for
   communicating with a database of your choice, so you will need to write an
   `instance MonadDb MyApp` to specify how to communicate with your database. We
   provide an example for Postgres in the [tutorial](tutorial/tutorial/Main.hs).
 - Generically persisted data: it is easy to derive all the necessary instances
-  for your data types in one line. This will allow `MonadDb` to read/write
-  instances of your data types to/from your database.
+  for your data types in one line of code. These instances will allow `MonadDb`
+  to read/write your data to/from your database.
 
 Two important features of this library:
 - **Server for free**: merely provide an instance of `MonadDb` so the server
@@ -37,9 +38,11 @@ familiar with `database-generic`.
 
 To run the tutorial on your machine:
 1. Clone this repo.
-2. Start a PostgreSQL instance with username and password `demo`, e.g.:
-  `docker run -it --rm --env POSTGRES_PASSWORD=demo --env POSTGRES_USER=demo --publish 5432:5432 postgres`
-3. Then `cabal run tutorial` via provided `nix-shell`.
+2. Install deps. Easiest is to use Nix shell: `nix-shell`
+3. Start a Postgres server with username and password `demo`, e.g.: `docker run
+  -it --rm --env POSTGRES_PASSWORD=demo --env POSTGRES_USER=demo --publish
+  5432:5432 postgres`
+4. Run the tutorial: `cabal run tutorial`
 
 ## Features
 
